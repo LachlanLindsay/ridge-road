@@ -20,6 +20,13 @@ import { addFresh, cacheItems, collectCache, issueShoes } from './stores';
 import { addMorale, queueEvent, say, unlockCard, type Ctx } from './world';
 import type { EatenLevel, EndDayResult, EveningOrders, GameState, Member } from './types';
 
+/** A bigger pack is likelier to bring something down; five dogs, as in 1813, keep the tuned odds. */
+export function dogOdds(p: number, dogs: number): number {
+  if (dogs <= 0) return 0;
+  if (dogs === T.dogs.count) return p;
+  return 1 - (1 - p) ** (dogs / T.dogs.count);
+}
+
 export function endDay(state: GameState, orders: EveningOrders): EndDayResult {
   if (state.phase !== 'evening') throw new Error('Evening orders are given in camp, after the afternoon.');
   if (state.pending.length) throw new Error('Answer the event card first.');
@@ -89,7 +96,7 @@ function night(ctx: Ctx, tea: boolean, feedGrass: boolean) {
 
   // Dogs hunt on their own.
   const habitat = huntHabitat(s.map, s.camp);
-  if (s.dogs > 0 && chance(s, T.hunting.dogs[habitat])) {
+  if (s.dogs > 0 && chance(s, dogOdds(T.hunting.dogs[habitat], s.dogs))) {
     const lb = chance(s, T.hunting.smallChance) ? T.hunting.smallLb : T.hunting.largeLb;
     addFresh(s, lb);
     s.today.dogsKilled = true;

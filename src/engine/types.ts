@@ -9,7 +9,7 @@ export type RegionId = 1 | 2 | 3 | 4 | 5 | 6;
 export type Zone = 'mountains' | 'west';
 export type Weather = 'fair' | 'dew' | 'cloud' | 'rain';
 export type Task = 'scout' | 'cut' | 'camp' | 'water' | 'hunt' | 'grass' | 'rest';
-export type MemberId = 'blaxland' | 'lawson' | 'wentworth' | 'burne' | 'fairs' | 'servant3' | 'servant4';
+export type MemberId = 'blaxland' | 'lawson' | 'wentworth' | 'burne' | 'fairs' | 'servant3' | 'servant4' | 'servant5' | 'servant6';
 export type Condition = 'chill' | 'bowel' | 'footsore' | 'tooIll';
 export type Rations = 'full' | 'reduced' | 'short';
 export type EatenLevel = Rations | 'none';
@@ -285,10 +285,21 @@ export type Action =
   | { t: 'choose'; choice: ChoiceId }
   | { t: 'end'; orders: EveningOrders };
 
+/** Who sets out. Leaders are always the three of 1813; the 1813 party had 4 servants, 4 horses, 5 dogs. */
+export interface PartyChoice {
+  /** 0 to 6. Burne comes first, then Fairs, then unnamed men. */
+  servants?: number;
+  /** 2 to 6 pack horses. */
+  horses?: number;
+  /** 0 to 8 dogs. */
+  dogs?: number;
+}
+
 export interface NewGameOptions {
   seed: number;
   mode: Mode;
   loadout?: Loadout;
+  party?: PartyChoice;
   names?: { servant3?: string; servant4?: string };
 }
 

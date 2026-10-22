@@ -2,7 +2,10 @@
 import { T } from './data';
 import type { GameState, Horse, Item, Member, MemberId, Rations, Stores } from './types';
 
-export const MEMBER_ORDER: MemberId[] = ['blaxland', 'lawson', 'wentworth', 'burne', 'fairs', 'servant3', 'servant4'];
+export const MEMBER_ORDER: MemberId[] = ['blaxland', 'lawson', 'wentworth', 'burne', 'fairs', 'servant3', 'servant4', 'servant5', 'servant6'];
+export const LEADERS: MemberId[] = ['blaxland', 'lawson', 'wentworth'];
+/** Servants in the order they join: the 1813 party took the first four. */
+export const SERVANTS: MemberId[] = ['burne', 'fairs', 'servant3', 'servant4', 'servant5', 'servant6'];
 
 export const MEMBER_INFO: Record<MemberId, { name: string; leader: boolean }> = {
   blaxland: { name: 'Gregory Blaxland', leader: true },
@@ -12,6 +15,8 @@ export const MEMBER_INFO: Record<MemberId, { name: string; leader: boolean }> = 
   fairs: { name: 'Samuel Fairs', leader: false },
   servant3: { name: 'Servant 3', leader: false },
   servant4: { name: 'Servant 4', leader: false },
+  servant5: { name: 'Servant 5', leader: false },
+  servant6: { name: 'Servant 6', leader: false },
 };
 
 export const clamp = (v: number, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, v));

@@ -12,7 +12,7 @@ import {
   walkedMiles,
   type Step,
 } from './map';
-import { canWork, isAway, isBusy, itemWeight, loadLb, capacity, MEMBER_ORDER, round1 } from './party';
+import { canWork, isAway, isBusy, itemWeight, loadLb, capacity, round1 } from './party';
 import type { GameState, HalfDayPlan, Item, MemberId, Task, Warning } from './types';
 
 export type Assignment = Task | 'away' | 'busy';
@@ -22,8 +22,8 @@ export const AT_CAMP_TASKS: Task[] = ['camp', 'rest', 'grass'];
 
 export function assignments(s: GameState, plan: HalfDayPlan): Map<MemberId, Assignment> {
   const out = new Map<MemberId, Assignment>();
-  for (const id of MEMBER_ORDER) {
-    const m = s.men.find((x) => x.id === id)!;
+  for (const m of s.men) {
+    const id = m.id;
     if (isAway(s, m)) out.set(id, 'away');
     else if (isBusy(s, m)) out.set(id, 'busy');
     else out.set(id, plan.tasks[id] ?? 'camp');

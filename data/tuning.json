@@ -71,6 +71,7 @@
     "strayDelayCapHours": 4
   },
   "dogs": { "count": 5 },
+  "party": { "servants": 4, "servantsMax": 6, "horsesMin": 2, "horsesMax": 6, "dogsMax": 8 },
   "wear": { "dewPush": 3, "shoesRelief": 10 },
   "morale": {
     "start": 70,

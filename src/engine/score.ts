@@ -37,7 +37,7 @@ export function computeOutcome(s: GameState): Outcome {
     { label: 'Reached the goal and returned', points: sc.base },
     { label: `Days to the goal: ${s.goalDay} against ${sc.parDays}`, points: (sc.parDays - s.goalDay) * sc.perDay },
     { label: `Horses home: ${horsesHome}`, points: horsesHome * sc.perHorse },
-    { label: 'All seven men well at the ford', points: allWell ? sc.allWell : 0 },
+    { label: 'Every man well at the ford', points: allWell ? sc.allWell : 0 },
     { label: `Route marked and cleared: ${Math.round(share * 100)}%`, points: Math.round(sc.routeMax * share) },
     { label: `Food left at the ford: ${food} lb`, points: Math.floor(food / 10) * sc.foodPer10Lb },
   ];

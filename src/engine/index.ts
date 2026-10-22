@@ -1,6 +1,6 @@
 // Ridge Road engine: the public API. Every rule lives behind these functions; the UI, saves and
 // the sim harness only call them. All functions are pure: they return a new state.
-export { newGame, replay, applyAction } from './state';
+export { newGame, replay, applyAction, partyOf } from './state';
 export {
   validatePlan,
   hoursAvailable,
@@ -25,7 +25,7 @@ export {
   stableNoise,
 } from './advice';
 export { chooseEvent, eventCard } from './events';
-export { endDay } from './night';
+export { endDay, dogOdds } from './night';
 export { computeOutcome, routeShare } from './score';
 export { dateOf, weekday } from './day';
 export {
@@ -60,6 +60,9 @@ export {
   rationLevel,
   MEMBER_ORDER,
   MEMBER_INFO,
+  LEADERS,
+  SERVANTS,
+  itemWeight,
 } from './party';
 export { T, MAP_DATA, JOURNAL_1813, CARDS, regionSpec, terrainSpec } from './data';
 export type * from './types';
