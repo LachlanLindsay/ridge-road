@@ -11,7 +11,11 @@ A tap-driven expedition sim of the 1813 crossing of the Blue Mountains: outfit t
 | M2, map | Done: SVG survey plot with fog of war, pan, pinch and zoom. The route, decoy and hoe checks are in `test/map.test.ts`, the fog-of-war checks in `test/ui.test.ts` |
 | M3, play loop | Built: plan sheet, event cards, camp screen, journal. Plays through at phone size with touch in a headless browser; the check on a real iPhone in Safari is still to do |
 | M4, outfitting, end screen and history | Done: outfitting (party size, provisions, auto-packed load bars per horse, and a party plate whose packs follow each horse's load), the end screen with score breakdown and ghost line, engraved plates, every journal card written fresh with its sources (nineteen, found as you play), a card for each man, horse and the dogs (hover, press and hold, or tap in Party and stores), plus the 1813 party's day beside each of yours in the journal (11 May to 6 June). The Country text still needs review by a Gundungurra or Darug organisation before any public release |
-| M5, ship | Partly: save and resume are in. Installable offline app, export and import are not |
+| M5, ship | Partly: save and resume are in, the display font is bundled (no Google Fonts), and an expedition moves between devices as a code (Menu → Copy expedition code; title → Load an expedition code). Installable offline app is not |
+
+## After the school playtest
+
+Played on a laptop as a primary-school class would (see the project doc `primary-school-playtest.md`): the map now frames the same few miles on every screen and draws them bigger on a laptop; Easy is the default; the first-day card comes before the first event; tapping a man opens a task picker; the camp suggestion looks for water and grass and says what the camp has; a chilled man kept at camp stays there until he is well; caches keep the blankets and the food for the way home, and the men carry a cache home when the horses cannot; the milestone cards (the view back, the high heath, the way down, the sugarloaf hill) open by themselves; the journal runs oldest first, takes the player's own line for each day, and prints; the end screen keeps the journal and says what to do differently after a repulse; a finished expedition stays on the title until a new one sets out; the menu has metric units and an expedition code; the map key is in plain words. `CALIBRATION.md` lists the engine rules that changed.
 
 ## Play on your iPhone over Tailscale
 

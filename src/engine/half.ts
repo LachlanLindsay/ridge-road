@@ -8,6 +8,7 @@ import {
   horseReach,
   huntHabitat,
   isPassable,
+  openBranches,
   openMiles,
   pathSteps,
   setCleared,
@@ -40,7 +41,7 @@ import {
 import { chance } from './rng';
 import { addFresh, cacheItems, collectCache } from './stores';
 import { addMorale, arriveAt, findPass, queueEvent, say, unlockCard, useLookout, type Ctx } from './world';
-import type { GameState, Half, HalfDayPlan, HalfResult, Member, MemberId, Task, Terrain } from './types';
+import type { GameState, Half, HalfDayPlan, HalfResult, Member, MemberId, Segment, Task, Terrain } from './types';
 
 type Activity = 'walk' | 'scout' | 'cut' | 'water' | 'carry' | 'hunt' | 'camp' | 'idle' | 'rest' | 'grass';
 type Acct = Record<Activity, number>;
@@ -147,6 +148,7 @@ function moveCamp(ctx: HalfCtx, steps: Step[], party: Member[]): number {
     if (seg.pass) {
       h = st.dir === 'out' ? T.obstacles.descentHours : T.obstacles.ascentHours;
       for (const m of party) log(ctx, m, 'carry', h);
+      sayPass(ctx, st.dir, h);
     } else {
       h = seg.miles / terrainSpec(seg.terrain).horseMph;
       loaded = true;
@@ -162,6 +164,12 @@ function moveCamp(ctx: HalfCtx, steps: Step[], party: Member[]): number {
   campArrived(ctx, miles);
   if (loaded) hours += horseFalls(ctx, party);
   return hours;
+}
+
+/** The pass is the one place the horses go unloaded: the men carry every pack down, and up again on the way home. */
+function sayPass(ctx: HalfCtx, dir: Step['dir'], hours: number) {
+  if (dir === 'out') say(ctx, `Down the pass: the horses are unloaded and led down the trench, and every man carries a pack. ${round1(hours)} h of climbing.`);
+  else say(ctx, `Up the pass: the packs go up on the men's backs and the horses climb the trench behind them. ${round1(hours)} h of climbing.`);
 }
 
 function campArrived(ctx: HalfCtx, miles: number) {
@@ -200,10 +208,33 @@ function horseFalls(ctx: HalfCtx, party: Member[]): number {
   }
   if (first !== null) {
     queueEvent(ctx, { id: 'horseFall', horse: first });
-    say(ctx, `A horse fell under its load: ${lost} h lost reloading.`);
+    const n = Math.round(lost / fall.hours);
+    say(ctx, n > 1 ? `${n} horses fell under their loads: ${lost} h lost getting them up again.` : `A horse fell under its load: ${lost} h lost getting it up again.`);
     for (const m of party) log(ctx, m, 'walk', lost);
   }
   return lost;
+}
+
+/**
+ * The advance stops at water rather than push on to a dry camp: leaving a node with water for one
+ * without, when the party could not get beyond the dry one this half anyway, strands the horses dry
+ * for the night for no gain. Rock holes count as water for the men only, so they count as dry for
+ * the horses here.
+ */
+function leavesWaterForDry(ctx: HalfCtx, from: string, seg: Segment, st: Step, hoursLeft: number): boolean {
+  const { s } = ctx;
+  const map = s.map;
+  const here = map.nodes[from]!;
+  const hereWater = here.water === 'swamp' || here.water === 'stream' || here.water === 'lagoon';
+  if (!hereWater) return false;
+  const next = map.nodes[stepEnd(map, st)]!;
+  if (next.water !== 'none' && next.water !== 'rockHole') return false;
+  if (next.feature === 'goal' || next.feature === 'pass') return false;
+  // Could the party carry on past the dry node this half? Then it is not the night's camp.
+  const h = seg.pass ? T.obstacles.descentHours : seg.miles / terrainSpec(seg.terrain).horseMph;
+  const after = hoursLeft - h;
+  const onward = next.childSegs.map((c) => map.segments[c]!).filter((g) => g.visible && !g.deadEnd && (horsePassable(map, g, s.stores) || (isPassable(g.terrain) && !g.pass)));
+  return !onward.some((g) => g.miles / terrainSpec(g.terrain).horseMph <= after + EPS);
 }
 
 /** The whole party pushes on with the horses into passable ground, blazing as it goes. */
@@ -237,10 +268,12 @@ function advanceParty(ctx: HalfCtx, target: string, blaze: boolean, party: Membe
     if (horsePassable(map, seg, s.stores)) {
       const h = seg.pass ? (st.dir === 'out' ? T.obstacles.descentHours : T.obstacles.ascentHours) : seg.miles / terrainSpec(seg.terrain).horseMph;
       if (t + h > H + EPS) break;
+      if (leavesWaterForDry(ctx, s.camp, seg, st, H - t)) break;
       t += h;
       miles += seg.miles;
       if (!seg.pass) loaded = true;
       for (const m of party) log(ctx, m, seg.pass ? 'carry' : 'walk', h);
+      if (seg.pass) sayPass(ctx, st.dir, h);
       s.camp = stepEnd(map, st);
       moved = true;
       if (arriveAt(ctx, s.camp, lawson)) break;
@@ -248,6 +281,7 @@ function advanceParty(ctx: HalfCtx, target: string, blaze: boolean, party: Membe
     }
     if (st.dir === 'in') break;
     if (!isPassable(seg.terrain) || seg.pass || !stepShifted(map.nodes[seg.a]!)) break;
+    if (leavesWaterForDry(ctx, s.camp, seg, st, H - t)) break;
     const horse = terrainSpec(seg.terrain).horseMph;
     const v = blaze ? Math.min(terrainSpec(seg.terrain).scoutMph * factor, horse) : horse;
     const known = walkedMiles(seg);
@@ -345,7 +379,14 @@ function scoutHalf(ctx: HalfCtx, team: Member[], target: string, H: number) {
         if (!search()) break;
       }
       const next = continuation(map, pos, lawson);
-      if (!next) break;
+      if (!next) {
+        const open = openBranches(map, pos).filter((b) => !map.nodes[b.b]!.reached).length;
+        if (open >= 2 && H - committed > EPS) {
+          const where = node.label ? `at ${node.label}` : `${round1(dist)} mi out`;
+          say(ctx, `The scouts reached a fork ${where} and came back to ask which branch to take. Tap one on the map.`);
+        }
+        break;
+      }
       steps.push({ seg: next.id, dir: 'out' });
     }
     const st = steps[i++]!;

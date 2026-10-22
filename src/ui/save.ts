@@ -102,6 +102,29 @@ export function writeDraft(d: Draft) {
   }
 }
 
+const NOTES_KEY = 'ridge-road.notes.v1';
+
+/** The player's own journal lines, by day, kept on the device beside the save (not part of the replay). */
+export function readNotes(seed: number): Record<number, string> {
+  try {
+    const raw = localStorage.getItem(`${NOTES_KEY}.${seed}`);
+    return raw ? (JSON.parse(raw) as Record<number, string>) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function writeNote(seed: number, day: number, text: string) {
+  try {
+    const notes = readNotes(seed);
+    if (text.trim()) notes[day] = text;
+    else delete notes[day];
+    localStorage.setItem(`${NOTES_KEY}.${seed}`, JSON.stringify(notes));
+  } catch {
+    // A convenience only.
+  }
+}
+
 /** A remembered yes/no for small conveniences, such as a dismissed hint. */
 export function readFlag(key: string): boolean {
   try {

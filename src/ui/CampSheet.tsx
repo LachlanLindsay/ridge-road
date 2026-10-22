@@ -96,13 +96,14 @@ export function CampSheet({ state, onMakeCamp, selected, setSelected }: Props) {
             <dt>Water</dt>
             <dd class={menWater ? '' : 'is-warn'}>
               {state.today.waterFetched && node.water === 'none' ? 'Carried up from the gully for the men' : waterLabel(node.water, node.gullyFt)}
-              {!horseWater && horsesWithUs > 0 ? '. The horses go without.' : ''}
+              {!horseWater && horsesWithUs > 0 ? `. The horses go without and lose ${-T.horses.night.noWater} condition each.` : ''}
             </dd>
           </div>
           <div>
             <dt>Grass</dt>
             <dd class={goodGrass ? '' : 'is-warn'}>
               {GRASS_LABEL[node.grass]}
+              {!goodGrass && horsesWithUs > 0 ? (node.grass === 'rushy' ? `: the horses lose ${-T.horses.night.rushy} condition each tonight` : `: the horses lose ${-T.horses.night.noFeed} condition each tonight`) : ''}
               {!goodGrass && st.grass > 0 ? `. ${lb(st.grass)} of cut grass carried, ${plural(grassNights, 'horse-night')}.` : ''}
             </dd>
           </div>
@@ -110,7 +111,7 @@ export function CampSheet({ state, onMakeCamp, selected, setSelected }: Props) {
             <dt>Food</dt>
             <dd class={daysLeft < 7 ? 'is-warn' : ''}>
               {lb(food)}
-              {freshLb(st) > 0 ? `, ${lb(freshLb(st))} of it fresh meat` : ''}. About {num(daysLeft, 0)} days at {rations} rations.
+              {freshLb(st) > 0 ? `, ${lb(freshLb(st))} of it fresh meat` : ''}. About {plural(Math.round(daysLeft), 'day')} at {rations} rations.
             </dd>
           </div>
         </dl>
@@ -151,7 +152,7 @@ export function CampSheet({ state, onMakeCamp, selected, setSelected }: Props) {
             value={shoes}
             max={st.shoes}
             onChange={setShoes}
-            label={`Spare shoes to issue (${st.shoes} pairs, wear ${Math.round(state.wear)}${footsore ? `, ${footsore} footsore` : ''})`}
+            label={`Spare shoes to issue (${st.shoes} pairs left${footsore ? `, ${footsore} footsore` : ''})`}
           />
         )}
         {hasCache && (

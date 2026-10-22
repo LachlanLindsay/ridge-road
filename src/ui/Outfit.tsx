@@ -113,15 +113,20 @@ export function Outfit({ onSetOut, onBack }: { onSetOut: (o: OutfitT) => void; o
       </div>
       <div class="outfit-inner">
         <p class="end-kicker">Emu Ford on the Nepean, 11 May 1813</p>
-        <h1 class="display outfit-title">Outfit the party</h1>
+        <h1 class="display outfit-title">Pack for the trip</h1>
         <p class="outfit-lede">
           Blaxland took {word(h1813.servants)} servants, {word(h1813.horses)} pack horses and {word(h1813.dogs)} dogs, with food for about {Math.round(foodDays(outfit1813()))} days. Keep his outfit or choose your own.
         </p>
         {changed && (
-          <button type="button" class="link-btn" onClick={() => setO(outfit1813())}>
+          <button type="button" class="link-btn" onClick={() => setO({ ...outfit1813(), owner: o.owner })}>
             Back to Blaxland’s outfit
           </button>
         )}
+
+        <section class="outfit-section">
+          <h2 class="section-title">Who is leading this expedition?</h2>
+          <input class="owner-field" type="text" maxLength={40} value={o.owner ?? ''} placeholder="Your name (optional, for a shared device)" onInput={(e) => set({ owner: (e.currentTarget as HTMLInputElement).value })} aria-label="Your name" />
+        </section>
 
         <section class="outfit-section">
           <h2 class="section-title">The party</h2>

@@ -5,15 +5,37 @@ import { CARDS, JOURNAL_1813, T, foodLb, freshLb, type GameState } from '../engi
 import { BUILD } from './build';
 import { BriefingArt } from './art/scenes';
 import { BRIEFING, CARD_SOURCES, CARD_TEXT, HELP } from './copy';
-import { isoShort, itemText, lb, longDate, plural } from './format';
-import { DogsRow, Horses, ManRow } from './parts';
+import { isoShort, itemText, lb, localize, longDate, plural, type Units } from './format';
+import { DogsRow, Horses, ManRow, Toggle } from './parts';
+import { encodeReplay } from './replaycode';
 import { Sheet } from './Sheet';
+import { readNotes, writeNote } from './save';
 
 export { Sheet };
 
 export type OverlayId = 'menu' | 'journal' | 'party' | 'briefing' | 'help' | 'key' | 'feedback';
 
-export function Menu({ state, open, onClose, onTitle, onRestart }: { state: GameState; open: (o: OverlayId) => void; onClose: () => void; onTitle: () => void; onRestart: () => void }) {
+/** The expedition as a code the player can copy, to load on another device or keep. */
+function CopyCode({ state }: { state: GameState }) {
+  const [done, setDone] = useState<string | null>(null);
+  const copy = async () => {
+    try {
+      const code = await encodeReplay(state, BUILD);
+      await navigator.clipboard.writeText(code);
+      setDone('Copied. Paste it into "Load an expedition code" on the title screen of any device.');
+    } catch {
+      setDone('Could not copy here. Send feedback shows the same code as text.');
+    }
+  };
+  return (
+    <button type="button" class="menu-item" onClick={copy}>
+      Copy expedition code
+      <span>{done ?? 'A short code that rebuilds this expedition on another device, or keeps it when someone else plays here'}</span>
+    </button>
+  );
+}
+
+export function Menu({ state, open, units, onUnits, onClose, onTitle, onRestart }: { state: GameState; open: (o: OverlayId) => void; units: Units; onUnits: (u: Units) => void; onClose: () => void; onTitle: () => void; onRestart: () => void }) {
   const [confirm, setConfirm] = useState(false);
   return (
     <Sheet title="Ridge Road" onClose={onClose}>
@@ -40,6 +62,10 @@ export function Menu({ state, open, onClose, onTitle, onRestart }: { state: Game
           Send feedback
           <span>Your note, with a code that replays this expedition</span>
         </button>
+        <CopyCode state={state} />
+        <div class="menu-item menu-setting">
+          <Toggle id="units" checked={units === 'metric'} onChange={(v) => onUnits(v ? 'metric' : 'imperial')} label="Metric units" note="Kilograms and kilometres instead of the 1813 party's pounds, miles and chains." />
+        </div>
         <button type="button" class="menu-item" onClick={onTitle}>
           Title screen
           <span>The expedition is saved on this device</span>
@@ -69,13 +95,62 @@ export function Menu({ state, open, onClose, onTitle, onRestart }: { state: Game
   );
 }
 
+/** The journal as a plain page for printing: your days beside the 1813 party's, your notes, and the cards found. */
+function printJournal(state: GameState, notes: Record<number, string>) {
+  const then1813 = new Map<string, string>([...JOURNAL_1813.days, ...JOURNAL_1813.home].map((d) => [d.date, d.text]));
+  const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const days = state.journal
+    .map((j) => {
+      const then = then1813.get(j.date);
+      const note = notes[j.day];
+      return `<section class="day"><h2>Day ${j.day} · ${esc(isoShort(j.date))}</h2><p>${esc(localize(j.text))}</p>${note ? `<p class="note"><b>My note:</b> ${esc(note)}</p>` : ''}${then ? `<p class="then"><b>In 1813:</b> ${esc(then)}</p>` : ''}</section>`;
+    })
+    .join('');
+  const cards = state.cards
+    .filter((c) => CARDS[c])
+    .map((c) => `<section class="card"><h3>${esc(CARDS[c]!.title)}</h3>${(CARD_TEXT[c] ?? []).map((p) => `<p>${esc(p)}</p>`).join('')}${CARD_SOURCES[c] ? `<p class="src">${esc(CARD_SOURCES[c]!)}</p>` : ''}</section>`)
+    .join('');
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Ridge Road journal</title><style>
+    body{font:12pt/1.45 Georgia,serif;max-width:46em;margin:2em auto;padding:0 1em;color:#222}
+    h1{font-weight:normal;font-size:2em;margin:0}h2{font-size:1.1em;margin:1.2em 0 .2em}h3{font-size:1em;margin:1em 0 .2em}
+    .day{page-break-inside:avoid}.then{color:#444;font-style:italic}.note{background:#f3f1ea;padding:.4em .6em}.src{font-size:.85em;color:#555}
+    .cards{page-break-before:always}.sub{color:#555;margin:0 0 1.5em}
+    @media print{body{margin:0}}
+  </style></head><body>
+  <h1>Ridge Road: my journal</h1><p class="sub">Across the Blue Mountains from ${esc(longDate(1))} · seed ${state.seed} · ${esc(state.mode)}</p>
+  ${days || '<p>No entries yet.</p>'}
+  <div class="cards"><h1>Cards found</h1>${cards || '<p>None yet.</p>'}</div>
+  </body></html>`;
+  const w = window.open('', '_blank');
+  if (!w) return false;
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 300);
+  return true;
+}
+
 export function Journal({ state, onClose }: { state: GameState; onClose: () => void }) {
   // The 1813 party's day for each date: the way out, then the way home.
   const then1813 = new Map<string, string>([...JOURNAL_1813.days, ...JOURNAL_1813.home].map((d) => [d.date, d.text]));
-  const entries = [...state.journal].reverse();
+  const entries = state.journal;
   const cards = state.cards.filter((c) => CARDS[c]);
+  const [notes, setNotes] = useState<Record<number, string>>(() => readNotes(state.seed));
+  const [printFail, setPrintFail] = useState(false);
+  const note = (day: number, text: string) => {
+    setNotes({ ...notes, [day]: text });
+    writeNote(state.seed, day, text);
+  };
   return (
     <Sheet title="Journal" onClose={onClose}>
+      <p class="fine journal-hint">
+        One line a day beside the 1813 party's, oldest first. Add your own line to any day.{' '}
+        <button type="button" class="link-btn link-inline" onClick={() => setPrintFail(!printJournal(state, notes))}>
+          Print or save as PDF
+        </button>
+        {printFail ? ' (the browser blocked the print window: allow pop-ups for this page and try again)' : ''}
+      </p>
       {entries.length === 0 && <p class="fine">The first entry is written tonight.</p>}
       <ol class="journal">
         {entries.map((j) => {
@@ -85,12 +160,13 @@ export function Journal({ state, onClose }: { state: GameState; onClose: () => v
               <span class="journal-date display">
                 Day {j.day} · {isoShort(j.date)}
               </span>
-              <span class="journal-text">{j.text}</span>
+              <span class="journal-text">{localize(j.text)}</span>
               {then && (
                 <span class="journal-1813">
                   <span class="journal-1813-label">In 1813:</span> {then}
                 </span>
               )}
+              <textarea class="journal-note" rows={1} placeholder="Your own line for this day" value={notes[j.day] ?? ''} onInput={(e) => note(j.day, (e.currentTarget as HTMLTextAreaElement).value)} aria-label={`Your note for day ${j.day}`} />
             </li>
           );
         })}
@@ -207,31 +283,31 @@ export function MapKey({ onClose }: { onClose: () => void }) {
   return (
     <Sheet title="Map key" onClose={onClose}>
       <ul class="key">
-        {row(<line x1="2" y1="10" x2="46" y2="10" class="seg-open" stroke-width="3.4" />, 'Cleared path: the horses can go here')}
-        {row(<line x1="2" y1="10" x2="46" y2="10" class="seg-marked" stroke-width="1.8" stroke-dasharray="6 4" />, 'Marked trail: blazed, not yet cleared')}
-        {row(<line x1="2" y1="10" x2="46" y2="10" class="seg-seen" stroke-width="1.3" stroke-dasharray="1.5 3.5" />, 'Ridge seen, not yet marked')}
+        {row(<line x1="2" y1="10" x2="46" y2="10" class="seg-open" stroke-width="3.4" />, 'Cleared path: the horses can walk here')}
+        {row(<line x1="2" y1="10" x2="46" y2="10" class="seg-marked" stroke-width="1.8" stroke-dasharray="6 4" />, 'Marked trail: the scouts have cut marks on the trees ("blazed" it), but the bush is not cleared for horses yet')}
+        {row(<line x1="2" y1="10" x2="46" y2="10" class="seg-seen" stroke-width="1.3" stroke-dasharray="1.5 3.5" />, 'A ridge seen from a distance; nobody has walked it')}
         {row(
           <>
             <line x1="2" y1="10" x2="40" y2="10" class="seg-seen" stroke-width="1.3" stroke-dasharray="1.5 3.5" />
             <circle cx="42" cy="10" r="4" class="lead-end" stroke-width="1.4" />
           </>,
-          'Unexplored lead: where it goes is unknown',
+          'An unexplored ridge: nobody knows where it goes yet',
         )}
-        {row(<line x1="2" y1="10" x2="46" y2="10" class="seg-crossed" stroke-width="2.6" stroke-dasharray="0.1 5" />, 'Crossed without blazing: slow on the way home')}
+        {row(<line x1="2" y1="10" x2="46" y2="10" class="seg-crossed" stroke-width="2.6" stroke-dasharray="0.1 5" />, 'Walked without marking the trees: slow to find again on the way home')}
         {row(
           <>
             <line x1="2" y1="10" x2="46" y2="10" class="seg-dead" stroke-width="1.4" stroke-dasharray="2 3" />
             <path d="M19 5 L29 15 M19 15 L29 5" class="seg-cross" stroke-width="2" />
           </>,
-          'Dead end: the branch ends in cliffs',
+          'Dead end: this ridge ends at cliffs',
         )}
-        {row(<path d="M14 18 L34 18 M14 12 L14 18 M19 12 L19 18 M24 12 L24 18 M29 12 L29 18 M34 12 L34 18" class="glyph-cliff" stroke-width="1.6" />, 'Precipice')}
+        {row(<path d="M14 18 L34 18 M14 12 L14 18 M19 12 L19 18 M24 12 L24 18 M29 12 L29 18 M34 12 L34 18" class="glyph-cliff" stroke-width="1.6" />, 'Cliff edge (the journals call it a precipice)')}
         {row(
           <>
             <path d="M24 2 L32 16 L16 16 Z" class="glyph-trig" stroke-width="1.4" />
             <circle cx="24" cy="12" r="2.5" class="node node-reached" stroke-width="1" />
           </>,
-          'Lookout, marked like a survey trig station',
+          'Lookout: a high point with a view, drawn the way surveyors mark one',
         )}
         {row(
           <>
@@ -245,10 +321,10 @@ export function MapKey({ onClose }: { onClose: () => void }) {
             <path d="M22 19 L22 2" class="flag-pole" stroke-width="1.6" />
             <path d="M22 2 L33 6 L22 10 Z" class="flag-cloth" stroke-width="1" />
           </>,
-          'Where scouts and cutters are working',
+          'The flag: where the scouts and cutters are working today',
         )}
         {row(<circle cx="24" cy="10" r="4" class="glyph-water" />, 'Water for men and horses')}
-        {row(<circle cx="24" cy="10" r="3.5" class="glyph-rockhole" stroke-width="1.4" />, 'Rock hole: water for the men only')}
+        {row(<circle cx="24" cy="10" r="3.5" class="glyph-rockhole" stroke-width="1.4" />, 'Rock hole: a pool in the rock, enough for the men but not the horses')}
         {row(<path d="M20 16 l-1.5 -6 M24 16 l0 -7 M28 16 l1.5 -6" class="glyph-grass" stroke-width="1.4" />, 'Good grass for the horses')}
         {row(
           <g class="hint hint-fallsAway">
@@ -257,11 +333,21 @@ export function MapKey({ onClose }: { onClose: () => void }) {
               ↓
             </text>
           </g>,
-          "Lawson's reading: the ridge falls away (→ runs on); ✓ or ✗ once it is known",
+          "Lawson's guess about a ridge: ↓ it probably ends at cliffs, → it probably runs on. He is right about three times in four.",
         )}
-        {row(<rect x="20" y="6" width="8" height="7" class="glyph-cache" stroke-width="1.2" />, 'Supplies left for the way home')}
+        {row(
+          <g class="hint hint-runsOn hint-wrong">
+            <circle cx="24" cy="10" r="7" stroke-width="1.2" />
+            <text x="24" y="10" font-size="10" text-anchor="middle" dominant-baseline="central">
+              →
+            </text>
+            <path d="M18 16 L30 4" class="hint-slash" stroke-width="1.6" />
+          </g>,
+          'Once the ridge is known, the ring turns green if his guess was right, or red with a line through it if he was wrong',
+        )}
+        {row(<rect x="20" y="6" width="8" height="7" class="glyph-cache" stroke-width="1.2" />, 'Supplies left here to pick up on the way home')}
       </ul>
-      <p class="fine">Ticks along each ridge are hachures: the closer they sit, the rougher the ground. Distances on the map are straight-line miles; the trail along a winding ridge is longer.</p>
+      <p class="fine">The little ticks along each ridge show steep ground: the closer together, the rougher it is. Distances on the map are as the crow flies; the trail along a winding ridge is longer. Drag to move the map, use + and − or the mouse wheel to zoom, and the target button to find the camp again.</p>
     </Sheet>
   );
 }

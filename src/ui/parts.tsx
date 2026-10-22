@@ -1,9 +1,9 @@
 // Small pieces shared by the plan and camp sheets.
 import { useContext, useState } from 'preact/hooks';
 import { T, capacity, horseCapacity, isAway, loadLb, withParty, type GameState, type Horse, type Member, type Task } from '../engine';
-import { CONDITION_LABEL, TASK_HINT, TASK_LABEL, lb, shortName } from './format';
+import { CONDITION_LABEL, TASK_HINT, TASK_LABEL, lb, localize, shortName } from './format';
 import type { Draft } from './draft';
-import { available } from './draft';
+import { available, taskChoices } from './draft';
 import { InfoContext, cardInLine, useInfo } from './Info';
 import { infoFor } from './people';
 
@@ -22,10 +22,10 @@ export function Report({ lines, title = 'Report' }: { lines: string[]; title?: s
             <li key={`${i}:${l}`}>
               {card ? (
                 <button type="button" class="link-btn link-inline report-card" onClick={() => api!.open({ kind: 'card', id: card })}>
-                  {l} <span class="report-card-read">Read it</span>
+                  {localize(l)} <span class="report-card-read">Read it</span>
                 </button>
               ) : (
-                l
+                localize(l)
               )}
             </li>
           );
@@ -50,44 +50,79 @@ export function Meter({ value, max = 100, tone }: { value: number; max?: number;
   );
 }
 
-export function RosterChip({ state, m, task, onTap }: { state: GameState; m: Member; task: Task; onTap: () => void }) {
+export function RosterChip({ state, m, task, open, onOpen }: { state: GameState; m: Member; task: Task; open: boolean; onOpen: () => void }) {
   const avail = available(state, m);
   const off = avail === 'away' || avail === 'busy';
   const label = avail === 'away' ? 'Away' : avail === 'busy' ? 'Searching' : TASK_LABEL[task];
   const info = useInfo({ kind: 'man', id: m.id });
+  const kept = m.keepAtCamp && m.condition === 'chill';
   return (
     <button
       type="button"
-      class={`chip task-${off ? 'off' : task}`}
+      class={`chip task-${off ? 'off' : task}${open ? ' is-open' : ''}`}
       {...info.props}
       onClick={() => {
-        if (!info.held() && !off) onTap();
+        if (!info.held() && !off) onOpen();
       }}
       aria-disabled={off}
-      aria-label={`${m.name}${m.leader ? ', leader' : ''}, ${label}${m.condition ? `, ${CONDITION_LABEL[m.condition]}` : ''}. Stamina ${Math.round(m.stamina)}.${off ? '' : ' Tap to change the task.'} Press and hold for his card.`}
+      aria-expanded={open}
+      aria-label={`${m.name}${m.leader ? ', leader' : ''}, ${label}${m.condition ? `, ${CONDITION_LABEL[m.condition]}` : ''}. Stamina ${Math.round(m.stamina)}.${off ? '' : ' Tap to choose his task.'} Press and hold for his card.`}
     >
       <span class="chip-name">{shortName(m.name)}</span>
       <span class="chip-task">{label}</span>
       <span class={m.condition ? 'chip-hint is-warn' : 'chip-hint'}>
-        {m.leader ? 'Leader, ' : ''}
-        {off ? (avail === 'away' ? 'not back yet' : 'out after the hunter') : m.condition ? CONDITION_LABEL[m.condition].toLowerCase() : TASK_HINT[task]}
+        {m.leader && !m.condition ? 'Leader, ' : ''}
+        {off ? (avail === 'away' ? 'not back yet' : 'out after the hunter') : kept ? 'resting off a chill' : m.condition ? CONDITION_LABEL[m.condition].toLowerCase() : TASK_HINT[task]}
       </span>
       <Meter value={m.stamina} />
     </button>
   );
 }
 
-export function Roster({ state, draft, onCycle }: { state: GameState; draft: Draft; onCycle: (m: Member) => void }) {
+/** The tasks this man can be given, as a row of buttons under the roster. */
+function TaskPicker({ state, m, task, onSet, onClose }: { state: GameState; m: Member; task: Task; onSet: (t: Task) => void; onClose: () => void }) {
+  const choices = taskChoices(state, m);
+  return (
+    <div class="task-picker" role="group" aria-label={`${shortName(m.name)}'s task`}>
+      <span class="task-picker-name">{shortName(m.name)}</span>
+      {choices.map((t) => (
+        <button key={t} type="button" class={`task-choice task-${t}${t === task ? ' is-on' : ''}`} aria-pressed={t === task} onClick={() => onSet(t)}>
+          <span class="chip-task">{TASK_LABEL[t]}</span>
+          <span class="chip-hint">{TASK_HINT[t]}</span>
+        </button>
+      ))}
+      <button type="button" class="icon-btn task-picker-close" onClick={onClose} aria-label="Close">
+        ×
+      </button>
+    </div>
+  );
+}
+
+export function Roster({ state, draft, onSet }: { state: GameState; draft: Draft; onSet: (m: Member, t: Task) => void }) {
+  const [open, setOpen] = useState<string | null>(null);
+  const picking = open ? state.men.find((m) => m.id === open) : undefined;
   return (
     <>
       <div class="roster" role="group" aria-label="The party's tasks">
         {state.men.map((m) => (
-          <RosterChip key={m.id} state={state} m={m} task={draft.tasks[m.id] ?? 'camp'} onTap={() => onCycle(m)} />
+          <RosterChip key={m.id} state={state} m={m} task={draft.tasks[m.id] ?? 'camp'} open={open === m.id} onOpen={() => setOpen(open === m.id ? null : m.id)} />
         ))}
       </div>
+      {picking && (
+        <TaskPicker
+          state={state}
+          m={picking}
+          task={draft.tasks[picking.id] ?? 'camp'}
+          onSet={(t) => {
+            onSet(picking, t);
+            setOpen(null);
+          }}
+          onClose={() => setOpen(null)}
+        />
+      )}
       <p class="roster-hint">
-        <span class="hint-touch">Tap a man to change his task; press and hold to read about him.</span>
-        <span class="hint-mouse">Click a man to change his task; hover to read about him.</span>
+        <span class="hint-touch">Tap a man to choose his task; press and hold to read about him.</span>
+        <span class="hint-mouse">Click a man to choose his task; hover to read about him.</span>
       </p>
     </>
   );
@@ -103,7 +138,8 @@ function horseState(h: Horse): string {
 
 function HorseRow({ state, h }: { state: GameState; h: Horse }) {
   const info = useInfo({ kind: 'horse', id: h.id }, 'tap');
-  const note = horseState(h) || `${Math.round(h.condition)}`;
+  const word = horseState(h);
+  const note = word === 'weak' || word === 'exhausted' ? `${word} · ${Math.round(h.condition)}` : word || `${Math.round(h.condition)}`;
   return (
     <button type="button" class={`horse${withParty(h) ? '' : ' horse-gone'}`} {...info.props} aria-label={`${h.name}, ${note}. Open his card.`}>
       <span class="horse-name">{h.name}</span>

@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import type { GameState, Mode } from '../engine';
+import { computeOutcome, replay, type GameState, type Mode } from '../engine';
 import { BriefingArt, TitleArt } from './art/scenes';
 import { BUILD } from './build';
 import { BRIEFING } from './copy';
@@ -7,6 +7,7 @@ import { Feedback } from './Feedback';
 import { MeetRow } from './Info';
 import type { Who } from './people';
 import { shortDate } from './format';
+import { decodeReplay } from './replaycode';
 
 const MODES: { id: Mode; label: string; note: string }[] = [
   { id: 'easy', label: 'Easy', note: 'Fewer false ridges, faster cutting, steadier men' },
@@ -14,11 +15,51 @@ const MODES: { id: Mode; label: string; note: string }[] = [
   { id: 'hard', label: 'Hard', note: 'More dead ends, slower cutting, a warier party' },
 ];
 
-export function Title({ save, notice = null, onContinue, onStart }: { save: GameState | null; notice?: string | null; onContinue: () => void; onStart: (mode: Mode) => void }) {
-  const [mode, setMode] = useState<Mode>('historical');
+/** Paste a replay code to rebuild an expedition from another device, or one kept aside. */
+function LoadCode({ onLoad }: { onLoad: (g: GameState) => void }) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const load = async () => {
+    try {
+      const data = await decodeReplay(text);
+      onLoad(replay(data.o, data.a));
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
+  if (!open)
+    return (
+      <button type="button" class="link-btn" onClick={() => setOpen(true)}>
+        Load an expedition code
+      </button>
+    );
+  return (
+    <div class="load-code">
+      <label class="section-title" for="load-code">
+        Expedition code
+      </label>
+      <textarea id="load-code" rows={3} value={text} onInput={(e) => setText((e.currentTarget as HTMLTextAreaElement).value)} placeholder="Paste a code from Menu → Copy expedition code" />
+      {error && <p class="fine is-warn">{error}</p>}
+      <div class="confirm-actions">
+        <button type="button" class="btn btn-small" onClick={load} disabled={!text.trim()}>
+          Load it
+        </button>
+        <button type="button" class="btn btn-small btn-quiet" onClick={() => setOpen(false)}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function Title({ save, notice = null, onContinue, onStart, onLoad }: { save: GameState | null; notice?: string | null; onContinue: () => void; onStart: (mode: Mode) => void; onLoad: (g: GameState) => void }) {
+  const [mode, setMode] = useState<Mode>('easy');
   const [feedback, setFeedback] = useState(false);
-  const [choosing, setChoosing] = useState(!save || save.phase === 'over');
+  const [choosing, setChoosing] = useState(!save);
   const resumable = save && save.phase !== 'over';
+  const finished = save && save.phase === 'over' ? computeOutcome(save) : null;
+  const owner = save?.opts.owner?.trim();
   return (
     <main class="title">
       <div class="title-inner">
@@ -37,8 +78,19 @@ export function Title({ save, notice = null, onContinue, onStart }: { save: Game
         {resumable && !choosing && (
           <>
             <button type="button" class="btn btn-go" onClick={onContinue}>
-              Continue · day {save.day}, {shortDate(save.day)}
+              Continue{owner ? ` ${owner}'s expedition` : ''} · day {save.day}, {shortDate(save.day)}
             </button>
+            <button type="button" class="btn btn-quiet" onClick={() => setChoosing(true)}>
+              New expedition
+            </button>
+          </>
+        )}
+        {finished && !choosing && (
+          <>
+            <button type="button" class="btn btn-go" onClick={onContinue}>
+              {owner ? `${owner}'s last expedition` : 'Your last expedition'}: {finished.result === 'crossed' ? 'crossed and returned' : 'repulsed'}, day {finished.dayHome}
+            </button>
+            <p class="fine">The end screen and the journal are kept until a new expedition sets out.</p>
             <button type="button" class="btn btn-quiet" onClick={() => setChoosing(true)}>
               New expedition
             </button>
@@ -57,14 +109,15 @@ export function Title({ save, notice = null, onContinue, onStart }: { save: Game
               ))}
             </fieldset>
             <button type="button" class="btn btn-go" onClick={() => onStart(mode)}>
-              {resumable ? 'Start a new expedition' : 'Set out'}
+              {save ? 'Start a new expedition' : 'Set out'}
             </button>
-            {resumable && (
+            {save && (
               <button type="button" class="btn btn-quiet" onClick={() => setChoosing(false)}>
                 Back
               </button>
             )}
-            {resumable && <p class="fine">Starting again replaces the expedition saved on this device.</p>}
+            {resumable && <p class="fine">Starting again replaces the expedition saved on this device. Menu → Copy expedition code keeps it first.</p>}
+            <LoadCode onLoad={onLoad} />
           </>
         )}
         <p class="fine">
@@ -124,7 +177,7 @@ export function Briefing({ onDone }: { onDone: () => void }) {
             </button>
           )}
           <button type="button" class="btn btn-go" onClick={() => (last ? onDone() : setI(i + 1))}>
-            {last ? 'Outfit the party' : 'Next'}
+            {last ? 'Pack for the trip' : 'Next'}
           </button>
           {!last && (
             <button type="button" class="btn btn-quiet" onClick={onDone}>

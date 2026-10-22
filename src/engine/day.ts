@@ -55,7 +55,8 @@ export function startDay(s: GameState, lines: string[]) {
     m.workedWet = false;
     m.workedRough = false;
     m.nightPenalty = 0;
-    m.keepAtCamp = false;
+    // A man kept at camp with a chill stays there until it passes; the flag outlives the day.
+    if (m.condition !== 'chill') m.keepAtCamp = false;
   }
   s.restToday = s.restTomorrow;
   s.restTomorrow = false;

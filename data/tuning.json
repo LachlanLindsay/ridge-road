@@ -10,6 +10,7 @@
     "horses.strayDelayCapHours",
     "efficiency.servantMoraleFactor applies to scouting and cutting",
     "advance.staminaPerHour",
+    "returnLeg.manCarryLb: on the way home each fit man carries a pack, as they carried the packs down the pass",
     "wear: accrues per hour each working party (scouts, cutters, the advance) spends in a terrain",
     "events.eventChanceFactor and all of modes.easy / modes.hard"
   ],
@@ -131,7 +132,8 @@
   "grass": { "lbPerManHour": 15 },
   "events": { "dingoes": 0.12, "dogsRaceOff": 0.06, "dogsRaceOffAfterDay": 8, "eventChanceFactor": 1 },
   "forcedHome": { "noFoodDays": 2, "tooIllCount": 3 },
-  "returnLeg": { "unmarkedMph": 1, "loseHourChancePerMile": 0.25 },
+  "advice": { "campPenalty": { "noWater": 1.5, "rockHole": 1, "noGrass": 0.5, "rushyGrass": 0.25 } },
+  "returnLeg": { "unmarkedMph": 1, "loseHourChancePerMile": 0.25, "manCarryLb": 15, "milesPerDay": 10 },
   "scoring": {
     "base": 1000,
     "parDays": 21,

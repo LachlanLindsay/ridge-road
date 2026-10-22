@@ -1,6 +1,6 @@
 // The plan sheet: one half-day at a time. Pick a target on the map, move camp, set each man's task, Go.
-import { useState } from 'preact/hooks';
 import {
+  T,
   canAdvance,
   capacity,
   horseReach,
@@ -14,35 +14,12 @@ import {
   validatePlan,
   type GameState,
   type Member,
+  type Task,
 } from '../engine';
-import { excessCache, overload, tapTask, taskCounts, toPlan, type Draft } from './draft';
-import { compass, hrs, itemText, lb, mi } from './format';
+import { excessCache, overload, setTask, taskCounts, toPlan, type Draft } from './draft';
+import { compass, hrs, itemText, lb, localize, mi, shortName } from './format';
 import { Horses, Report, Roster, Toggle } from './parts';
 import { PlaceInfo } from './PlaceInfo';
-import { readFlag, writeFlag } from './save';
-
-const COACH_KEY = 'ridge-road.coach.v1';
-
-/** For a first expedition: what the screen is for, until the player says they have it. */
-function Coach({ onDone }: { onDone: () => void }) {
-  return (
-    <aside class="coach" aria-label="Getting started">
-      <p class="coach-title display">Your first day</p>
-      <ul>
-        <li>
-          The plan below is ready. Press <strong>Go</strong> to work the morning, then the afternoon; then make camp for the night.
-        </li>
-        <li>Tap a man to change his job; press and hold him, or hover with a mouse, to read about him. Tap a ridge on the map to work there instead.</li>
-        <li>
-          <strong>Menu → How to play</strong> explains the rest, and <strong>Send feedback</strong> is there too.
-        </li>
-      </ul>
-      <button type="button" class="btn btn-small" onClick={onDone}>
-        Got it
-      </button>
-    </aside>
-  );
-}
 
 interface Props {
   state: GameState;
@@ -76,6 +53,14 @@ export function describeTarget(state: GameState, id: string | null): string {
   return n.label ?? `A point ${mi(pathMiles(map, stepsToTarget(map, state.camp, n.id)))} along the trail`;
 }
 
+/** "Swamp head · water for men and horses · rushy grass": what a night at this camp offers. */
+function campNote(n: GameState['map']['nodes'][string]): string {
+  const water =
+    n.water === 'none' ? (n.gullyFt ? 'no water up here, a gully for the men' : 'no water') : n.water === 'rockHole' ? 'rock-hole water for the men only' : 'water for men and horses';
+  const grass = n.grass === 'none' ? 'no grass' : n.grass === 'rushy' ? 'rushy grass, half feed' : `${n.grass} grass`;
+  return `${n.label ?? 'an unnamed camp'} · ${water} · ${grass}`;
+}
+
 export function PlanSheet({ state, draft, setDraft, selected, setSelected, onGo }: Props) {
   const home = state.leg === 'home';
   const plan = toPlan(state, draft);
@@ -97,13 +82,16 @@ export function PlanSheet({ state, draft, setDraft, selected, setSelected, onGo 
   const advanceOk = !home && !resting && canMove && !!draft.target && canAdvance(state, from, draft.target);
   const counts = taskCounts(state, draft);
   const ahead = !home && draft.target ? markedAhead(state, from, draft.target) : 0;
-  const idleCutters = !home && !!draft.target && !counts.scout && !advanceOk && (counts.cut ?? 0) > 0 && ahead < 0.3 && draft.target !== state.map.goal;
   const dew = state.phase === 'morning' ? state.today.dewStart : 0;
   const halfName = state.phase === 'morning' ? 'Morning' : 'Afternoon';
 
-  const [coach, setCoach] = useState(() => !readFlag(COACH_KEY));
   const set = (patch: Partial<Draft>) => setDraft({ ...draft, ...patch });
-  const cycle = (m: Member) => setDraft(tapTask(state, draft, m));
+  const give = (m: Member, t: Task) => setDraft(setTask(state, draft, m, t));
+  const grassCutters = state.men.filter((m) => draft.tasks[m.id] === 'grass');
+  const campNode = state.map.nodes[state.camp]!;
+  const sugNode = suggestion ? state.map.nodes[suggestion]! : null;
+  const sugNote = sugNode ? campNote(sugNode) : '';
+  const cuttersIdle = !home && !resting && advanceOk && !draft.advance && (counts.cut ?? 0) > 0 && ahead < 0.3;
 
   const summary = Object.entries(counts)
     .map(([t, n]) => `${n} ${t === 'scout' ? 'scouting' : t === 'cut' ? 'cutting' : t === 'camp' ? 'minding camp' : t === 'water' ? 'fetching water' : t === 'hunt' ? 'hunting' : t === 'grass' ? 'cutting grass' : 'resting'}`)
@@ -111,14 +99,6 @@ export function PlanSheet({ state, draft, setDraft, selected, setSelected, onGo 
 
   return (
     <div class="sheet-inner">
-      {coach && state.day === 1 && state.leg === 'out' && (
-        <Coach
-          onDone={() => {
-            writeFlag(COACH_KEY);
-            setCoach(false);
-          }}
-        />
-      )}
       <Report lines={state.today.log} />
       {selected && (
         <PlaceInfo
@@ -150,7 +130,7 @@ export function PlanSheet({ state, draft, setDraft, selected, setSelected, onGo 
           <>
             <p class="plan-line">The party follows its own trail back toward the Nepean. Blazed ground goes at the horses' pace; ground crossed without blazing is slow.</p>
             <Toggle id="halt" checked={draft.halt} onChange={(v) => set({ halt: v })} label="Halt here this half" note="Stay at this camp to rest, hunt, cut grass or fetch water." />
-            {draft.halt && <Roster state={state} draft={draft} onCycle={cycle} />}
+            {draft.halt && <Roster state={state} draft={draft} onSet={give} />}
           </>
         ) : (
           <>
@@ -207,6 +187,7 @@ export function PlanSheet({ state, draft, setDraft, selected, setSelected, onGo 
                     >
                       Move camp forward {mi(sugMiles)} · {hrs(sugH)}
                     </button>
+                    <span class="plan-note">to {sugNote}</span>
                   </>
                 ) : resting ? (
                   'Stays put: a rest day. The men can still hunt, cut grass or fetch water.'
@@ -227,19 +208,24 @@ export function PlanSheet({ state, draft, setDraft, selected, setSelected, onGo 
             {advanceOk && draft.advance && (
               <Toggle id="blaze" checked={draft.blaze} onChange={(v) => set({ blaze: v })} label="Blaze the trail as you go" note="Unblazed ground is quicker now and slow on the way home." />
             )}
-            <Roster state={state} draft={draft} onCycle={cycle} />
+            <Roster state={state} draft={draft} onSet={give} />
             {summary && <p class="plan-line">{summary}.</p>}
+            {grassCutters.length > 0 && (campNode.grass === 'good' || campNode.grass === 'tall') && (
+              <p class="plan-line">
+                {grassCutters.map((m) => shortName(m.name)).join(' and ')} cut{grassCutters.length === 1 ? 's' : ''} grass here to feed the horses at the dry camps ahead: {lb(T.horses.night.grassLbPerHorse)} a horse a night.
+              </p>
+            )}
+            {cuttersIdle && <p class="plan-line is-warn">Camp stays here and nothing is marked ahead, so the cutters will have no work. Tick "Push on with the horses", or send a leader to scout.</p>}
           </>
         )}
 
-        {(warnings.length > 0 || idleCutters) && (
+        {warnings.length > 0 && (
           <ul class="warnings">
             {warnings.map((w) => (
               <li key={w.code + w.text} class={w.level === 'error' ? 'is-error' : 'is-warn'}>
-                {w.text}
+                {localize(w.text)}
               </li>
             ))}
-            {idleCutters && <li class="is-warn">Little is marked ahead, so the cutters will run out of work. Send a leader to scout.</li>}
           </ul>
         )}
         <Horses state={state} />

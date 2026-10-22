@@ -1,6 +1,7 @@
 // The survey plot: known ridges in ink with hachures, the cleared road in red, fog over the rest.
 // Drag to pan, pinch or scroll to zoom, tap a point or a ridge to select it.
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { getUnits } from './format';
 import { distToSeg, hachurePath, lerp, targetPoint, type Bounds, type MapDraw, type NodeDraw, type P, type SegDraw } from './geometry';
 import { SizeButtons, type MapSize } from './MapSize';
 
@@ -27,6 +28,10 @@ const K_MAX = 420;
 /** The Nepean runs north past the ford, the one stretch of country the party already knows. */
 const NEPEAN = 'M0.55 7.5 C0.35 6.2 0.05 5.4 0.2 4.3 S0.45 2.6 0.25 1.5 S0.02 0.4 0.14 -0.4 S0.4 -1.8 0.3 -3 S0.05 -4.6 0.2 -5.8 S0.5 -7 0.4 -8.5';
 const MIN_SPAN = 3;
+/** Glyphs, labels and line weights grow with the panel: a laptop map is not a phone map seen from further away. */
+function uiScale(w: number, h: number): number {
+  return clamp(Math.min(w, h) / 480, 1, 1.5);
+}
 const f = (v: number) => (Math.round(v * 1000) / 1000).toString();
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 const reducedMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -49,8 +54,9 @@ function fit(b: Bounds, w: number, h: number, kMin: number, kMax: number): View 
 /** Frame the camp and the country within a few miles of it. */
 function frameCamp(draw: MapDraw, w: number, h: number): View {
   const c = draw.camp;
-  // A bigger screen shows more of the country around the camp.
-  const R = clamp((2.6 * Math.min(w, h)) / 420, 2.2, 6);
+  // The same few miles of country around the camp on every screen: a bigger panel draws them
+  // bigger rather than showing more empty fog.
+  const R = clamp((2.6 * Math.min(w, h)) / 420, 2.2, 3.2);
   const b: Bounds = { minX: c.x - 0.9, maxX: c.x + 0.9, minY: c.y - 0.9, maxY: c.y + 0.9 };
   const add = (p: P) => {
     if (Math.hypot(p.x - c.x, p.y - c.y) > R) return;
@@ -98,15 +104,31 @@ export function MapView({ draw, campKey, selected, target, moveTo, onTap, onKey,
     if (!viewRef.current) setView(frameCamp(draw, size.w, size.h));
   }, [size.w, size.h]);
 
-  // When the camp moves out of the middle of the view, follow it.
+  // After each half, keep the camp and the work front in view: pan when they have drifted toward
+  // an edge, and zoom out a step when they no longer fit together.
   useEffect(() => {
     const v = viewRef.current;
     const { w, h } = sizeRef.current;
     if (!v || !w) return;
-    const c = draw.camp;
-    const sx = (c.x - v.cx) * v.k + w / 2;
-    const sy = (c.y - v.cy) * v.k + h / 2;
-    if (sx < w * 0.15 || sx > w * 0.85 || sy < h * 0.15 || sy > h * 0.85) animateTo({ ...v, cx: c.x, cy: c.y });
+    const pts = [draw.camp];
+    const t = targetPoint(draw, target);
+    if (t) pts.push(t);
+    const inner = (p: P) => {
+      const sx = (p.x - v.cx) * v.k + w / 2;
+      const sy = (p.y - v.cy) * v.k + h / 2;
+      return sx >= w * 0.12 && sx <= w * 0.88 && sy >= h * 0.12 && sy <= h * 0.88;
+    };
+    if (pts.every(inner)) return;
+    const b: Bounds = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
+    for (const p of pts) {
+      b.minX = Math.min(b.minX, p.x);
+      b.maxX = Math.max(b.maxX, p.x);
+      b.minY = Math.min(b.minY, p.y);
+      b.maxY = Math.max(b.maxY, p.y);
+    }
+    const { kMin } = kLimits(draw, w, h);
+    const kFit = Math.min((w * 0.7) / Math.max(b.maxX - b.minX, 0.01), (h * 0.7) / Math.max(b.maxY - b.minY, 0.01));
+    animateTo({ k: clamp(Math.min(v.k, kFit), kMin, v.k), cx: (b.minX + b.maxX) / 2, cy: (b.minY + b.maxY) / 2 });
   }, [campKey]);
 
   function clampView(v: View): View {
@@ -264,6 +286,7 @@ export function MapView({ draw, campKey, selected, target, moveTo, onTap, onKey,
   const v = view;
   const { w, h } = size;
   const box: Bounds | null = v ? { minX: v.cx - w / 2 / v.k, minY: v.cy - h / 2 / v.k, maxX: v.cx + w / 2 / v.k, maxY: v.cy + h / 2 / v.k } : null;
+  const kGlyph = v ? v.k / uiScale(w, h) : 1;
   const hatch = useMemo(() => (v && box ? hachurePath(draw.segs, v.k, box) : ''), [draw, v?.k, v?.cx, v?.cy, w, h]);
 
   return (
@@ -289,12 +312,12 @@ export function MapView({ draw, campKey, selected, target, moveTo, onTap, onKey,
             </text>
             <path class="map-hachure" d={hatch} stroke-width={1 / v.k} />
             {draw.segs.map((s) => (
-              <Seg key={s.id} s={s} k={v.k} selected={selected === s.id} />
+              <Seg key={s.id} s={s} k={kGlyph} selected={selected === s.id} />
             ))}
             {draw.nodes.map((n) => (
-              <Node key={n.id} n={n} k={v.k} selected={selected === n.id} />
+              <Node key={n.id} n={n} k={kGlyph} selected={selected === n.id} />
             ))}
-            <Markers draw={draw} k={v.k} target={target} moveTo={moveTo} />
+            <Markers draw={draw} k={kGlyph} target={target} moveTo={moveTo} />
           </>
         )}
       </svg>
@@ -330,6 +353,23 @@ export function MapView({ draw, campKey, selected, target, moveTo, onTap, onKey,
 }
 
 function ScaleBar({ k }: { k: number }) {
+  if (getUnits() === 'metric') {
+    // k is pixels per mile; a kilometre is 0.6214 of one.
+    const kkm = k / 1.60934;
+    const options = [0.25, 0.5, 1, 2, 5, 10, 20];
+    let km = options[0]!;
+    for (const o of options) if (o * kkm <= 120) km = o;
+    const px = km * kkm;
+    const label = km < 1 ? `${km * 1000} m` : `${km} km`;
+    return (
+      <div class="map-scale" aria-label={`Scale: ${label}`}>
+        <svg width={px + 2} height="10" aria-hidden="true">
+          <path d={`M1 2 V8 H${px + 1} V2 M${px / 2 + 1} 5 V8`} class="scale-line" />
+        </svg>
+        <span>{label}</span>
+      </div>
+    );
+  }
   const options = [0.25, 0.5, 1, 2, 4, 8, 16];
   let miles = options[0]!;
   for (const o of options) if (o * k <= 120) miles = o;
@@ -375,12 +415,15 @@ function Seg({ s, k, selected }: { s: SegDraw; k: number; selected: boolean }) {
     const l = Math.max(Math.hypot(dx, dy), 1e-6);
     const o = { x: c.x - (dy / l) * px(11), y: c.y + (dx / l) * px(11) };
     const cls = `hint hint-${s.hint}${s.hintMark ? ` hint-${s.hintMark}` : ''}`;
+    // The arrow is Lawson's reading. Once the branch is known the ring says whether he was right:
+    // green for right, red with a slash for wrong. (A cross is kept for dead ends only.)
     out.push(
       <g class={cls}>
         <circle cx={f(o.x)} cy={f(o.y)} r={px(7)} stroke-width={px(1.2)} />
         <text x={f(o.x)} y={f(o.y)} font-size={px(10)} text-anchor="middle" dominant-baseline="central">
-          {s.hintMark === 'right' ? '✓' : s.hintMark === 'wrong' ? '✗' : s.hint === 'fallsAway' ? '↓' : '→'}
+          {s.hint === 'fallsAway' ? '↓' : '→'}
         </text>
+        {s.hintMark === 'wrong' && <path class="hint-slash" stroke-width={px(1.6)} d={`M${f(o.x - px(6))} ${f(o.y + px(6))}L${f(o.x + px(6))} ${f(o.y - px(6))}`} />}
       </g>,
     );
   }

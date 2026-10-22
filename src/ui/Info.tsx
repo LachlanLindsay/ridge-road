@@ -232,8 +232,25 @@ function MeetButton({ who, name, last }: { who: Who; name: string; last: boolean
   );
 }
 
+/** Cards that open by themselves when found: the moments the whole crossing is about. */
+export const MILESTONE_CARDS = ['viewBack', 'highHeath', 'wayDown', 'sugarloaf'] as const;
+
 export function InfoLayer({ state, mode, children }: { state: GameState | null; mode: Mode; children: ComponentChildren }) {
   const [open, setOpen] = useState<Opened | null>(null);
+  // A milestone card found this turn opens on its own, once.
+  const seen = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    if (!state) return;
+    if (!seen.current) {
+      seen.current = new Set(state.cards);
+      return;
+    }
+    for (const id of state.cards) {
+      if (seen.current.has(id)) continue;
+      seen.current.add(id);
+      if ((MILESTONE_CARDS as readonly string[]).includes(id) && CARDS[id]) setOpen({ kind: 'card', id });
+    }
+  }, [state?.cards.length]);
   const [peek, setPeek] = useState<{ who: Who; rect: DOMRect; click: boolean } | null>(null);
   const api = useMemo<InfoApi>(
     () => ({

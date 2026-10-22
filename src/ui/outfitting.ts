@@ -7,6 +7,8 @@ export interface Outfit {
   horses: number;
   dogs: number;
   loadout: Record<Item, number>;
+  /** Whose expedition, for a shared device. */
+  owner?: string;
 }
 
 export function outfit1813(): Outfit {
@@ -154,6 +156,7 @@ export function checks(o: Outfit): Check[] {
   return out;
 }
 
-export function toOptions(o: Outfit): { party: { servants: number; horses: number; dogs: number }; loadout: Loadout } {
-  return { party: { servants: o.servants, horses: o.horses, dogs: o.dogs }, loadout: { ...o.loadout } };
+export function toOptions(o: Outfit): { party: { servants: number; horses: number; dogs: number }; loadout: Loadout; owner?: string } {
+  const owner = o.owner?.trim();
+  return { party: { servants: o.servants, horses: o.horses, dogs: o.dogs }, loadout: { ...o.loadout }, ...(owner ? { owner } : {}) };
 }

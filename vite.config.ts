@@ -22,5 +22,6 @@ export default defineConfig({
   define: { __BUILD__: JSON.stringify(buildId()) },
   server: { host: true, port: 5173, allowedHosts: true },
   preview: { host: true, port: 4173, strictPort: true, allowedHosts: true },
-  build: { target: 'es2020', outDir: 'dist', assetsInlineLimit: 0, sourcemap: false },
+  // Fonts are inlined so the one-file artifact build carries them; everything else stays a file.
+  build: { target: 'es2020', outDir: 'dist', assetsInlineLimit: (file) => /\.woff2$/.test(file), sourcemap: false },
 });

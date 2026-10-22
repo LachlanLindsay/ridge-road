@@ -198,7 +198,9 @@ export function validatePlan(s: GameState, plan: HalfDayPlan): Warning[] {
       const walk = (2 * m) / T.time.walkMph;
       out.push(warn('walk', `Work front is ${round1(m)} miles away: ${round1(walk)} hours of walking.`));
     }
-    if (markedAhead(s, from, plan.target!) < EPS) out.push(warn('cut', 'Nothing marked to cut on the way to that target.'));
+    // Cutters follow the scouts' fresh blazes in the same half, so the warning only applies when
+    // nobody is scouting that way.
+    if (markedAhead(s, from, plan.target!) < EPS && !scouts.length) out.push(warn('cut', 'Nothing is marked to cut that way, and nobody is scouting: the cutters will have no work. Send a leader to scout.'));
   }
   if (scouts.length && validTarget(s, plan.target)) {
     const m = scoutFrontMiles(s, from, plan.target!);

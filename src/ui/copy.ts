@@ -85,7 +85,7 @@ export const CARD_TEXT: Record<string, string[]> = {
     'Who piled the stones, and why, is not known. The cairn may be Aboriginal.',
   ],
   'signs-huts': [
-    'On the third day the party came on a line of trees blazed by some European before them, the bark cut to mark the way. In different places, “several native huts presented themselves”.',
+    'On 13 May 1813, their third day out, the party came on a line of trees blazed by some European before them, the bark cut to mark the way. In different places, “several native huts presented themselves”.',
     'They are the journal’s first sign that the ridges were not empty country. People lived and travelled here, and had for thousands of years.',
     'Later, west of the range, the journal remarks that the people there “appear to have no huts like those on the eastern side”.',
   ],
@@ -104,10 +104,10 @@ export const CARD_TEXT: Record<string, string[]> = {
   ],
   wombats: [
     'On 25 May, pushing through prickly brush, the party “saw the track of the wombat”, which Blaxland describes as “an animal which burrows in the ground as a badger”.',
-    'The journal notices animals mostly as food or as noise: a kangaroo an eagle had just killed, on the second day; an emu calling all night across a gully; native dogs, now called dingoes, howling round the camp; and the kangaroos the dogs ran down, welcome after nearly two weeks of salt meat.',
+    'The journal notices animals mostly as food or as noise. There is a kangaroo an eagle had just killed, on the second day, and an emu calling all night across a gully. Native dogs, now called dingoes, howl round the camp. And there are the kangaroos the dogs ran down, welcome after nearly two weeks of salt meat.',
   ],
   viewBack: [
-    'On 19 May the party began to climb the second ridge of the mountains, and from up there they could see back over the colony: Prospect Hill to the east, a little south; Windsor and Grose Head to the north-east; Mount Banks to the north-west.',
+    'On 19 May the party began to climb the second ridge of the mountains. From up there they could see back over the colony: Prospect Hill to the east, a little south; Windsor and Grose Head to the north-east; Mount Banks to the north-west.',
     'Mount Banks was as far as the botanist George Caley had got, in 1804.',
   ],
   rockWall: [
@@ -124,7 +124,7 @@ export const CARD_TEXT: Record<string, string[]> = {
   ],
   kangarooDogs: [
     'The kangaroo dog was bred in the colony in the early 1800s, mostly from greyhounds and Scottish deerhounds: a sighthound fast and strong enough to outrun a kangaroo and hold it, and tough enough to survive its claws. Kangaroo was a major food for the early settlers.',
-    'The journal doesn’t say what kind of dogs the party’s five were, but it records their kills: a large kangaroo on 13 May, two small ones on 16 May, and another on 29 May, “very acceptable, as the party had lived on salt meat since they caught the last”.',
+    'The journal doesn’t say what kind of dogs the party’s five were, but it records their kills: a large kangaroo on 13 May, two small ones on 16 May, and another on 29 May. That last one was “very acceptable, as the party had lived on salt meat since they caught the last”.',
   ],
   frost: [
     'Below the western cliffs, in the journal for 30 May: during the night “the ground was covered with a thick frost, and a leg of the kangaroo was quite frozen”.',
@@ -135,7 +135,7 @@ export const CARD_TEXT: Record<string, string[]> = {
     '“Their provisions were nearly expended, their clothes and shoes were in very bad condition”, and they decided “to return home by the track they came”.',
   ],
   wayDown: [
-    'On 28 May they stopped at five o’clock on the edge of the precipice, above forest land. They got the horses down “by cutting a small trench with a hoe, which kept them from slipping”, and the horses “again tasted fresh grass for the first time since they left the forest land on the other side of the mountain”.',
+    'On 28 May they stopped at five o’clock on the edge of the precipice, above forest land. They got the horses down “by cutting a small trench with a hoe, which kept them from slipping”. At the bottom the horses “again tasted fresh grass for the first time since they left the forest land on the other side of the mountain”.',
     'Next morning the party went down “through a pass in the rock, about thirty feet wide”, starting at seven o’clock and reaching the foot at nine. In places “the party were obliged to carry the packages themselves”. They had come down from what is now called Mount York.',
   ],
   sugarloaf: [

@@ -102,10 +102,16 @@ function restDay(s: GameState): boolean {
 }
 
 export function nextTask(s: GameState, m: Member, current: Task): Task {
-  const avail = available(s, m) === 'yes';
-  const cycle = restDay(s) ? (avail ? REST_CYCLE : CAMP_CYCLE) : avail ? CYCLE : CAMP_CYCLE;
+  const cycle = taskChoices(s, m);
   const i = cycle.indexOf(current);
   return cycle[(i + 1) % cycle.length]!;
+}
+
+/** The tasks this man may be given this half, in the order the picker shows them. */
+export function taskChoices(s: GameState, m: Member): Task[] {
+  const avail = available(s, m) === 'yes';
+  if (s.leg === 'home') return avail ? ['rest', 'hunt', 'grass', 'water', 'camp'] : CAMP_CYCLE;
+  return restDay(s) ? (avail ? REST_CYCLE : CAMP_CYCLE) : avail ? CYCLE : CAMP_CYCLE;
 }
 
 /** Adjust tasks for who can work this half: the ill rest, a rest day stops scouting and cutting. */
@@ -113,7 +119,7 @@ function fitTasks(s: GameState, tasks: Partial<Record<MemberId, Task>>, roster: 
   const resting = restDay(s);
   for (const m of s.men) {
     const t = tasks[m.id] ?? 'camp';
-    if (resting && (t === 'scout' || t === 'cut')) tasks[m.id] = 'rest';
+    if ((resting || s.leg === 'home') && (t === 'scout' || t === 'cut')) tasks[m.id] = 'rest';
     else if (available(s, m) === 'camp-only' && FIELD.includes(t)) tasks[m.id] = m.condition ? 'rest' : 'camp';
   }
   if (resting || s.leg !== 'out') return;
@@ -158,7 +164,12 @@ export function normalizeDraft(s: GameState, prev: Draft | null): Draft {
 
 /** A tap on a man's chip: the next task, kept as a standing order when he is fit on a working day. */
 export function tapTask(s: GameState, d: Draft, m: Member): Draft {
-  const next = nextTask(s, m, d.tasks[m.id] ?? 'camp');
+  return setTask(s, d, m, nextTask(s, m, d.tasks[m.id] ?? 'camp'));
+}
+
+/** Give a man a task, kept as a standing order when he is fit on a working day. */
+export function setTask(s: GameState, d: Draft, m: Member, next: Task): Draft {
+  if (!taskChoices(s, m).includes(next)) return d;
   const standing = available(s, m) === 'yes' && !restDay(s) && s.leg === 'out';
   return { ...d, tasks: { ...d.tasks, [m.id]: next }, roster: standing ? { ...d.roster, [m.id]: next } : d.roster };
 }

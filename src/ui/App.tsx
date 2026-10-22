@@ -13,11 +13,43 @@ import { Outfit } from './Outfit';
 import { toOptions, type Outfit as OutfitT } from './outfitting';
 import { BriefingSheet, Help, Journal, MapKey, Menu, Party, type OverlayId } from './Overlays';
 import { PlanSheet } from './PlanSheet';
-import { clearSave, readDraft, readSave, writeDraft, writeSave } from './save';
+import { clearSave, readDraft, readFlag, readSave, writeDraft, writeFlag, writeSave } from './save';
 import { Briefing, Title } from './Title';
 import { TopBar } from './TopBar';
+import { getUnits, setUnits, type Units } from './format';
 
 type Screen = 'title' | 'briefing' | 'outfit' | 'play';
+
+const coachKey = (seed: number) => `ridge-road.coach.v2.${seed}`;
+const dewKey = (seed: number) => `ridge-road.dew.v1.${seed}`;
+
+/** For a first expedition: what the screen is for, shown before anything else on the first morning. */
+function Coach({ onDone }: { onDone: () => void }) {
+  return (
+    <div class="backdrop">
+      <div class="event-card coach" role="dialog" aria-modal="true" aria-labelledby="coach-title">
+        <h2 id="coach-title" class="display event-title">
+          Your first day
+        </h2>
+        <ul>
+          <li>
+            The plan on the right is ready. Press <strong>Go</strong> to work the morning, then the afternoon; then make camp for the night.
+          </li>
+          <li>Tap a man to choose his job; press and hold him, or hover with a mouse, to read about him. Tap a ridge on the map to work there instead.</li>
+          <li>The horses need water and grass every night. The camp suggestion looks for both.</li>
+          <li>
+            <strong>Menu → How to play</strong> explains the rest.
+          </li>
+        </ul>
+        <div class="choices">
+          <button type="button" class="choice" onClick={onDone}>
+            <span class="choice-label">Got it</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /** A seed from the address (?seed=123) replays a known expedition; otherwise a fresh one. */
 function startSeed(): number {
@@ -52,7 +84,13 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
   const [mapSize, setMapSizeState] = useState<MapSize>(() => readMapSize());
   // A new expedition between the title and the first morning: its mode and seed, before outfitting.
   const [setup, setSetup] = useState<{ mode: Mode; seed: number } | null>(null);
+  const [units, setUnitsState] = useState<Units>(getUnits());
+  const [tick, setTick] = useState(0);
   const sheet = useRef<HTMLDivElement>(null);
+  const changeUnits = (u: Units) => {
+    setUnits(u);
+    setUnitsState(u);
+  };
   const play = useRef<HTMLDivElement>(null);
   const setMapSize = (m: MapSize) => {
     setMapSizeState(m);
@@ -92,6 +130,18 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
     }
   };
 
+  // A remembered answer to the dew card: the same choice every misty morning of this expedition.
+  useEffect(() => {
+    if (!game || game.pending[0]?.id !== 'dew') return;
+    let remembered: string | null = null;
+    try {
+      remembered = localStorage.getItem(dewKey(game.seed));
+    } catch {
+      // Nothing remembered.
+    }
+    if (remembered === 'wait' || remembered === 'push') act(() => chooseEvent(game, remembered as ChoiceId));
+  }, [game?.pending.length, game?.day]);
+
   const start = (mode: Mode) => {
     setNotice(null);
     setSetup({ mode, seed: startSeed() });
@@ -121,8 +171,33 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
 
   if (screen === 'briefing' && setup) return cards('briefing', <Briefing onDone={() => setScreen('outfit')} />);
   if (screen === 'outfit' && setup) return cards('outfit', <Outfit onSetOut={setOut} onBack={() => setScreen('title')} />);
-  if (screen === 'title' || !game) return <Title save={game} notice={notice} onContinue={() => setScreen('play')} onStart={start} />;
+  if (screen === 'title' || !game)
+    return (
+      <Title
+        save={game}
+        notice={notice}
+        onContinue={() => setScreen('play')}
+        onStart={start}
+        onLoad={(g) => {
+          clearSave();
+          setGame(g);
+          setDraft(null);
+          setSelected(null);
+          setOverlay(null);
+          setScreen('play');
+        }}
+      />
+    );
   if (game.phase === 'over') return cards('end', <EndScreen state={game} onNew={() => setScreen('title')} onTitle={() => setScreen('title')} />);
+
+  const showCoach = game.day === 1 && game.leg === 'out' && game.phase === 'morning' && !readFlag(coachKey(game.seed));
+  const rememberDew = (choice: ChoiceId) => {
+    try {
+      localStorage.setItem(dewKey(game.seed), choice);
+    } catch {
+      // A convenience only.
+    }
+  };
 
   const go = () => {
     if (!current) return;
@@ -168,11 +243,22 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
           </button>
         </div>
       )}
-      {game.pending.length > 0 && <EventModal state={game} onChoose={choose} />}
+      {showCoach ? (
+        <Coach
+          onDone={() => {
+            writeFlag(coachKey(game.seed));
+            setTick(tick + 1);
+          }}
+        />
+      ) : (
+        game.pending.length > 0 && <EventModal state={game} onChoose={choose} onRemember={game.pending[0]?.id === 'dew' ? rememberDew : undefined} />
+      )}
       {overlay === 'menu' && (
         <Menu
           state={game}
           open={setOverlay}
+          units={units}
+          onUnits={changeUnits}
           onClose={() => setOverlay(null)}
           onTitle={() => {
             setOverlay(null);

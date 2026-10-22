@@ -48,51 +48,57 @@ function options(s: GameState, ev: PendingEvent): Option[] {
   switch (ev.id) {
     case 'dew':
       return [
-        { id: 'wait', effect: 'Start work at 10:00' },
-        { id: 'push', effect: 'Start at 09:00; party wear +3; chill odds +3% tonight for those who work' },
+        { id: 'wait', effect: 'Start work at 10:00, an hour late' },
+        { id: 'push', effect: 'Start at 09:00 in wet clothes: boots and coats wear faster, and the men who work are more likely to catch a chill tonight' },
       ];
     case 'horseFall':
       return [
-        { id: 'reload', effect: 'One hour lost' },
-        { id: 'lighten', effect: `Cache ${T.horses.fall.lightenLb} lb here; no second fall today` },
+        { id: 'reload', effect: 'Carry on with the same loads; another horse may fall today' },
+        { id: 'lighten', effect: `Leave ${T.horses.fall.lightenLb} lb here for the way home; no more falls today` },
       ];
     case 'horseExhausted': {
       const h = s.horses.find((x) => x.id === ev.horse);
       const over = Math.max(0, Math.ceil(loadLb(s.stores) - capacity(s)));
       const tooMuch = loadLb(s.stores) > capacity(s, true);
-      return [
-        {
-          id: 'spread',
-          effect: over > 0 ? `The others carry its load: ${over} lb over their limit` : 'The others carry its load',
-          ...(tooMuch ? { disabled: 'More than the others can carry' } : {}),
-        },
-        { id: 'cache', effect: over > 0 ? `Leave ${over} lb here for the way home` : 'Nothing needs leaving' },
-        { id: 'rest', effect: `Rest a day here${h ? `; ${h.name} recovers with feed and water` : ''}` },
-      ];
+      const fed = node.water !== 'none' && node.water !== 'rockHole' && node.grass !== 'none';
+      const rest: Option = {
+        id: 'rest',
+        effect: fed
+          ? `Nobody works tomorrow; ${h?.name ?? 'the horse'} eats and drinks here and recovers a little`
+          : `Nobody works tomorrow, but there is ${node.grass === 'none' ? 'no grass' : 'no water for horses'} here, so ${h?.name ?? 'the horse'} will not recover`,
+      };
+      const spread: Option = {
+        id: 'spread',
+        effect: over > 0 ? `The others carry its load: ${over} lb over their easy limit, so more falls` : 'The others carry its load',
+        ...(tooMuch ? { disabled: 'More than the others can carry' } : {}),
+      };
+      const cache: Option = { id: 'cache', effect: over > 0 ? `Leave ${over} lb here for the way home: cut grass and spare food first, never the blankets` : 'Nothing needs leaving' };
+      // The usual choice first: a rest where the horse can recover, otherwise sharing the load.
+      return fed ? [rest, spread, cache] : [spread, cache, rest];
     }
     case 'dryCamp':
       return [
         {
           id: 'fetch',
-          effect: node.gullyFt ? `Two men climb ${node.gullyFt} ft down and back: their recovery −10` : 'No gully to fetch from',
+          effect: node.gullyFt ? `Two men climb ${node.gullyFt} ft down and back after dark: they sleep badly, the rest drink` : 'No gully to fetch from',
           ...(node.gullyFt ? {} : { disabled: 'No gully here' }),
         },
-        { id: 'dry', effect: 'Everyone recovers 10 less; morale −6' },
+        { id: 'dry', effect: 'Nobody drinks tonight: everyone sleeps badly and spirits drop' },
       ];
     case 'chill':
       return [
-        { id: 'keep', effect: 'He stays at camp tomorrow; 30% a night he recovers while resting' },
-        { id: 'work', effect: `He can work, at 70%; ${Math.round(T.illness.chill.tooIllIfWorks * 100)}% a night he becomes too ill` },
+        { id: 'keep', effect: 'He rests at camp until the chill passes, usually two or three nights' },
+        { id: 'work', effect: `He works, slowly, and each night he works there is a ${Math.round(T.illness.chill.tooIllIfWorks * 100)}% chance he becomes too ill to work at all` },
       ];
     case 'bowel':
       return [
-        { id: 'rest', effect: 'Nobody works today' },
+        { id: 'push', effect: 'He keeps working, a little slower, until it passes' },
         {
           id: 'hunt',
-          effect: `One shot now for fresh meat (${Math.round(T.hunting.man[huntHabitat(s.map, s.camp)] * 100)}% chance, double for Burne)`,
+          effect: `One shot now for fresh meat: ${Math.round(T.hunting.man[huntHabitat(s.map, s.camp)] * 100)}% chance here, double for Burne`,
           ...(s.stores.shots < 1 ? { disabled: 'No powder left' } : {}),
         },
-        { id: 'push', effect: 'He works at 80% until it passes' },
+        { id: 'rest', effect: 'Nobody works today: the whole party loses a day' },
       ];
     case 'hunterStrays':
       return [
@@ -101,8 +107,8 @@ function options(s: GameState, ev: PendingEvent): Option[] {
       ];
     case 'dogsRaceOff':
       return [
-        { id: 'watch', effect: 'Two men stand watch: their stamina −10' },
-        { id: 'settle', effect: 'Morale −3' },
+        { id: 'watch', effect: 'Two men stand watch and sleep badly' },
+        { id: 'settle', effect: 'A restless night: spirits drop a little' },
       ];
     case 'brood': {
       const no = canFeast(s, 1);

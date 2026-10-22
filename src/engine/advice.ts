@@ -1,6 +1,7 @@
 // What a player can see and reasonably do next. Used by the plan sheet's suggestions and by the sim
 // bots. Nothing here reads hidden truth (isRoute, hintRight).
 import { EPS, horsePassable, horseReach, isPassable, openBranches, stepsToTarget, walkedMiles } from './map';
+import { T } from './data';
 import { hoursAvailable, moveHours, validTarget } from './plan';
 import type { GameState, Segment } from './types';
 
@@ -68,9 +69,23 @@ export function horseWater(s: GameState, id: string): boolean {
   return w === 'swamp' || w === 'stream' || w === 'lagoon';
 }
 
+/** How much a night here costs the horses, in miles of progress a party would give up to avoid it. */
+export function campPenalty(s: GameState, id: string): number {
+  const n = s.map.nodes[id]!;
+  const w = T.advice.campPenalty;
+  let p = 0;
+  if (n.water === 'none') p += w.noWater; // nobody drinks unless there is a gully to climb
+  else if (!horseWater(s, id)) p += w.rockHole; // the men drink, the horses go without
+  if (n.grass === 'none') p += w.noGrass;
+  else if (n.grass === 'rushy') p += w.rushyGrass;
+  return p;
+}
+
 /**
- * Tonight's camp on the way to the target: the furthest the horses can reach this half, unless a
- * camp with water for the horses lies within a mile short of it.
+ * The camp on the way to the target: the furthest the horses can reach this half, unless a camp a
+ * little short of it has water and grass that the furthest one lacks. Scored as miles gained less
+ * what a dry or bare camp costs the horses, so the suggestion never walks the party past water
+ * into a dry camp for the sake of half a mile.
  */
 export function campChoice(s: GameState, target: string, maxHours = hoursAvailable(s)): string {
   const along: { id: string; miles: number }[] = [{ id: s.camp, miles: 0 }];
@@ -84,13 +99,17 @@ export function campChoice(s: GameState, target: string, maxHours = hoursAvailab
     miles += seg.miles;
     along.push({ id: st.dir === 'out' ? seg.b : seg.a, miles });
   }
-  const last = along[along.length - 1]!;
-  for (let i = along.length - 1; i >= 0; i--) {
+  let best = along[along.length - 1]!;
+  let bestScore = best.miles - campPenalty(s, best.id);
+  for (let i = along.length - 2; i >= 0; i--) {
     const n = along[i]!;
-    if (last.miles - n.miles > 1 + EPS) break;
-    if (horseWater(s, n.id)) return n.id;
+    const score = n.miles - campPenalty(s, n.id);
+    if (score > bestScore + EPS) {
+      best = n;
+      bestScore = score;
+    }
   }
-  return last.id;
+  return best.id;
 }
 
 /**
@@ -114,7 +133,7 @@ export function canAdvance(s: GameState, from: string, target: string): boolean 
 export function suggestCampMove(s: GameState, target: string): string | null {
   const camp = s.map.nodes[s.camp]!;
   const stranded = !!camp.parentSeg && !!s.map.segments[camp.parentSeg]!.deadEnd;
-  const reach = s.phase === 'morning' ? campChoice(s, target) : furthestReachable(s, target);
+  const reach = campChoice(s, target);
   if (reach === s.camp) return null;
   const gain = s.map.nodes[reach]!.routeMiles - camp.routeMiles;
   return stranded || gain > EPS ? reach : null;

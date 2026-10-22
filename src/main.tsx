@@ -3,6 +3,7 @@ import { App } from './ui/App';
 import { BUILD } from './ui/build';
 import { Guard } from './ui/Crash';
 import { currentSave } from './ui/save';
+import './ui/fonts.css';
 import './ui/styles.css';
 
 // When the game runs as a published claude.ai page, the viewer can keep an open game across a

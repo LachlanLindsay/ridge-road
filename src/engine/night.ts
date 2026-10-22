@@ -54,11 +54,12 @@ export function endDay(state: GameState, orders: EveningOrders): EndDayResult {
     unlockCard(ctx, 'distanceByClock');
   }
 
-  const summary = summarise(s);
+  const dayNotes = pickDayNotable(state.today.log);
+  const summary = summarise(s, dayNotes.some((l) => l.startsWith('Camp moved') || l.includes('pushed on')));
   night(ctx, tea, orders.feedGrass !== false);
   if (s.leg === 'out') forcedHome(ctx);
 
-  const journal = { day, date: dateOf(day), text: [summary, ...pickNotable(ctx.lines)].join(' ') };
+  const journal = { day, date: dateOf(day), text: [summary, ...dayNotes, ...pickNotable(ctx.lines)].join(' ') };
   s.journal.push(journal);
 
   s.pending.push(...ctx.events);
@@ -70,16 +71,34 @@ export function endDay(state: GameState, orders: EveningOrders): EndDayResult {
   return { state: s, journal };
 }
 
-function summarise(s: GameState): string {
+function summarise(s: GameState, moveTold: boolean): string {
   const parts = [`${weatherWord(s.weather)}.`];
-  if (s.today.movedMiles > EPS) parts.push(`Camp moved ${round1(s.today.movedMiles)} mi.`);
-  else parts.push(s.today.fieldWork ? 'Camp stayed; the men worked ahead.' : 'A day in camp.');
+  if (s.today.movedMiles > EPS) {
+    if (!moveTold) parts.push(`Camp moved ${round1(s.today.movedMiles)} mi.`);
+  } else parts.push(s.today.fieldWork ? 'Camp stayed; the men worked ahead.' : 'A day in camp.');
   return parts.join(' ');
 }
 
 function pickNotable(lines: string[]): string[] {
   const keys = ['chill', 'ill', 'kangaroo', 'collapsed', 'Forced', 'turns', 'Dingoes', 'mending'];
   return lines.filter((l) => keys.some((k) => l.includes(k))).slice(0, 3);
+}
+
+/**
+ * The day's story for the journal: where the camp went, what was found, the dead ends, the views,
+ * the pass and the hill. Cards found read as "Found: Huts."
+ */
+function pickDayNotable(lines: string[]): string[] {
+  const keys = ['Camp moved', 'pushed on', 'Dead end', 'show plainly', 'A view at last', 'way down', 'trench is dug', 'Down the pass', 'Up the pass', 'sugarloaf hill', 'rock step', 'cairn', 'reached a fork', 'Collected from the cache', 'Cached at camp', 'nothing to mark'];
+  const out: string[] = [];
+  for (const l of lines) {
+    if (l.startsWith('Journal card: ')) {
+      out.push(`Found: ${l.slice('Journal card: '.length)}`);
+      continue;
+    }
+    if (keys.some((k) => l.includes(k))) out.push(l.replace(/\. Tap one on the map\.$/, '.'));
+  }
+  return out.slice(0, 4);
 }
 
 function blanketed(s: GameState, men: Member[]): Set<string> {
@@ -275,6 +294,7 @@ function illness(ctx: Ctx, men: Member[], frost: boolean, covered: Set<string>) 
       } else if (chance(s, I.chill.recoverIfRested)) {
         m.condition = null;
         m.workingWithChill = false;
+        m.keepAtCamp = false;
         say(ctx, `${m.name} has shaken off his chill.`);
       }
     } else if (m.condition === 'bowel') {
@@ -285,6 +305,7 @@ function illness(ctx: Ctx, men: Member[], frost: boolean, covered: Set<string>) 
     } else if (m.condition === 'tooIll') {
       if (chance(s, I.tooIll.toChill)) {
         m.condition = 'chill';
+        m.keepAtCamp = true; // he rests on until the chill has gone
         say(ctx, `${m.name} is mending, though still chilled.`);
       }
     }

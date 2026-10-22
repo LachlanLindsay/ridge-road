@@ -301,6 +301,8 @@ export interface NewGameOptions {
   loadout?: Loadout;
   party?: PartyChoice;
   names?: { servant3?: string; servant4?: string };
+  /** Whose expedition this is, for a shared device. Display only. */
+  owner?: string;
 }
 
 export interface GameState {

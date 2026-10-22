@@ -3,8 +3,21 @@ import { useState } from 'preact/hooks';
 import { EndArt } from './art/scenes';
 import { CARD_SOURCES, CARD_TEXT } from './copy';
 import { Feedback } from './Feedback';
-import { lb, mi, plural } from './format';
+import { lb, localize, mi, plural } from './format';
 import { packHorses } from './outfitting';
+import { Journal } from './Overlays';
+
+/** What to do differently, in a sentence, for each way of being turned back. */
+const LESSON: Record<string, string> = {
+  horses:
+    'The horses lose condition every night they have no grass or no water, and most camps past the foothills have only rushy grass. Cut grass wherever the grass is good (a man on Grass cuts 15 lb an hour), feed it on dry nights, take the camp suggestion that stops at a swamp head, and move camp forward instead of making the horses carry everything a day longer than they need to.',
+  food: 'Food runs out around day 24 at full rations. Put a man on Hunt in forest or grass country, go to reduced rations as soon as the goal is in sight, and never leave food behind at a cache on the way out.',
+  illness:
+    'A man who keeps working with a chill becomes too ill to work at all. Keep him at camp until the chill passes, issue blankets before the frost, and rest a day when three or more men are low.',
+  morale: 'Spirits fall with every dead end, dry camp and short ration, and rise with new ground, a view, fresh meat and tea. Issue tea on a bad night, and rest a day only when morale is above 45.',
+  refusal: 'Spirits fall with every dead end, dry camp and short ration, and rise with new ground, a view, fresh meat and tea. Issue tea on a bad night, and rest a day only when morale is above 45.',
+  chose: 'The 1813 party nearly turned back more than once. Twenty-one days got them to the hill, with the horses weak but walking and the flour nearly gone.',
+};
 
 const REASON: Record<string, string> = {
   morale: 'the men lost heart',
@@ -52,12 +65,28 @@ function Ghost({ state }: { state: GameState }) {
         ))}
         <path d={path(ghost)} class="ghost-1813" />
         <path d={path(yours)} class="ghost-you" />
-        <text x={x(ghost.length) + 2} y={y(ghost[ghost.length - 1]!) + 12} class="ghost-label ghost-label-1813" text-anchor="end">
-          1813
-        </text>
-        <text x={Math.min(x(yours.length) + 4, W - R)} y={y(yours[yours.length - 1] ?? 0) - 6} class="ghost-label" text-anchor={x(yours.length) > W - 60 ? 'end' : 'start'}>
-          You
-        </text>
+        {(() => {
+          // The two labels sit at the ends of their lines; when both end near the top right they
+          // would collide, so the lower one drops below its line and the higher one rises above.
+          const gx = x(ghost.length);
+          const gy = y(ghost[ghost.length - 1]!);
+          const yx = Math.min(x(yours.length) + 4, W - R);
+          const yy = y(yours[yours.length - 1] ?? 0);
+          const close = Math.abs(gx - yx) < 40 && Math.abs(gy - yy) < 22;
+          const youAbove = yy <= gy;
+          const gLabelY = close ? (youAbove ? gy + 14 : gy - 6) : gy + 12;
+          const yLabelY = close ? (youAbove ? yy - 6 : yy + 14) : yy - 6;
+          return (
+            <>
+              <text x={gx + 2} y={gLabelY} class="ghost-label ghost-label-1813" text-anchor="end">
+                1813
+              </text>
+              <text x={yx} y={yLabelY} class="ghost-label" text-anchor={x(yours.length) > W - 60 ? 'end' : 'start'}>
+                You
+              </text>
+            </>
+          );
+        })()}
       </svg>
       <figcaption>Share of the route covered by each evening. The 1813 line follows Blaxland's camp-to-camp miles; its flat days are cutting and rest.</figcaption>
     </figure>
@@ -85,15 +114,17 @@ function homeLoads(state: GameState, horses: number) {
 
 export function EndScreen({ state, onNew, onTitle }: { state: GameState; onNew: () => void; onTitle: () => void }) {
   const [feedback, setFeedback] = useState(false);
+  const [journal, setJournal] = useState(false);
   const o = state.outcome!;
   const crossed = o.result === 'crossed';
+  const lesson = !crossed ? LESSON[o.reason ?? ''] : null;
   return (
     <main class="end">
       <div class="end-art">
         <EndArt crossed={crossed} counts={{ servants: Math.max(0, state.men.length - 3), horses: o.horsesHome, dogs: state.dogs }} loads={homeLoads(state, o.horsesHome)} />
       </div>
       <div class="end-inner">
-        <p class="end-kicker">{crossed ? `Home on day ${o.dayHome}` : `Turned back on day ${o.turnedBackDay ?? o.dayHome}`}</p>
+        <p class="end-kicker">{crossed ? `Home on day ${o.dayHome}` : `Turned back after day ${o.turnedBackDay ?? o.dayHome}`}</p>
         <h1 class="display end-title">{crossed ? 'Crossed and returned' : 'Repulsed'}</h1>
         {crossed ? (
           <p class="end-sub">
@@ -101,8 +132,14 @@ export function EndScreen({ state, onNew, onTitle }: { state: GameState; onNew: 
           </p>
         ) : (
           <p class="end-sub">
-            The party turned back because {REASON[o.reason ?? ''] ?? 'it could go no further'}. Furthest point: {mi(o.furthestMiles)} from the Nepean in a straight line. The high heath, where the 1813 party turned north, is 18.
+            The party turned back because {REASON[o.reason ?? ''] ?? 'it could go no further'}. Furthest point: {mi(o.furthestMiles)} from the Nepean in a straight line. The high heath, where the 1813 party turned north, is {mi(18)}.
           </p>
+        )}
+        {lesson && (
+          <section class="lesson">
+            <h2 class="section-title">Next time</h2>
+            <p>{localize(lesson)}</p>
+          </section>
         )}
 
         {crossed && (
@@ -110,7 +147,7 @@ export function EndScreen({ state, onNew, onTitle }: { state: GameState; onNew: 
             <tbody>
               {o.breakdown.map((l) => (
                 <tr key={l.label}>
-                  <td>{l.label}</td>
+                  <td>{localize(l.label)}</td>
                   <td class="num">{l.points > 0 ? `+${l.points}` : l.points}</td>
                 </tr>
               ))}
@@ -157,6 +194,9 @@ export function EndScreen({ state, onNew, onTitle }: { state: GameState; onNew: 
           <button type="button" class="btn btn-go" onClick={onNew}>
             New expedition
           </button>
+          <button type="button" class="btn btn-quiet" onClick={() => setJournal(true)}>
+            Read the journal
+          </button>
           <button type="button" class="btn btn-quiet" onClick={() => setFeedback(true)}>
             Send feedback on this expedition
           </button>
@@ -169,6 +209,7 @@ export function EndScreen({ state, onNew, onTitle }: { state: GameState; onNew: 
         </p>
       </div>
       {feedback && <Feedback state={state} onClose={() => setFeedback(false)} />}
+      {journal && <Journal state={state} onClose={() => setJournal(false)} />}
     </main>
   );
 }

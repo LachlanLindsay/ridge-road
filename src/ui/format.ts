@@ -32,9 +32,54 @@ export function num(v: number, digits = 1): string {
   return Number.isInteger(r) ? String(r) : r.toFixed(digits);
 }
 
-export const mi = (v: number) => `${num(v)} mi`;
+// ---------------------------------------------------------------- units
+// The game's numbers are the 1813 party's: pounds, miles, feet and chains. Metric is a display
+// choice for players who have never seen a pound (every Australian primary school, for one), kept
+// on the device; the engine and the saves never change.
+
+export type Units = 'imperial' | 'metric';
+const UNITS_KEY = 'ridge-road.units.v1';
+let units: Units = 'imperial';
+try {
+  if (localStorage.getItem(UNITS_KEY) === 'metric') units = 'metric';
+} catch {
+  // No storage: pounds and miles.
+}
+
+export function getUnits(): Units {
+  return units;
+}
+
+export function setUnits(u: Units) {
+  units = u;
+  try {
+    localStorage.setItem(UNITS_KEY, u);
+  } catch {
+    // A convenience only.
+  }
+}
+
+const KG = 0.45359;
+const KM = 1.60934;
+const M = 0.3048;
+
+export const mi = (v: number) => (units === 'metric' ? `${num(v * KM)} km` : `${num(v)} mi`);
 export const hrs = (v: number) => `${num(v)} h`;
-export const lb = (v: number) => `${Math.round(v)} lb`;
+export const lb = (v: number) => (units === 'metric' ? `${Math.round(v * KG)} kg` : `${Math.round(v)} lb`);
+export const ft = (v: number) => (units === 'metric' ? `${Math.round((v * M) / 10) * 10} m` : `${Math.round(v)} ft`);
+
+/**
+ * Engine text carries its own units ("Lawson marked 3.1 mi", "28 lb of grass", "450 ft down").
+ * Convert them for display when the player wants metric.
+ */
+export function localize(text: string): string {
+  if (units !== 'metric') return text;
+  return text
+    .replace(/(\d+(?:\.\d+)?) lb\b/g, (_, n) => `${Math.round(Number(n) * KG)} kg`)
+    .replace(/(\d+(?:\.\d+)?) mi(les?)?\b/g, (_, n, long) => `${num(Number(n) * KM)} ${long ? 'kilometres' : 'km'}`)
+    .replace(/(\d+(?:\.\d+)?) ft\b/g, (_, n) => `${Math.round((Number(n) * M) / 10) * 10} m`)
+    .replace(/(\d+(?:\.\d+)?)-mile\b/g, (_, n) => `${num(Number(n) * KM)}-km`);
+}
 
 export const TASK_LABEL: Record<Task, string> = {
   scout: 'Scout',
@@ -91,7 +136,7 @@ export const GRASS_LABEL: Record<Grass, string> = {
 export function waterLabel(water: Water, gullyFt?: number): string {
   switch (water) {
     case 'none':
-      return gullyFt ? `None up here; a gully ${gullyFt} ft down, for the men only` : 'None';
+      return gullyFt ? `None up here; a gully ${ft(gullyFt)} down, for the men only` : 'None';
     case 'rockHole':
       return 'Rock hole, for the men only';
     case 'swamp':
