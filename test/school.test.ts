@@ -34,7 +34,7 @@ describe('caches', () => {
     cacheWeight(s, 120, lines);
     expect(s.stores.blankets).toBe(before.blankets);
     expect(s.stores.flour + s.stores.saltMeat).toBeGreaterThan(0);
-    expect(lines[0]).toMatch(/lb of (flour|salt meat|cut grass)/);
+    expect(lines[0]).toMatch(/lb (flour|salt meat|cut grass)/);
     expect(lines[0]).not.toMatch(/saltMeat/);
   });
 
@@ -57,7 +57,7 @@ describe('caches', () => {
     const lines: string[] = [];
     collectCache(s, lines);
     expect(s.stores.flour).toBeGreaterThan(0);
-    expect(lines[0]).toMatch(/Collected from the cache: .* lb of flour/);
+    expect(lines[0]).toMatch(/Collected from the cache: .* lb flour/);
   });
 
   it('counts the days home from the trail', () => {

@@ -162,34 +162,7 @@ export function plural(n: number, one: string, many = `${one}s`): string {
   return `${n} ${n === 1 ? one : many}`;
 }
 
-export function itemText(item: string, qty: number): string {
-  switch (item) {
-    case 'flour':
-      return `${lb(qty)} flour`;
-    case 'saltMeat':
-      return `${lb(qty)} salt meat`;
-    case 'tea':
-      return `${lb(qty)} tea and sugar`;
-    case 'shots':
-      return plural(Math.round(qty), 'shot');
-    case 'axes':
-      return plural(qty, 'axe');
-    case 'hatchets':
-      return plural(qty, 'hatchet');
-    case 'hoe':
-      return 'the hoe';
-    case 'blankets':
-      return plural(qty, 'blanket');
-    case 'shoes':
-      return `${plural(qty, 'pair')} of shoes`;
-    case 'campKit':
-      return 'the camp kit';
-    case 'grass':
-      return `${lb(qty)} cut grass`;
-    default:
-      return `${num(qty)} ${item}`;
-  }
-}
+export { itemText } from '../engine';
 
 const COMPASS = ['north', 'north-north-east', 'north-east', 'east-north-east', 'east', 'east-south-east', 'south-east', 'south-south-east', 'south', 'south-south-west', 'south-west', 'west-south-west', 'west', 'west-north-west', 'north-west', 'north-north-west'];
 

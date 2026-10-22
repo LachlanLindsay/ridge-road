@@ -133,35 +133,6 @@ export function itemWeight(item: Item, qty: number): number {
 
 export const ITEMS: Item[] = ['flour', 'saltMeat', 'tea', 'shots', 'axes', 'hatchets', 'hoe', 'blankets', 'shoes', 'campKit', 'grass'];
 
-/** An item and quantity in words for the log: "87 lb of flour", "2 axes", "7 pairs of shoes". */
-export function itemText(item: Item, qty: number): string {
-  const n = round1(qty);
-  switch (item) {
-    case 'flour':
-      return `${n} lb of flour`;
-    case 'saltMeat':
-      return `${n} lb of salt meat`;
-    case 'tea':
-      return `${n} lb of tea and sugar`;
-    case 'grass':
-      return `${n} lb of cut grass`;
-    case 'shots':
-      return `${n} shot${n === 1 ? '' : 's'}`;
-    case 'axes':
-      return `${n} axe${n === 1 ? '' : 's'}`;
-    case 'hatchets':
-      return `${n} hatchet${n === 1 ? '' : 's'}`;
-    case 'hoe':
-      return n === 1 ? 'the hoe' : `${n} hoes`;
-    case 'blankets':
-      return `${n} blanket${n === 1 ? '' : 's'}`;
-    case 'shoes':
-      return `${n} pair${n === 1 ? '' : 's'} of shoes`;
-    case 'campKit':
-      return 'the camp kit';
-  }
-}
-
 export function freshLb(st: Stores): number {
   return st.fresh.reduce((s, f) => s + f.lb, 0);
 }

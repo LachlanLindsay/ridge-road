@@ -1,7 +1,8 @@
 // Supplies: fresh meat, caches and spare shoes.
 import { T } from './data';
 import { pathMiles, pathSteps } from './map';
-import { capacity, clamp, dailyFood, itemText, itemWeight, ITEMS, loadLb } from './party';
+import { capacity, clamp, dailyFood, itemWeight, ITEMS, loadLb } from './party';
+import { itemText } from './text';
 import type { Cache, GameState, Item, Loadout, Stores } from './types';
 
 export function storesFrom(loadout: Loadout): Stores {
@@ -36,8 +37,8 @@ export function addFresh(s: GameState, lb: number) {
 
 const UNCACHEABLE: Item[] = ['campKit'];
 
-/** Leave items at the current camp. Returns pounds cached. */
-export function cacheItems(s: GameState, cache: Cache, lines: string[]): number {
+/** Leave items at the current camp. Returns pounds cached. `why` opens the report line. */
+export function cacheItems(s: GameState, cache: Cache, lines: string[], why = 'Left at camp for the way home'): number {
   let lb = 0;
   const here = (s.caches[s.camp] ??= {});
   const parts: string[] = [];
@@ -52,16 +53,16 @@ export function cacheItems(s: GameState, cache: Cache, lines: string[]): number 
     parts.push(itemText(item, qty));
   }
   if (!Object.keys(here).length) delete s.caches[s.camp];
-  if (parts.length) lines.push(`Cached at camp: ${parts.join(', ')}.`);
+  if (parts.length) lines.push(`${why}: ${parts.join(', ')}.`);
   return lb;
 }
 
 /**
  * Cache about this many pounds, taking the least needed goods first: cut grass, then food beyond
  * what the party needs to get home from here, then spare shoes and tea. Blankets stay with the
- * men, and the food reserve for the way home is never left behind.
+ * men, and the food reserve for the way home is never left behind. `why` opens the report line.
  */
-export function cacheWeight(s: GameState, lb: number, lines: string[]): number {
+export function cacheWeight(s: GameState, lb: number, lines: string[], why?: string): number {
   const cache: Cache = {};
   let left = lb;
   const take = (item: Item, max: number) => {
@@ -81,7 +82,7 @@ export function cacheWeight(s: GameState, lb: number, lines: string[]): number {
   take('saltMeat', Math.min(s.stores.saltMeat, spareFood - (cache.flour ?? 0)));
   take('shoes', Math.max(0, s.stores.shoes - 2));
   take('tea', s.stores.tea);
-  return cacheItems(s, cache, lines);
+  return cacheItems(s, cache, lines, why);
 }
 
 /** Pick up what was cached here, as far as the horses and (on the way home) the men can carry it. */

@@ -187,8 +187,18 @@ function manNow(s: GameState, id: MemberId): string | null {
   parts.push(m.condition ? CONDITION_LABEL[m.condition].toLowerCase() : 'well');
   if (isBusy(s, m)) parts.push('out searching for the hunter');
   const pace = m.condition === 'tooIll' ? 'too ill to work' : `works at ${pct(workFactor(s, m))} pace`;
-  return `${parts.join(', ')}: ${pace}.`;
+  const mend = m.condition ? ` ${MENDING[m.condition]()}` : '';
+  return `${parts.join(', ')}: ${pace}.${mend}`;
 }
+
+/** How each illness passes, from the tuning, so the player knows what rest does and does not do. */
+const MENDING: Record<NonNullable<GameState['men'][number]['condition']>, () => string> = {
+  tooIll: () => `Each night there is a ${pct(T.illness.tooIll.toChill)} chance he mends to a chill, whatever he does: rest will not hurry it, and it usually takes three to five days.`,
+  chill: () =>
+    `Each night he does not scout, cut, fetch water or hunt there is a ${pct(T.illness.chill.recoverIfRested)} chance he shakes it off. Working through it risks a ${pct(T.illness.chill.tooIllIfWorks)} chance a night of falling too ill.`,
+  bowel: () => `Each night there is a ${pct(T.illness.bowel.recover)} chance he mends. It does not get worse if he works.`,
+  footsore: () => 'A pair of spare shoes at the evening camp puts him back on his feet.',
+};
 
 function horseNow(s: GameState, id: number): string | null {
   const h = s.horses.find((x) => x.id === id);

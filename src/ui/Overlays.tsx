@@ -35,14 +35,35 @@ function CopyCode({ state }: { state: GameState }) {
   );
 }
 
-export function Menu({ state, open, units, onUnits, onClose, onTitle, onRestart }: { state: GameState; open: (o: OverlayId) => void; units: Units; onUnits: (u: Units) => void; onClose: () => void; onTitle: () => void; onRestart: () => void }) {
+export function Menu({
+  state,
+  unread = 0,
+  open,
+  units,
+  onUnits,
+  onClose,
+  onTitle,
+  onRestart,
+}: {
+  state: GameState;
+  unread?: number;
+  open: (o: OverlayId) => void;
+  units: Units;
+  onUnits: (u: Units) => void;
+  onClose: () => void;
+  onTitle: () => void;
+  onRestart: () => void;
+}) {
   const [confirm, setConfirm] = useState(false);
   return (
     <Sheet title="Ridge Road" onClose={onClose}>
       <nav class="menu">
         <button type="button" class="menu-item" onClick={() => open('journal')}>
-          Journal
-          <span>One line a day, beside the 1813 party's day</span>
+          <span class="menu-item-head">
+            Journal
+            {unread > 0 && <span class="tag-new">{unread} new</span>}
+          </span>
+          <span>{unread > 0 ? `${plural(unread, 'card')} found and not yet read, and your days beside 1813` : "One line a day, beside the 1813 party's day, and the cards you find"}</span>
         </button>
         <button type="button" class="menu-item" onClick={() => open('party')}>
           Party and stores
@@ -131,11 +152,15 @@ function printJournal(state: GameState, notes: Record<number, string>) {
   return true;
 }
 
-export function Journal({ state, onClose }: { state: GameState; onClose: () => void }) {
+export function Journal({ state, unread = [], onRead, onClose }: { state: GameState; unread?: string[]; onRead?: (id: string) => void; onClose: () => void }) {
   // The 1813 party's day for each date: the way out, then the way home.
   const then1813 = new Map<string, string>([...JOURNAL_1813.days, ...JOURNAL_1813.home].map((d) => [d.date, d.text]));
+  // Oldest first: the journal reads as a story from day 1.
   const entries = state.journal;
-  const cards = state.cards.filter((c) => CARDS[c]);
+  const cards = state.cards.filter((c) => CARDS[c]).reverse();
+  const total = Object.keys(CARDS).filter((k) => !k.startsWith('_')).length;
+  // Cards come first when there is something new to read in them.
+  const [tab, setTab] = useState<'days' | 'cards'>(unread.length ? 'cards' : 'days');
   const [notes, setNotes] = useState<Record<number, string>>(() => readNotes(state.seed));
   const [printFail, setPrintFail] = useState(false);
   const note = (day: number, text: string) => {
@@ -144,47 +169,72 @@ export function Journal({ state, onClose }: { state: GameState; onClose: () => v
   };
   return (
     <Sheet title="Journal" onClose={onClose}>
-      <p class="fine journal-hint">
-        One line a day beside the 1813 party's, oldest first. Add your own line to any day.{' '}
-        <button type="button" class="link-btn link-inline" onClick={() => setPrintFail(!printJournal(state, notes))}>
-          Print or save as PDF
+      <div class="tabs" role="tablist" aria-label="Journal">
+        <button type="button" role="tab" id="tab-days" aria-selected={tab === 'days'} aria-controls="panel-days" class={tab === 'days' ? 'tab is-on' : 'tab'} onClick={() => setTab('days')}>
+          Your days
+          <span class="tab-note">{entries.length ? `${plural(entries.length, 'entry', 'entries')}, beside 1813` : 'Beside 1813'}</span>
         </button>
-        {printFail ? ' (the browser blocked the print window: allow pop-ups for this page and try again)' : ''}
-      </p>
-      {entries.length === 0 && <p class="fine">The first entry is written tonight.</p>}
-      <ol class="journal">
-        {entries.map((j) => {
-          const then = then1813.get(j.date);
-          return (
-            <li key={j.day}>
-              <span class="journal-date display">
-                Day {j.day} · {isoShort(j.date)}
-              </span>
-              <span class="journal-text">{localize(j.text)}</span>
-              {then && (
-                <span class="journal-1813">
-                  <span class="journal-1813-label">In 1813:</span> {then}
-                </span>
-              )}
-              <textarea class="journal-note" rows={1} placeholder="Your own line for this day" value={notes[j.day] ?? ''} onInput={(e) => note(j.day, (e.currentTarget as HTMLTextAreaElement).value)} aria-label={`Your note for day ${j.day}`} />
-            </li>
-          );
-        })}
-      </ol>
-      {cards.length > 0 && (
-        <section class="cards">
-          <h3 class="section-title">
-            Cards found: {cards.length} of {Object.keys(CARDS).filter((k) => !k.startsWith('_')).length}
-          </h3>
-          {cards.map((c) => (
-            <details key={c} class="card-item">
-              <summary>{CARDS[c]!.title}</summary>
-              {(CARD_TEXT[c] ?? []).map((p) => (
-                <p key={p}>{p}</p>
-              ))}
-              {CARD_SOURCES[c] && <p class="card-source">{CARD_SOURCES[c]}</p>}
-            </details>
-          ))}
+        <button type="button" role="tab" id="tab-cards" aria-selected={tab === 'cards'} aria-controls="panel-cards" class={tab === 'cards' ? 'tab is-on' : 'tab'} onClick={() => setTab('cards')}>
+          <span class="menu-item-head">
+            Cards
+            {unread.length > 0 && <span class="tag-new">{unread.length} new</span>}
+          </span>
+          <span class="tab-note">
+            {cards.length} of {total} found
+          </span>
+        </button>
+      </div>
+      {tab === 'days' ? (
+        <div role="tabpanel" id="panel-days" aria-labelledby="tab-days">
+          <p class="fine journal-hint">
+            One line a day beside the 1813 party's, oldest first. Add your own line to any day.{' '}
+            <button type="button" class="link-btn link-inline" onClick={() => setPrintFail(!printJournal(state, notes))}>
+              Print or save as PDF
+            </button>
+            {printFail ? ' (the browser blocked the print window: allow pop-ups for this page and try again)' : ''}
+          </p>
+          {entries.length === 0 && <p class="fine">The first entry is written tonight.</p>}
+          <ol class="journal">
+            {entries.map((j) => {
+              const then = then1813.get(j.date);
+              return (
+                <li key={j.day}>
+                  <span class="journal-date display">
+                    Day {j.day} · {isoShort(j.date)}
+                  </span>
+                  <span class="journal-text">{localize(j.text)}</span>
+                  {then && (
+                    <span class="journal-1813">
+                      <span class="journal-1813-label">In 1813:</span> {then}
+                    </span>
+                  )}
+                  <textarea class="journal-note" rows={1} placeholder="Your own line for this day" value={notes[j.day] ?? ''} onInput={(e) => note(j.day, (e.currentTarget as HTMLTextAreaElement).value)} aria-label={`Your note for day ${j.day}`} />
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      ) : (
+        <section class="cards" role="tabpanel" id="panel-cards" aria-labelledby="tab-cards">
+          <p class="fine">
+            History found on the way, from the 1813 journals and the sources each card names.
+            {cards.length < total ? ` ${plural(total - cards.length, 'card')} still to find.` : ' You have found them all.'}
+          </p>
+          {cards.map((c) => {
+            const isNew = unread.includes(c);
+            return (
+              <details key={c} class={isNew ? 'card-item is-new' : 'card-item'} onToggle={(e) => (e.currentTarget as HTMLDetailsElement).open && onRead?.(c)}>
+                <summary>
+                  {CARDS[c]!.title}
+                  {isNew && <span class="tag-new">New</span>}
+                </summary>
+                {(CARD_TEXT[c] ?? []).map((p) => (
+                  <p key={p}>{p}</p>
+                ))}
+                {CARD_SOURCES[c] && <p class="card-source">{CARD_SOURCES[c]}</p>}
+              </details>
+            );
+          })}
         </section>
       )}
     </Sheet>

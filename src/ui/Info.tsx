@@ -235,8 +235,34 @@ function MeetButton({ who, name, last }: { who: Who; name: string; last: boolean
 /** Cards that open by themselves when found: the moments the whole crossing is about. */
 export const MILESTONE_CARDS = ['viewBack', 'highHeath', 'wayDown', 'sugarloaf'] as const;
 
-export function InfoLayer({ state, mode, children }: { state: GameState | null; mode: Mode; children: ComponentChildren }) {
+export function InfoLayer({
+  state,
+  mode,
+  onCardOpen,
+  children,
+}: {
+  state: GameState | null;
+  mode: Mode;
+  /** Told whenever a journal card is opened, from wherever: the slip, a report line, the journal. */
+  onCardOpen?: (id: string) => void;
+  children: ComponentChildren;
+}) {
   const [open, setOpen] = useState<Opened | null>(null);
+  const [peek, setPeek] = useState<{ who: Who; rect: DOMRect; click: boolean } | null>(null);
+  const cardOpened = useRef(onCardOpen);
+  cardOpened.current = onCardOpen;
+  const api = useMemo<InfoApi>(
+    () => ({
+      open: (w) => {
+        setPeek(null);
+        setOpen(w);
+        if (w.kind === 'card') cardOpened.current?.(w.id);
+      },
+      peek: (w, el, click) => setPeek({ who: w, rect: el.getBoundingClientRect(), click }),
+      unpeek: () => setPeek(null),
+    }),
+    [],
+  );
   // A milestone card found this turn opens on its own, once.
   const seen = useRef<Set<string> | null>(null);
   useEffect(() => {
@@ -248,21 +274,9 @@ export function InfoLayer({ state, mode, children }: { state: GameState | null; 
     for (const id of state.cards) {
       if (seen.current.has(id)) continue;
       seen.current.add(id);
-      if ((MILESTONE_CARDS as readonly string[]).includes(id) && CARDS[id]) setOpen({ kind: 'card', id });
+      if ((MILESTONE_CARDS as readonly string[]).includes(id) && CARDS[id]) api.open({ kind: 'card', id });
     }
   }, [state?.cards.length]);
-  const [peek, setPeek] = useState<{ who: Who; rect: DOMRect; click: boolean } | null>(null);
-  const api = useMemo<InfoApi>(
-    () => ({
-      open: (w) => {
-        setPeek(null);
-        setOpen(w);
-      },
-      peek: (w, el, click) => setPeek({ who: w, rect: el.getBoundingClientRect(), click }),
-      unpeek: () => setPeek(null),
-    }),
-    [],
-  );
   useEffect(() => {
     if (!peek) return;
     const hide = () => setPeek(null);

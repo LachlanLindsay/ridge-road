@@ -71,7 +71,7 @@ export const CARD_TEXT: Record<string, string[]> = {
   whoseCountry: BRIEFING[2]!.paragraphs,
   ridgeMethod: [
     'From the colony’s first years, people tried to get through the mountains. Most followed the rivers upstream and were stopped by rapids and sheer cliffs; others lost themselves in gorges or gave up in the scrub. Francis Barrallier was turned back by a waterfall in 1802.',
-    'Blaxland’s plan turned that around: keep to the line of ridges running west between two river valleys, and never go down into them. It was hard going. On the third day, every ridge they explored “proved to terminate in a deep rocky precipice”.',
+    'Blaxland’s plan turned that around: keep to the line of ridges running west between two river valleys, and never go down into them. It was hard going. On 13 May, their third day, every ridge they explored “proved to terminate in a deep rocky precipice”.',
     'So they worked in stages. Two men stayed with the horses while the rest went ahead, marking trees and cutting a path, then walked back to camp; when the path was ready, the whole party moved up. Most of the way was walked three times over.',
   ],
   distanceByClock: [

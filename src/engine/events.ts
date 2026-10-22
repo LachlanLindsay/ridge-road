@@ -191,14 +191,14 @@ function apply(ctx: Ctx, ev: PendingEvent, choice: ChoiceId) {
       return;
     case 'horseFall':
       if (choice === 'lighten') {
-        cacheWeight(s, T.horses.fall.lightenLb, ctx.lines);
+        cacheWeight(s, T.horses.fall.lightenLb, ctx.lines, 'Loads lightened after the fall, left here for the way home');
         s.today.noFall = true;
       }
       return;
     case 'horseExhausted':
       if (choice === 'cache') {
         const over = loadLb(s.stores) - capacity(s);
-        if (over > 0) cacheWeight(s, over, ctx.lines);
+        if (over > 0) cacheWeight(s, over, ctx.lines, 'Load of the spent horse left here for the way home');
       } else if (choice === 'rest') scheduleRest(s);
       return;
     case 'dryCamp':

@@ -39,6 +39,9 @@ const CACHE_ITEMS: { item: Item; step: number; label: string }[] = [
   { item: 'shots', step: 10, label: 'Shots' },
 ];
 
+/** Wear below this does nothing yet, so the shoes row stays out of the way unless a man is footsore. */
+const SHOES_SHOWN_OVER = 55;
+
 export function CampSheet({ state, onMakeCamp, selected, setSelected }: Props) {
   const node = state.map.nodes[state.camp]!;
   const st = state.stores;
@@ -104,7 +107,12 @@ export function CampSheet({ state, onMakeCamp, selected, setSelected }: Props) {
             <dd class={goodGrass ? '' : 'is-warn'}>
               {GRASS_LABEL[node.grass]}
               {!goodGrass && horsesWithUs > 0 ? (node.grass === 'rushy' ? `: the horses lose ${-T.horses.night.rushy} condition each tonight` : `: the horses lose ${-T.horses.night.noFeed} condition each tonight`) : ''}
-              {!goodGrass && st.grass > 0 ? `. ${lb(st.grass)} of cut grass carried, ${plural(grassNights, 'horse-night')}.` : ''}
+              {!goodGrass && st.grass > 0
+                ? grassNights > 0
+                  ? `. ${lb(st.grass)} of cut grass carried, enough for ${plural(grassNights, 'horse-night')}.`
+                  : `. ${lb(st.grass)} of cut grass carried, not enough to feed a horse (${lb(T.horses.night.grassLbPerHorse)} each).`
+                : '.'}
+              {!goodGrass && ' Grass can only be cut to carry where it is good or tall.'}
             </dd>
           </div>
           <div>
@@ -146,13 +154,14 @@ export function CampSheet({ state, onMakeCamp, selected, setSelected }: Props) {
         {st.grass >= T.horses.night.grassLbPerHorse && !goodGrass && (
           <Toggle id="feed" checked={feed} onChange={setFeed} label="Feed the cut grass" note="Each horse eats 15 lb and counts as well fed. Untick to save it for a camp with no grass." />
         )}
-        {st.shoes > 0 && (footsore > 0 || state.wear > 40) && (
+        {st.shoes > 0 && (footsore > 0 || state.wear > SHOES_SHOWN_OVER) && (
           <Stepper
             id="shoes"
             value={shoes}
             max={st.shoes}
             onChange={setShoes}
-            label={`Spare shoes to issue (${st.shoes} pairs left${footsore ? `, ${footsore} footsore` : ''})`}
+            label={`Spare shoes to issue (${plural(st.shoes, 'pair')} left${footsore ? `, ${footsore} footsore` : ''})`}
+            note={`Boots and clothes are ${state.wear > T.illness.footsore.wearOver ? 'worn through' : state.wear > T.illness.chill.wearOver ? 'badly worn' : 'wearing'} (wear ${Math.round(state.wear)} of 100). Each pair takes ${T.wear.shoesRelief} off and puts a footsore man back on his feet; past ${T.illness.chill.wearOver} chills come more often, past ${T.illness.footsore.wearOver} men go footsore.`}
           />
         )}
         {hasCache && (

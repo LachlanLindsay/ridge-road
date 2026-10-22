@@ -7,6 +7,8 @@ import { EventModal } from './EventModal';
 import { Feedback } from './Feedback';
 import { mapDraw } from './geometry';
 import { InfoLayer } from './Info';
+import { marksFor, newCards, readCardMarks, unreadCards, withNoticed, withOpened, writeCardMarks, type CardMarks } from './journalMarks';
+import { JournalSlip } from './JournalSlip';
 import { Grip, readMapSize, writeMapSize, type MapSize } from './MapSize';
 import { MapView } from './MapView';
 import { Outfit } from './Outfit';
@@ -82,6 +84,8 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
   const [overlay, setOverlay] = useState<OverlayId | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [mapSize, setMapSizeState] = useState<MapSize>(() => readMapSize());
+  // Which journal cards the player has been told about and has read, for this expedition.
+  const [marks, setMarks] = useState<CardMarks | null>(() => (boot.game ? readCardMarks(boot.game) : null));
   // A new expedition between the title and the first morning: its mode and seed, before outfitting.
   const [setup, setSetup] = useState<{ mode: Mode; seed: number } | null>(null);
   const [units, setUnitsState] = useState<Units>(getUnits());
@@ -103,6 +107,12 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
   useEffect(() => {
     if (draft) writeDraft(draft);
   }, [draft]);
+  useEffect(() => {
+    if (game && marks?.seed !== game.seed) setMarks(readCardMarks(game));
+  }, [game, marks]);
+  useEffect(() => {
+    if (marks) writeCardMarks(marks);
+  }, [marks]);
 
   const planning = !!game && (game.phase === 'morning' || game.phase === 'afternoon');
   // The plan in force: the player's draft brought up to date with the state (a new half, an
@@ -152,7 +162,9 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
   const setOut = (o: OutfitT) => {
     if (!setup) return;
     clearSave();
-    setGame(newGame({ ...setup, ...toOptions(o) }));
+    const fresh = newGame({ ...setup, ...toOptions(o) });
+    setGame(fresh);
+    setMarks(marksFor(fresh));
     setSetup(null);
     setDraft(null);
     setSelected(null);
@@ -163,8 +175,9 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
   // Cards for the party: in play they show the game's men and horses as they are; before setting
   // out, the party being outfitted, for the mode chosen.
   const playing = screen === 'play' && !!game;
+  const readCard = (id: string) => setMarks((m) => (m ? withOpened(m, id) : m));
   const cards = (key: string, body: preact.ComponentChildren) => (
-    <InfoLayer key={key} state={playing ? game : null} mode={playing ? game!.mode : (setup?.mode ?? 'historical')}>
+    <InfoLayer key={key} state={playing ? game : null} mode={playing ? game!.mode : (setup?.mode ?? 'historical')} onCardOpen={playing ? readCard : undefined}>
       {body}
     </InfoLayer>
   );
@@ -198,15 +211,25 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
       // A convenience only.
     }
   };
+  const live = marks && marks.seed === game.seed ? marks : null;
+  const fresh = live ? newCards(game, live) : [];
+  const unread = live ? unreadCards(game, live) : [];
+  // The slip announces cards found since the last orders; giving the next orders files it away,
+  // and the cards stay marked as unread in the menu and the journal until they are opened.
+  const fileSlip = () => {
+    if (live && fresh.length) setMarks(withNoticed(live, fresh));
+  };
 
   const go = () => {
     if (!current) return;
+    fileSlip();
     setDraft(current);
     setSelected(null);
     act(() => resolveHalfDay(game, toPlan(game, current)).state);
   };
   const choose = (c: ChoiceId) => act(() => chooseEvent(game, c));
   const makeCamp = (orders: EveningOrders) => {
+    fileSlip();
     setSelected(null);
     act(() => endDay(game, orders).state);
   };
@@ -214,7 +237,9 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
   return cards(
     'play',
     <div class="play" data-map={mapSize} ref={play}>
-      <TopBar state={game} onMenu={() => setOverlay('menu')} />
+      <TopBar state={game} onMenu={() => setOverlay('menu')} unread={unread.length}>
+        <JournalSlip key={fresh.join('|')} ids={fresh} onDismiss={fileSlip} />
+      </TopBar>
       <MapView
         key={game.seed}
         draw={draw!}
@@ -256,6 +281,7 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
       {overlay === 'menu' && (
         <Menu
           state={game}
+          unread={unread.length}
           open={setOverlay}
           units={units}
           onUnits={changeUnits}
@@ -273,7 +299,7 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
           }}
         />
       )}
-      {overlay === 'journal' && <Journal state={game} onClose={() => setOverlay('menu')} />}
+      {overlay === 'journal' && <Journal state={game} unread={unread} onRead={readCard} onClose={() => setOverlay('menu')} />}
       {overlay === 'party' && <Party state={game} onClose={() => setOverlay('menu')} />}
       {overlay === 'briefing' && <BriefingSheet onClose={() => setOverlay('menu')} />}
       {overlay === 'help' && <Help onClose={() => setOverlay('menu')} />}

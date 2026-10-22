@@ -161,3 +161,28 @@ describe('the plan sheet draft', () => {
     expect(excessCache(s)).toBeNull();
   });
 });
+
+describe('journal marks', () => {
+  it('counts the cards an expedition starts with as read, and announces the ones found after', async () => {
+    const m = await import('../src/ui/journalMarks');
+    const s = newGame({ seed: 11, mode: 'historical' });
+    const marks = m.marksFor(s);
+    expect(m.newCards(s, marks)).toEqual([]);
+    const later = playTo(11, 2);
+    expect(later.cards).toEqual(expect.arrayContaining(['ridgeMethod', 'distanceByClock']));
+    const fresh = m.newCards(later, marks);
+    expect(fresh).toEqual(expect.arrayContaining(['ridgeMethod', 'distanceByClock']));
+    // Giving the next orders files the slip away; the cards stay unread until opened.
+    const filed = m.withNoticed(marks, fresh);
+    expect(m.newCards(later, filed)).toEqual([]);
+    expect(m.unreadCards(later, filed)).toEqual(fresh);
+    const read = m.withOpened(filed, 'ridgeMethod');
+    expect(m.unreadCards(later, read)).not.toContain('ridgeMethod');
+  });
+
+  it('gives each card a first sentence for the slip', async () => {
+    const { cardLede } = await import('../src/ui/journalMarks');
+    expect(cardLede('cairn')).toBe('On 19 May, on the second ridge, the party found a pile of stones.');
+    expect(cardLede('signs-huts')).toMatch(/^On 13 May 1813, their third day out,/);
+  });
+});
