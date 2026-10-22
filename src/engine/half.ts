@@ -86,6 +86,7 @@ export function resolveHalfDay(state: GameState, plan: HalfDayPlan): HalfResult 
 
   applyAccounts(ctx);
   const event = finishHalf(ctx);
+  s.today.log.push(...ctx.lines);
   return { state: s, log: ctx.lines.map((text) => ({ day, half, text })), ...(event ? { event } : {}) };
 }
 

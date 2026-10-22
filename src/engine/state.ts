@@ -77,7 +77,7 @@ export function newGame(opts: NewGameOptions): GameState {
     today: blankToday(),
     cards: ['whoseCountry'],
     journal: [],
-    stats: { deadEnds: 0, refusals: 0, restDays: 0, horseFalls: 0, strays: 0, kills: 0, illnesses: 0, dryNights: 0, manHours: {} },
+    stats: { deadEnds: 0, refusals: 0, restDays: 0, horseFalls: 0, strays: 0, kills: 0, illnesses: 0, dryNights: 0, manHours: {}, campMilesByDay: [] },
     opts: structuredClone(opts),
     actions: [],
   };

@@ -10,8 +10,20 @@ export {
   markedAhead,
   assignments,
   loadAfterCache,
+  validTarget,
 } from './plan';
 export { resolveHalfDay } from './half';
+export {
+  leads,
+  chooseTarget,
+  furthestReachable,
+  horseWater,
+  campChoice,
+  canAdvance,
+  suggestCampMove,
+  targetSpent,
+  stableNoise,
+} from './advice';
 export { chooseEvent, eventCard } from './events';
 export { endDay } from './night';
 export { computeOutcome, routeShare } from './score';
@@ -26,6 +38,9 @@ export {
   straightMiles,
   walkedMiles,
   openMiles,
+  pathMiles,
+  zoneOf,
+  trenchNeed,
   EPS,
 } from './map';
 export {
@@ -40,9 +55,13 @@ export {
   freshLb,
   dailyFood,
   horseCapacity,
+  horseLoads,
+  withParty,
+  rationLevel,
   MEMBER_ORDER,
+  MEMBER_INFO,
 } from './party';
-export { T, MAP_DATA, JOURNAL_1813, CARDS } from './data';
+export { T, MAP_DATA, JOURNAL_1813, CARDS, regionSpec, terrainSpec } from './data';
 export type * from './types';
 
 import type { GameState } from './types';

@@ -344,6 +344,8 @@ export interface GameState {
     dryNights: number;
     /** Man-hours by activity across the run, for tuning. */
     manHours: Record<string, number>;
+    /** Furthest camp miles along the trail at the end of each day, for the end screen's ghost line. */
+    campMilesByDay: number[];
   };
   opts: NewGameOptions;
   actions: Action[];

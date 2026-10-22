@@ -55,6 +55,7 @@ export function endDay(state: GameState, orders: EveningOrders): EndDayResult {
   s.journal.push(journal);
 
   s.pending.push(...ctx.events);
+  s.stats.campMilesByDay.push(Math.round(s.furthestCampMiles * 100) / 100);
   s.day += 1;
   s.phase = 'morning';
   startDay(s, ctx.lines);

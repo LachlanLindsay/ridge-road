@@ -64,7 +64,7 @@ export function startDay(s: GameState, lines: string[]) {
   s.weather = pickWeighted(s, { fair: w.fair, dew: w.dew, cloud: w.cloud, rain: w.rain }) as Weather;
   s.today.cloudLifts = s.weather === 'cloud' && chance(s, T.weather.cloudLiftChance);
   s.frostTonight = chance(s, w.frost);
-  lines.push(`${dateOf(s.day)}: ${weatherWord(s.weather)}.`);
+  lines.push(`Dawn: ${weatherWord(s.weather).toLowerCase()}.`);
   if (s.weather === 'dew' && !s.restToday) s.pending.push({ id: 'dew' });
 }
 
