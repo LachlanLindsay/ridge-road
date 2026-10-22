@@ -15,6 +15,10 @@ const hot = (window as unknown as { claude?: { hot?: Hot } }).claude?.hot;
 const root = document.getElementById('app')!;
 function start(data: unknown) {
   const save = (data as { save?: unknown } | null)?.save;
+  if (import.meta.env.DEV && location.search.includes('gallery')) {
+    void import('./ui/art/Gallery').then(({ Gallery }) => render(<Gallery />, root));
+    return;
+  }
   render(<App resume={typeof save === 'string' ? save : null} />, root);
 }
 

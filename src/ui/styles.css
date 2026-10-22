@@ -17,6 +17,14 @@
   --haze-3: #6d8090;
   --scrim: rgba(28, 26, 22, 0.42);
   --on-ink: #f4f5f0;
+  /* The engravings: haze from far (0) to near (3), then ink. */
+  --art-0: #aebcc4;
+  --art-1: #8a9ba7;
+  --art-2: #627585;
+  --art-3: #3c4953;
+  --art-4: var(--ink);
+  --art-water: #4d7795;
+  --art-smoke: #8c877c;
   --font-display: 'IM Fell English', 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
   --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, Roboto, 'Helvetica Neue', Arial, sans-serif;
   --radius: 10px;
@@ -44,6 +52,12 @@
     --haze-3: #52646f;
     --scrim: rgba(0, 0, 0, 0.55);
     --on-ink: #1b2026;
+    --art-0: #3b4651;
+    --art-1: #53636f;
+    --art-2: #788a96;
+    --art-3: #a9b4ba;
+    --art-water: #7aa8c6;
+    --art-smoke: #8e9399;
     color-scheme: dark;
   }
 }
@@ -65,6 +79,12 @@
   --haze-3: #52646f;
   --scrim: rgba(0, 0, 0, 0.55);
   --on-ink: #1b2026;
+  --art-0: #3b4651;
+  --art-1: #53636f;
+  --art-2: #788a96;
+  --art-3: #a9b4ba;
+  --art-water: #7aa8c6;
+  --art-smoke: #8e9399;
   color-scheme: dark;
 }
 
@@ -1251,11 +1271,18 @@ p {
   background: var(--paper);
 }
 .title {
+  height: 100%;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   gap: 8px;
-  padding-block: 32px;
+  padding-block: 24px 32px;
+}
+.title > :first-child {
+  margin-top: auto;
+}
+.title > :last-child {
+  margin-bottom: auto;
 }
 .title-inner,
 .briefing-inner,
@@ -1277,19 +1304,19 @@ p {
   color: var(--ink-2);
   font-size: 1.02rem;
 }
-.range {
-  display: block;
+.title-art,
+.briefing-art {
   width: 100%;
-  height: clamp(90px, 22vw, 150px);
+  max-width: 46rem;
+  margin-inline: auto;
 }
-.range-3 {
-  fill: var(--haze-1);
+.briefing-art {
+  animation: plate-in 0.5s ease both;
 }
-.range-2 {
-  fill: var(--haze-2);
-}
-.range-1 {
-  fill: var(--haze-3);
+@keyframes plate-in {
+  from {
+    opacity: 0;
+  }
 }
 .title-actions {
   display: grid;
@@ -1330,9 +1357,19 @@ p {
 }
 
 .briefing {
+  height: 100%;
+  overflow-y: auto;
   display: flex;
-  align-items: center;
-  padding-block: 32px;
+  flex-direction: column;
+  gap: 4px;
+  padding-block: 12px 32px;
+}
+/* Centred when there is room; scrolls from the top when there is not. */
+.briefing > :first-child {
+  margin-top: auto;
+}
+.briefing > :last-child {
+  margin-bottom: auto;
 }
 .briefing-inner {
   display: grid;
@@ -1499,4 +1536,76 @@ p {
   fill: var(--water);
   opacity: 0.8;
   letter-spacing: 0.08em;
+}
+
+/* ---------------------------------------------------------------- engravings */
+
+.art {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.art path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.art .pp {
+  fill: var(--paper);
+}
+.art .l0 {
+  stroke: var(--art-0);
+}
+.art .l1 {
+  stroke: var(--art-1);
+}
+.art .l2 {
+  stroke: var(--art-2);
+}
+.art .l3 {
+  stroke: var(--art-3);
+}
+.art .l4 {
+  stroke: var(--art-4);
+}
+.art .f0 {
+  fill: var(--art-0);
+}
+.art .f1 {
+  fill: var(--art-1);
+}
+.art .f2 {
+  fill: var(--art-2);
+}
+.art .f3 {
+  fill: var(--art-3);
+}
+.art .f4 {
+  fill: var(--art-4);
+}
+.art .lw {
+  stroke: var(--art-water);
+}
+.art .ls {
+  stroke: var(--art-smoke);
+}
+.art .lp {
+  stroke: var(--paper);
+}
+.art .pk {
+  fill: var(--paper);
+  stroke: var(--art-4);
+}
+.art .o1 {
+  opacity: 0.7;
+}
+.art .o2 {
+  opacity: 0.42;
+}
+/* A plate fades out at its sides and foot, the way a vignetted book engraving does. */
+.plate {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent), linear-gradient(to bottom, transparent, #000 5%, #000 82%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent), linear-gradient(to bottom, transparent, #000 5%, #000 82%, transparent);
+  mask-composite: intersect;
 }
