@@ -1,0 +1,27 @@
+{
+  "_doc": "The 1813 party's camp-to-camp miles per day from Blaxland's 1823 account, 11-31 May 1813 (SPEC.md, 'The 1813 map'). Used for the end screen's ghost line, plotted as share of route. May 13 and 19 are estimates. Journal entry text for each date is still to be added (M3), quoting only the explorers' own words.",
+  "reckoningMiles": 58,
+  "days": [
+    { "date": "1813-05-11", "move": 2,    "kind": "move", "est": false },
+    { "date": "1813-05-12", "move": 3.25, "kind": "move", "est": false },
+    { "date": "1813-05-13", "move": 2,    "kind": "move", "est": true },
+    { "date": "1813-05-14", "move": 0,    "kind": "cut",  "est": false },
+    { "date": "1813-05-15", "move": 0,    "kind": "cut",  "est": false },
+    { "date": "1813-05-16", "move": 0,    "kind": "rest", "est": false },
+    { "date": "1813-05-17", "move": 6.5,  "kind": "move", "est": false },
+    { "date": "1813-05-18", "move": 0,    "kind": "cut",  "est": false },
+    { "date": "1813-05-19", "move": 2,    "kind": "move", "est": true },
+    { "date": "1813-05-20", "move": 5,    "kind": "move", "est": false },
+    { "date": "1813-05-21", "move": 4,    "kind": "move", "est": false },
+    { "date": "1813-05-22", "move": 4.5,  "kind": "move", "est": false },
+    { "date": "1813-05-23", "move": 3.5,  "kind": "move", "est": false },
+    { "date": "1813-05-24", "move": 4.5,  "kind": "move", "est": false },
+    { "date": "1813-05-25", "move": 3.5,  "kind": "move", "est": false },
+    { "date": "1813-05-26", "move": 2.75, "kind": "move", "est": false },
+    { "date": "1813-05-27", "move": 5.25, "kind": "move", "est": false },
+    { "date": "1813-05-28", "move": 5.75, "kind": "move", "est": false },
+    { "date": "1813-05-29", "move": 2.5,  "kind": "move", "est": false },
+    { "date": "1813-05-30", "move": 0,    "kind": "rest", "est": false },
+    { "date": "1813-05-31", "move": 6,    "kind": "move", "est": false }
+  ]
+}

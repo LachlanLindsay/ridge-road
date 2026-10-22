@@ -1,0 +1,149 @@
+{
+  "_doc": "Every number the engine uses. Mirrors SPEC.md 'Tuning table'. Entries listed under _specGaps are not in the spec and were filled in for M1; review them.",
+  "_calibrated": "M1 sim calibration changed these from SPEC.md: clearing rates x1.5 (scrub 0.30->0.45, thick 0.10->0.15, thorny 0.15->0.22, rocky 0.12->0.18) and brush scouting speeds (scrub 1.25->1.75, thick/thorny/rocky 0.75->1.0). See CALIBRATION.md.",
+  "_specGaps": [
+    "stamina.start",
+    "stamina.perHour.grass",
+    "grass.lbPerManHour",
+    "horses.startCondition",
+    "horses.rejoinCondition",
+    "horses.strayDelayCapHours",
+    "efficiency.servantMoraleFactor applies to scouting and cutting",
+    "advance.staminaPerHour",
+    "wear: accrues per hour each working party (scouts, cutters, the advance) spends in a terrain",
+    "events.eventChanceFactor and all of modes.easy / modes.hard"
+  ],
+  "start": { "date": "1813-05-11", "parDays": 21 },
+  "time": { "halfHours": 4, "dewDelayHours": 1, "walkMph": 2.5 },
+  "terrain": {
+    "openForest": { "passable": true,  "scoutMph": 1.5,  "clearMiPerWorkerHour": 0,    "horseMph": 2.0, "wearPerHour": 0.2, "hunt": "good" },
+    "heath":      { "passable": true,  "scoutMph": 2.0,  "clearMiPerWorkerHour": 0,    "horseMph": 2.0, "wearPerHour": 0.2, "hunt": "poor" },
+    "meadow":     { "passable": true,  "scoutMph": 2.0,  "clearMiPerWorkerHour": 0,    "horseMph": 2.0, "wearPerHour": 0.2, "hunt": "good" },
+    "swamp":      { "passable": true,  "scoutMph": 1.0,  "clearMiPerWorkerHour": 0,    "horseMph": 1.5, "wearPerHour": 0.2, "hunt": "poor" },
+    "scrub":      { "passable": false, "scoutMph": 1.75, "clearMiPerWorkerHour": 0.45, "horseMph": 2.0, "wearPerHour": 0.5, "hunt": "poor" },
+    "thick":      { "passable": false, "scoutMph": 1.0,  "clearMiPerWorkerHour": 0.15, "horseMph": 2.0, "wearPerHour": 0.5, "hunt": "poor" },
+    "thorny":     { "passable": false, "scoutMph": 1.0,  "clearMiPerWorkerHour": 0.22, "horseMph": 2.0, "wearPerHour": 1.0, "hunt": "poor" },
+    "rocky":      { "passable": false, "scoutMph": 1.0,  "clearMiPerWorkerHour": 0.18, "horseMph": 1.5, "wearPerHour": 0.5, "hunt": "poor" }
+  },
+  "efficiency": {
+    "base": 0.5,
+    "perStamina": 0.005,
+    "tools": { "axe": 1.0, "hatchet": 0.75, "none": 0.3 },
+    "wentworthCut": 1.15,
+    "servantMoraleBelow": 40,
+    "servantMoraleFactor": 0.9,
+    "rain": 0.8
+  },
+  "scouting": { "extraMemberBonus": 0.1, "maxTeam": 3, "cloud": 0.6, "rain": 0.8 },
+  "advance": { "staminaPerHour": { "leader": -5, "other": -3 } },
+  "stamina": {
+    "start": 100,
+    "max": 100,
+    "perHour": { "walk": -3, "scout": -5, "cut": -7, "water": -9, "carry": -10, "hunt": -4, "camp": -1, "rest": 3, "grass": -4 },
+    "recovery": { "full": 40, "reduced": 30, "short": 20, "none": 5, "noWater": -10, "frostNoBlanket": -8, "sickFactor": 0.5, "wentworthBonus": 5, "dingoes": -5, "nightDuty": -10 }
+  },
+  "rations": {
+    "levels": { "full": 1, "reduced": 0.6667, "short": 0.5 },
+    "flourPerMan": 1,
+    "meatPerMan": 1,
+    "dogMeat": 0.5,
+    "freshKeepDays": 3,
+    "freshKeepDaysFrost": 5
+  },
+  "weights": { "shot": 0.16667, "axe": 6, "hatchet": 3, "hoe": 5, "blanket": 5, "shoes": 2, "campKit": 30 },
+  "loadouts": {
+    "historical": { "flour": 220, "saltMeat": 180, "tea": 20, "shots": 60, "axes": 3, "hatchets": 2, "hoe": 1, "blankets": 7, "shoes": 7, "campKit": 1, "grass": 0 }
+  },
+  "horses": {
+    "count": 4,
+    "startCondition": 100,
+    "capacityLb": 160,
+    "overloadLb": 200,
+    "weakBelow": 50,
+    "weakCarry": 0.75,
+    "exhaustedBelow": 25,
+    "rejoinCondition": 30,
+    "rejoinChance": 0.5,
+    "night": { "goodFeed": 8, "rushy": -2, "noFeed": -10, "noWater": -6, "overloaded": -3, "longMove": -3, "longMoveMiles": 6, "grassLbPerHorse": 15, "blaxlandLossFactor": 0.75 },
+    "fall": { "base": 0.02, "per10LbOver": 0.01, "weakPerPoint": 0.005, "hours": 1, "injuryChance": 0.1, "injuryCondition": 20, "lightenLb": 20 },
+    "strayChance": 0.15,
+    "strayHours": 2,
+    "strayDelayCapHours": 4
+  },
+  "dogs": { "count": 5 },
+  "wear": { "dewPush": 3, "shoesRelief": 10 },
+  "morale": {
+    "start": 70,
+    "max": 100,
+    "daily": -1,
+    "rations": { "full": 0, "reduced": -3, "short": -6, "none": -12 },
+    "noWater": -6,
+    "freshMeat": 4,
+    "tea": 3,
+    "newGroundPerMile": 1,
+    "newGroundMaxPerDay": 4,
+    "lookout": 5,
+    "firstView": 15,
+    "cairn": 5,
+    "deadEnd": -6,
+    "fallsIll": -2,
+    "restDay": { "threshold": 45, "good": 4, "bad": -4 },
+    "nightAlarm": -2,
+    "cloudLifts": 2,
+    "refusalBelow": 25
+  },
+  "illness": {
+    "chill": { "base": 0.02, "wearOver": 60, "wear": 0.03, "staminaUnder": 30, "lowStamina": 0.04, "wetWork": 0.03, "frostNoBlanket": 0.05, "dewPush": 0.03, "efficiency": 0.7, "tooIllIfWorks": 0.15, "recoverIfRested": 0.3 },
+    "bowel": { "fromDay": 14, "base": 0.03, "noFreshMeatDays": 4, "noFreshMeat": 0.04, "poorWater": 0.04, "efficiency": 0.8, "recover": 0.2 },
+    "footsore": { "wearOver": 70, "chance": 0.05, "walkFactor": 0.85 },
+    "tooIll": { "toChill": 0.25 }
+  },
+  "weather": {
+    "zones": {
+      "mountains": { "fair": 0.45, "dew": 0.30, "cloud": 0.15, "rain": 0.10, "frost": 0 },
+      "west":      { "fair": 0.70, "dew": 0.20, "cloud": 0.05, "rain": 0.05, "frost": 0.6 }
+    },
+    "cloudLiftChance": 0.4
+  },
+  "hunting": {
+    "dogs": { "good": 0.25, "poor": 0.08 },
+    "man": { "good": 0.35, "poor": 0.10 },
+    "burneFactor": 2,
+    "smallLb": 10,
+    "largeLb": 30,
+    "smallChance": 0.6,
+    "strayChance": 0.05,
+    "strayBackNextMorning": 0.7
+  },
+  "obstacles": {
+    "rockStepWorkerHours": 6,
+    "passSearchScoutHours": 3,
+    "trenchWorkerHoursHoe": 6,
+    "trenchWorkerHoursNoHoe": 16,
+    "descentHours": 2,
+    "ascentHours": 3,
+    "gullyFtPerHour": 300,
+    "waterCarriers": 2
+  },
+  "lookout": { "radiusMiles": 2 },
+  "lawson": { "hintAccuracy": 0.75 },
+  "grass": { "lbPerManHour": 15 },
+  "events": { "dingoes": 0.12, "dogsRaceOff": 0.06, "dogsRaceOffAfterDay": 8, "eventChanceFactor": 1 },
+  "forcedHome": { "noFoodDays": 2, "tooIllCount": 3 },
+  "returnLeg": { "unmarkedMph": 1, "loseHourChancePerMile": 0.25 },
+  "scoring": {
+    "base": 1000,
+    "parDays": 21,
+    "perDay": 20,
+    "perHorse": 50,
+    "allWell": 100,
+    "routeMax": 300,
+    "foodPer10Lb": 5,
+    "titles": { "trailblazer": 1600, "explorer": 1250 }
+  },
+  "modes": {
+    "easy": { "moraleStart": 75, "decoyDelta": -1, "hintAccuracy": 0.85, "clearRateFactor": 1.1, "eventChanceFactor": 0.75 },
+    "historical": { "moraleStart": 70, "decoyDelta": 0, "hintAccuracy": 0.75, "clearRateFactor": 1, "eventChanceFactor": 1 },
+    "hard": { "moraleStart": 65, "decoyDelta": 1, "hintAccuracy": 0.65, "clearRateFactor": 0.9, "eventChanceFactor": 1.25 }
+  }
+}

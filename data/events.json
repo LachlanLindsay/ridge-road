@@ -1,0 +1,53 @@
+{
+  "_doc": "Choice event cards. Text is placeholder copy written fresh for M1; the engine fills in each choice's effect line with live numbers. Final card writing is M3.",
+  "dew": {
+    "title": "Heavy dew",
+    "text": "The brush is soaked to the shoulder. Wet clothes all day, or a late start.",
+    "choices": { "wait": "Wait for it to dry", "push": "Push through" }
+  },
+  "horseFall": {
+    "title": "A horse falls under its load",
+    "text": "A pack horse has gone down on the track and has to be unloaded and got up again.",
+    "choices": { "reload": "Reload", "lighten": "Lighten the load" }
+  },
+  "horseExhausted": {
+    "title": "A horse is spent",
+    "text": "One of the horses can barely stand under its pack.",
+    "choices": { "spread": "Spread its load", "cache": "Cache goods here", "rest": "Rest a day here" }
+  },
+  "dryCamp": {
+    "title": "Dry camp",
+    "text": "No water on the ridge tonight.",
+    "choices": { "fetch": "Send two men down the gully", "dry": "Go dry" }
+  },
+  "chill": {
+    "title": "A man takes a chill",
+    "text": "He woke shivering and stiff.",
+    "choices": { "keep": "Keep him at camp", "work": "Let him work" }
+  },
+  "bowel": {
+    "title": "Bowel complaint",
+    "text": "Salt meat and bad water are telling on him.",
+    "choices": { "rest": "Rest a day", "hunt": "Send a hunter for fresh meat", "push": "Push on" }
+  },
+  "hunterStrays": {
+    "title": "A hunter is missing",
+    "text": "He followed a kangaroo off the ridge and has not come back.",
+    "choices": { "search": "Search for him", "wait": "Wait for him" }
+  },
+  "dogsRaceOff": {
+    "title": "The dogs race off in the dark",
+    "text": "The dogs tore off into the scrub, barking. The men took it for someone out there; nobody saw anyone.",
+    "choices": { "watch": "Double the watch", "settle": "Let them settle" }
+  },
+  "brood": {
+    "title": "The men brood",
+    "text": "A day without work gives the men time to count what is left.",
+    "choices": { "tea": "Tea and an extra ration", "leaders": "Leaders take the worst cutting", "pass": "Let it pass" }
+  },
+  "refusal": {
+    "title": "The men will not go on",
+    "text": "The servants say they have had enough of the ridges.",
+    "choices": { "ration": "Extra ration and tea", "rest": "Rest a day", "turnBack": "Turn back" }
+  }
+}

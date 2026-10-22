@@ -1,0 +1,13 @@
+{
+  "_doc": "Info cards the engine unlocks. Titles only for M1. Each body must be written fresh and sourced in M4 (see SPEC.md 'History and Country content').",
+  "whoseCountry":     { "title": "Whose Country", "unlock": "briefing", "body": null },
+  "ridgeMethod":      { "title": "The ridge method", "unlock": "firstEvening", "body": null },
+  "distanceByClock":  { "title": "Distance by the clock", "unlock": "firstEvening", "body": null },
+  "cairn":            { "title": "The old cairn", "unlock": "node", "body": null },
+  "signs-huts":       { "title": "Huts", "unlock": "node", "body": null },
+  "signs-smoke":      { "title": "Smoke below the ridge", "unlock": "node", "body": null },
+  "signs-woodcutter": { "title": "A man cutting wood", "unlock": "node", "body": null },
+  "signs-camps":      { "title": "An old campsite", "unlock": "node", "body": null },
+  "wombats":          { "title": "Wombat tracks", "unlock": "node", "body": null },
+  "after1813":        { "title": "After 1813", "unlock": "end", "body": null }
+}
