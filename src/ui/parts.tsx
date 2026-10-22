@@ -4,6 +4,7 @@ import { T, capacity, horseCapacity, isAway, loadLb, withParty, type GameState, 
 import { CONDITION_LABEL, TASK_HINT, TASK_LABEL, lb, shortName } from './format';
 import type { Draft } from './draft';
 import { available } from './draft';
+import { JournalGlyph } from './JournalSlip';
 import { InfoContext, cardInLine, useInfo } from './Info';
 import { infoFor } from './people';
 
@@ -11,7 +12,12 @@ export function Report({ lines, title = 'Report' }: { lines: string[]; title?: s
   const [all, setAll] = useState(false);
   const api = useContext(InfoContext);
   if (!lines.length) return null;
-  const shown = all ? lines : lines.slice(-4);
+  // A journal card found is never folded away: its line stays in view with the last few others.
+  const isCard = (l: string) => !!api && !!cardInLine(l);
+  const others = lines.map((l, i) => (isCard(l) ? -1 : i)).filter((i) => i >= 0);
+  const keep = new Set(others.slice(-4));
+  const folded = lines.filter((l, i) => isCard(l) || keep.has(i));
+  const shown = all ? lines : folded;
   return (
     <section class="report" aria-live="polite">
       <h3 class="section-title">{title}</h3>
@@ -22,7 +28,7 @@ export function Report({ lines, title = 'Report' }: { lines: string[]; title?: s
             <li key={`${i}:${l}`}>
               {card ? (
                 <button type="button" class="link-btn link-inline report-card" onClick={() => api!.open({ kind: 'card', id: card })}>
-                  {l} <span class="report-card-read">Read it</span>
+                  <JournalGlyph size={18} /> {l} <span class="report-card-read">Read it</span>
                 </button>
               ) : (
                 l
@@ -31,7 +37,7 @@ export function Report({ lines, title = 'Report' }: { lines: string[]; title?: s
           );
         })}
       </ul>
-      {lines.length > 4 && (
+      {folded.length < lines.length && (
         <button type="button" class="link-btn" onClick={() => setAll(!all)}>
           {all ? 'Show less' : `Show all ${lines.length} lines`}
         </button>

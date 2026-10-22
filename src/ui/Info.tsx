@@ -232,14 +232,28 @@ function MeetButton({ who, name, last }: { who: Who; name: string; last: boolean
   );
 }
 
-export function InfoLayer({ state, mode, children }: { state: GameState | null; mode: Mode; children: ComponentChildren }) {
+export function InfoLayer({
+  state,
+  mode,
+  onCardOpen,
+  children,
+}: {
+  state: GameState | null;
+  mode: Mode;
+  /** Told whenever a journal card is opened, from wherever: the slip, a report line, the journal. */
+  onCardOpen?: (id: string) => void;
+  children: ComponentChildren;
+}) {
   const [open, setOpen] = useState<Opened | null>(null);
   const [peek, setPeek] = useState<{ who: Who; rect: DOMRect; click: boolean } | null>(null);
+  const cardOpened = useRef(onCardOpen);
+  cardOpened.current = onCardOpen;
   const api = useMemo<InfoApi>(
     () => ({
       open: (w) => {
         setPeek(null);
         setOpen(w);
+        if (w.kind === 'card') cardOpened.current?.(w.id);
       },
       peek: (w, el, click) => setPeek({ who: w, rect: el.getBoundingClientRect(), click }),
       unpeek: () => setPeek(null),
