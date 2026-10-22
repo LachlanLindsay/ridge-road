@@ -1,5 +1,5 @@
 {
-  "_doc": "The 1813 party's days from Blaxland's 1823 account (Project Gutenberg Australia, in Ernest Scott's Australian Discovery). 'days' (11-31 May) carry the camp-to-camp miles for the end screen's ghost line, plotted as share of route, and a line for the journal; 'home' (1-6 June) carries the journey back. May 13 and 19 are estimates; 22 May is 3.25, 'rather more than three miles'. The lines are written fresh from the journal's facts.",
+  "_doc": "The 1813 party's days from Blaxland's 1823 account (Project Gutenberg Australia, in Ernest Scott's Australian Discovery). 'days' (11-31 May) carry the camp-to-camp miles for the end screen's ghost line, plotted as share of route, and a line for the journal; 'home' (1-6 June) carries the journey back. 13 and 19 May give no distance and count as 0, so the days sum to 57.75, Blaxland's 'about fifty-eight miles' (fifty through the mountain, eight beyond); 22 May is 3.25, 'rather more than three miles'. The lines are written fresh from the journal's facts.",
   "reckoningMiles": 58,
   "days": [
     {
@@ -18,10 +18,10 @@
     },
     {
       "date": "1813-05-13",
-      "move": 2,
+      "move": 0,
       "kind": "move",
       "est": true,
-      "text": "Found a track blazed by some European before them, and native huts in several places. Every ridge they explored ended at a cliff and the brush ahead was too thick to pass, so they camped in a forest tract, not two miles on."
+      "text": "Found a track blazed by some European before them, and native huts in several places. Every ridge they explored ended at a cliff and the brush ahead was too thick to pass, so they camped in a forest tract, no more than two miles on."
     },
     {
       "date": "1813-05-14",
@@ -60,7 +60,7 @@
     },
     {
       "date": "1813-05-19",
-      "move": 2,
+      "move": 0,
       "kind": "move",
       "est": true,
       "text": "Climbed the second ridge, with a first wide view back over the settlements. Found a pile of stones they took to be Bass’s, and camped at the head of a swamp."
@@ -70,7 +70,7 @@
       "move": 5,
       "kind": "move",
       "est": false,
-      "text": "Nearly five miles. Camped at noon by a swamp of about three acres of coarse rushy grass. One man was ill with a cold."
+      "text": "Nearly five miles. Camped at noon by a swamp of about three acres of coarse rushy grass. One man was taken dangerously ill with a cold."
     },
     {
       "date": "1813-05-21",
@@ -119,14 +119,14 @@
       "move": 5.25,
       "kind": "move",
       "est": false,
-      "text": "Five and a quarter miles. More fires below, with about as many people, and forest land in sight beneath the cliffs."
+      "text": "Five and a quarter miles. More fires below, with about as many people, and a stretch of open ground they took for a poor reedy swamp."
     },
     {
       "date": "1813-05-28",
       "move": 5.75,
       "kind": "move",
       "est": false,
-      "text": "Five and three-quarter miles, with no water, to the edge of the cliff. That evening they cut a trench along the slope with a hoe and got the horses down to grass and water."
+      "text": "Five and three-quarter miles, with no water, to the edge of the cliff. What they had taken for barren sand below proved to be forest land, and that evening they cut a trench along the slope with a hoe and got the horses down to fresh grass."
     },
     {
       "date": "1813-05-29",
@@ -147,7 +147,7 @@
       "move": 6,
       "kind": "move",
       "est": false,
-      "text": "About six miles south-west and west, through forest and meadow, to a hill shaped like a sugarloaf: the end of the journey out, about 58 miles from the Nepean by their reckoning. With food nearly gone, clothes and shoes worn out and the men ill, they turned for home."
+      "text": "About six miles south-west and west, through forest and meadow, to a hill shaped like a sugarloaf: the end of the journey out, after about 58 miles walked from the Nepean by their reckoning. With food nearly gone, clothes and shoes worn out and the men ill, they turned for home."
     }
   ],
   "home": [
