@@ -1,6 +1,6 @@
 # Ridge Road
 
-A tap-driven expedition sim of the 1813 crossing of the Blue Mountains: lead seven men, four pack horses and five dogs up the ridges west of Sydney, cut a path for the horses, and bring everyone home before the food runs out. The design is in [SPEC.md](SPEC.md); it was committed before any code, and [PROVENANCE.md](PROVENANCE.md) keeps the clean-room log.
+A tap-driven expedition sim of the 1813 crossing of the Blue Mountains: outfit the party (Blaxland took seven men, four pack horses and five dogs), lead it up the ridges west of Sydney, cut a path for the horses, and bring everyone home before the food runs out. The design is in [SPEC.md](SPEC.md); it was committed before any code, and [PROVENANCE.md](PROVENANCE.md) keeps the clean-room log.
 
 ## Status
 
@@ -10,7 +10,7 @@ A tap-driven expedition sim of the 1813 crossing of the Blue Mountains: lead sev
 | M1, engine and sim | Done: all three acceptance checks pass over 1,000 seeds. See [CALIBRATION.md](CALIBRATION.md) |
 | M2, map | Done: SVG survey plot with fog of war, pan, pinch and zoom. The route, decoy and hoe checks are in `test/map.test.ts`, the fog-of-war checks in `test/ui.test.ts` |
 | M3, play loop | Built: plan sheet, event cards, camp screen, journal. Plays through at phone size with touch in a headless browser; the check on a real iPhone in Safari is still to do |
-| M4, outfitting, end screen and history | Partly: the end screen with score breakdown and ghost line is in. Outfitting and sourced info-card text are not |
+| M4, outfitting, end screen and history | Partly: outfitting (party size, provisions, auto-packed load bars per horse) and the end screen with score breakdown and ghost line are in, with engraved plates on the title, briefing and outfitting screens. Sourced info-card text is not |
 | M5, ship | Partly: save and resume are in. Installable offline app, export and import are not |
 
 ## Play on your iPhone over Tailscale
@@ -70,7 +70,12 @@ src/ui/                 the Preact app
   MapView.tsx           the SVG survey plot: hachured ridges, pan, pinch, tap to select
   geometry.ts           what the map may show under fog of war (pure, tested)
   draft.ts              the plan sheet's draft: standing orders, rest days, illness, caches (pure, tested)
+  Outfit.tsx            choosing the party and stores; outfitting.ts packs the horses (pure, tested)
+  MapSize.tsx           the map's minimise and maximise controls and the drag handle
   PlanSheet.tsx CampSheet.tsx EventModal.tsx PlaceInfo.tsx Overlays.tsx EndScreen.tsx Title.tsx
+  art/                  the engraved plates, drawn in code from a seed: kit.ts (ridges, hatching, cliffs,
+                        sky, water, gums), figures.ts (horses, men, dogs, the procession), scenes.tsx.
+                        `npm run dev` then ?gallery shows them all
   copy.ts               briefing, help and card text
 sim/                    bots and the harness (Node CLI)
 test/                   Vitest suite

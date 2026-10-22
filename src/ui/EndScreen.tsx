@@ -100,7 +100,9 @@ export function EndScreen({ state, onNew, onTitle }: { state: GameState; onNew: 
         <dl class="facts">
           <div>
             <dt>Horses home</dt>
-            <dd>{o.horsesHome} of 4</dd>
+            <dd>
+              {o.horsesHome} of {state.horses.length}
+            </dd>
           </div>
           <div>
             <dt>Food left</dt>

@@ -150,9 +150,9 @@ export function partyPlate(counts: PartyCounts, seed = 5): Scene {
   for (const [i, x] of [92, 214, 318, 386].entries()) gum(m, { seed: seed + 70 + i, x, y: yAt(track, x) + 1, h: 44 + (i % 2) * 14, lean: (i % 2 ? -0.05 : 0.06), density: 0.9 }, 2);
   hills(m, track, H + 2, 3, { seed: seed + 32, depth: 30, gap: 1.2, growth: 0.12, bias: 0.12 });
   m.push({ d: tufts(track, { seed: seed + 33, from: 0, to: W, every: 10, h: 5 }), c: 'l3', w: 0.45 });
-  const { fig } = procession(counts, track, { from: 44, to: 376, maxScale: 1, seed: seed + 3 });
+  const { fig } = procession(counts, track, { from: 44, to: 376, maxScale: 0.92, seed: seed + 3 });
   m.push(...figureMarks(fig));
-  gum(m, { seed: seed + 60, x: 16, y: yAt(track, 16) + 16, h: 150, lean: 0.07, spread: 0.85 });
+  gum(m, { seed: seed + 60, x: 16, y: yAt(track, 16) + 16, h: 132, lean: 0.07, spread: 0.85 });
   return { w: W, h: H, marks: m };
 }
 

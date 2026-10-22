@@ -7,13 +7,15 @@ import { EventModal } from './EventModal';
 import { mapDraw } from './geometry';
 import { Grip, readMapSize, writeMapSize, type MapSize } from './MapSize';
 import { MapView } from './MapView';
+import { Outfit } from './Outfit';
+import { toOptions, type Outfit as OutfitT } from './outfitting';
 import { Help, Journal, MapKey, Menu, Party, type OverlayId } from './Overlays';
 import { PlanSheet } from './PlanSheet';
 import { clearSave, readDraft, readSave, writeDraft, writeSave } from './save';
 import { Briefing, Title } from './Title';
 import { TopBar } from './TopBar';
 
-type Screen = 'title' | 'briefing' | 'play';
+type Screen = 'title' | 'briefing' | 'outfit' | 'play';
 
 /** A seed from the address (?seed=123) replays a known expedition; otherwise a fresh one. */
 function startSeed(): number {
@@ -44,6 +46,8 @@ export function App({ resume }: { resume: string | null }) {
   const [overlay, setOverlay] = useState<OverlayId | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [mapSize, setMapSizeState] = useState<MapSize>(() => readMapSize());
+  // A new expedition between the title and the first morning: its mode and seed, before outfitting.
+  const [setup, setSetup] = useState<{ mode: Mode; seed: number } | null>(null);
   const sheet = useRef<HTMLDivElement>(null);
   const play = useRef<HTMLDivElement>(null);
   const setMapSize = (m: MapSize) => {
@@ -85,16 +89,25 @@ export function App({ resume }: { resume: string | null }) {
   };
 
   const start = (mode: Mode) => {
-    clearSave();
-    setGame(newGame({ seed: startSeed(), mode }));
-    setDraft(null);
-    setSelected(null);
-    setOverlay(null);
+    setSetup({ mode, seed: startSeed() });
     setScreen('briefing');
   };
 
+  // The game begins once the party is outfitted; until then any saved expedition is kept.
+  const setOut = (o: OutfitT) => {
+    if (!setup) return;
+    clearSave();
+    setGame(newGame({ ...setup, ...toOptions(o) }));
+    setSetup(null);
+    setDraft(null);
+    setSelected(null);
+    setOverlay(null);
+    setScreen('play');
+  };
+
+  if (screen === 'briefing' && setup) return <Briefing onDone={() => setScreen('outfit')} />;
+  if (screen === 'outfit' && setup) return <Outfit onSetOut={setOut} onBack={() => setScreen('title')} />;
   if (screen === 'title' || !game) return <Title save={game} onContinue={() => setScreen('play')} onStart={start} />;
-  if (screen === 'briefing') return <Briefing onDone={() => setScreen('play')} />;
   if (game.phase === 'over') return <EndScreen state={game} onNew={() => setScreen('title')} onTitle={() => setScreen('title')} />;
 
   const go = () => {

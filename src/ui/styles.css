@@ -25,6 +25,8 @@
   --art-4: var(--ink);
   --art-water: #4d7795;
   --art-smoke: #8c877c;
+  --food: #b5813a;
+  --gear: #8c877c;
   --font-display: 'IM Fell English', 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
   --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, Roboto, 'Helvetica Neue', Arial, sans-serif;
   --radius: 10px;
@@ -58,6 +60,8 @@
     --art-3: #a9b4ba;
     --art-water: #7aa8c6;
     --art-smoke: #8e9399;
+    --food: #d2a25a;
+    --gear: #7f8389;
     color-scheme: dark;
   }
 }
@@ -85,6 +89,8 @@
   --art-3: #a9b4ba;
   --art-water: #7aa8c6;
   --art-smoke: #8e9399;
+  --food: #d2a25a;
+  --gear: #7f8389;
   color-scheme: dark;
 }
 
@@ -1608,4 +1614,201 @@ p {
   -webkit-mask-composite: source-in;
   mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent), linear-gradient(to bottom, transparent, #000 5%, #000 82%, transparent);
   mask-composite: intersect;
+}
+
+/* ---------------------------------------------------------------- outfitting */
+
+.outfit {
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+}
+.outfit-art {
+  width: 100%;
+  max-width: 46rem;
+  margin-inline: auto;
+  padding-top: 8px;
+}
+.outfit-inner {
+  width: 100%;
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 4px var(--gutter-r) 20px var(--gutter-l);
+  display: grid;
+  gap: 12px;
+}
+.outfit-title {
+  margin: -6px 0 0;
+  font-size: clamp(2.2rem, 10vw, 3.2rem);
+  line-height: 1;
+}
+.outfit-lede {
+  font-size: 1rem;
+}
+.outfit-inner > .link-btn {
+  justify-self: start;
+  padding-block: 2px;
+}
+.outfit-section {
+  display: grid;
+  margin-top: 8px;
+}
+.outfit-fixed {
+  font-size: 0.86rem;
+  color: var(--ink-2);
+  margin-bottom: 2px;
+}
+.ostep {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px 4.8rem 44px;
+  align-items: center;
+  gap: 6px;
+  min-height: 58px;
+  padding-block: 6px;
+  border-bottom: 1px solid var(--line);
+}
+.ostep-fixed {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.ostep-text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.ostep-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.ostep-note {
+  font-size: 0.8rem;
+  color: var(--ink-2);
+}
+.ostep-note.is-warn {
+  color: var(--warn);
+}
+.step-unit {
+  font-weight: 400;
+  font-size: 0.78rem;
+  color: var(--ink-2);
+}
+.ostep-none {
+  padding-right: 6px;
+  color: var(--ink-2);
+}
+.outfit-sum {
+  margin-top: 8px;
+  font-size: 0.88rem;
+}
+.outfit-sum.is-warn {
+  color: var(--warn);
+}
+.loads {
+  display: grid;
+  gap: 7px;
+  margin-top: 6px;
+}
+.load-row {
+  display: grid;
+  grid-template-columns: 4.4rem minmax(0, 1fr) 3.6rem;
+  align-items: center;
+  gap: 10px;
+}
+.load-name {
+  font-size: 0.88rem;
+}
+.load-bar {
+  position: relative;
+  display: flex;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+/* The last fifth of the bar, 160 to 200 lb, is load carried only at a push. */
+.load-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 80%;
+  right: 0;
+  border-left: 1.5px solid var(--ink-2);
+  background: repeating-linear-gradient(135deg, transparent 0 3px, var(--paper) 3px 4.5px);
+  opacity: 0.6;
+}
+.load-food {
+  background: var(--food);
+}
+.load-gear {
+  background: var(--gear);
+}
+.load-lb {
+  text-align: right;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+.load-lb.is-warn {
+  color: var(--warn);
+  font-weight: 600;
+}
+.load-lb.is-over {
+  color: var(--road);
+  font-weight: 700;
+}
+.load-key {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin-top: 2px;
+  font-size: 0.76rem;
+  color: var(--ink-2);
+}
+.key-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+.key-line {
+  display: inline-block;
+  height: 12px;
+  margin-left: 6px;
+  border-left: 1.5px solid var(--ink-2);
+}
+.outfit-checks {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  font-size: 0.88rem;
+}
+.outfit-checks .is-over {
+  color: var(--road);
+  font-weight: 600;
+}
+.outfit-foot {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  display: grid;
+  gap: 6px;
+  padding: 8px var(--gutter-r) 12px var(--gutter-l);
+  background: var(--paper-2);
+  border-top: 1px solid var(--line);
+}
+.outfit-foot > * {
+  width: 100%;
+  max-width: 34rem;
+  margin-inline: auto;
+}
+.outfit-foot-sum {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
 }

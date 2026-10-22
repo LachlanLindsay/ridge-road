@@ -75,9 +75,13 @@ export const CYCLE: Task[] = ['scout', 'cut', 'camp', 'water', 'hunt', 'grass', 
 export const CAMP_CYCLE: Task[] = ['camp', 'grass', 'rest'];
 const FIELD: Task[] = ['scout', 'cut', 'water', 'hunt'];
 
-/** The 1813 rhythm: Lawson marks ahead, four cut, Blaxland and one servant mind the horses. */
-export function defaultTasks(): Partial<Record<MemberId, Task>> {
-  return { blaxland: 'camp', lawson: 'scout', wentworth: 'cut', burne: 'cut', fairs: 'cut', servant3: 'cut', servant4: 'camp' };
+/**
+ * The 1813 rhythm: Lawson marks ahead, four cut, Blaxland and one servant mind the horses. Servants
+ * beyond the 1813 four join the cutters.
+ */
+export function defaultTasks(s?: GameState): Partial<Record<MemberId, Task>> {
+  const all: Partial<Record<MemberId, Task>> = { blaxland: 'camp', lawson: 'scout', wentworth: 'cut', burne: 'cut', fairs: 'cut', servant3: 'cut', servant4: 'camp', servant5: 'cut', servant6: 'cut' };
+  return s ? Object.fromEntries(s.men.map((m) => [m.id, all[m.id] ?? 'camp'])) : all;
 }
 
 export function halfKey(s: GameState): string {
@@ -131,7 +135,7 @@ export function normalizeDraft(s: GameState, prev: Draft | null): Draft {
   const key = halfKey(s);
   const fresh = !prev || prev.key !== key;
   const resting = restDay(s);
-  const roster = { ...(prev?.roster ?? prev?.tasks ?? defaultTasks()) };
+  const roster = { ...(prev?.roster ?? prev?.tasks ?? defaultTasks(s)) };
   let tasks: Partial<Record<MemberId, Task>>;
   if (!fresh) tasks = { ...prev!.tasks };
   else if (resting) tasks = Object.fromEntries(s.men.map((m) => [m.id, 'rest' as Task]));

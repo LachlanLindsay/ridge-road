@@ -86,7 +86,7 @@ export function Briefing({ onDone }: { onDone: () => void }) {
         ))}
         <div class="briefing-actions">
           <button type="button" class="btn btn-go" onClick={() => (last ? onDone() : setI(i + 1))}>
-            {last ? 'Set out from the Nepean' : 'Next'}
+            {last ? 'Outfit the party' : 'Next'}
           </button>
           {!last && (
             <button type="button" class="btn btn-quiet" onClick={onDone}>

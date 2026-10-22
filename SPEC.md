@@ -185,6 +185,8 @@ At full rations the party eats 16.5 lb a day: 14 lb for the men and 2.5 lb of me
 
 The outfitting screen packs items across the horses automatically, heaviest first, and warns above 160 lb a horse. At any camp the player can cache items and collect them on the way back.
 
+The outfitting screen also sets the party. The three leaders always go; the player picks 0 to 6 servants (Burne first, then Fairs, then unnamed convict servants), 2 to 6 pack horses and 0 to 8 dogs, defaulting to the 1813 party. Each extra man and dog eats; each extra horse carries 160 lb more but needs feed every night; a bigger pack of dogs raises the daily chance of a kill (five dogs give the tuned odds). There are no wagons: nothing on wheels could climb the ridges until Cox's road of 1814–15, and the screen says so. Limits live in `tuning.json` under `party`.
+
 ## Tuning table
 
 Every number the engine uses lives in one file, `tuning.json`, mirrored here. With these defaults the 1813 method reaches the goal in about 21 days, the same as the real party (calibration at the end).
