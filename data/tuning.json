@@ -1,6 +1,6 @@
 {
   "_doc": "Every number the engine uses. Mirrors SPEC.md 'Tuning table'. Entries listed under _specGaps are not in the spec and were filled in for M1; review them.",
-  "_calibrated": "M1 sim calibration changed these from SPEC.md: clearing rates x1.5 (scrub 0.30->0.45, thick 0.10->0.15, thorny 0.15->0.22, rocky 0.12->0.18) and brush scouting speeds (scrub 1.25->1.75, thick/thorny/rocky 0.75->1.0). See CALIBRATION.md.",
+  "_calibrated": "M1 sim calibration changed these from SPEC.md: clearing rates x1.6 (scrub 0.30->0.48, thick 0.10->0.16, thorny 0.15->0.24, rocky 0.12->0.19) and brush scouting speeds (scrub 1.25->1.75, thick/thorny/rocky 0.75->1.0). See CALIBRATION.md.",
   "_specGaps": [
     "stamina.start",
     "stamina.perHour.grass",
@@ -20,10 +20,10 @@
     "heath":      { "passable": true,  "scoutMph": 2.0,  "clearMiPerWorkerHour": 0,    "horseMph": 2.0, "wearPerHour": 0.2, "hunt": "poor" },
     "meadow":     { "passable": true,  "scoutMph": 2.0,  "clearMiPerWorkerHour": 0,    "horseMph": 2.0, "wearPerHour": 0.2, "hunt": "good" },
     "swamp":      { "passable": true,  "scoutMph": 1.0,  "clearMiPerWorkerHour": 0,    "horseMph": 1.5, "wearPerHour": 0.2, "hunt": "poor" },
-    "scrub":      { "passable": false, "scoutMph": 1.75, "clearMiPerWorkerHour": 0.45, "horseMph": 2.0, "wearPerHour": 0.5, "hunt": "poor" },
-    "thick":      { "passable": false, "scoutMph": 1.0,  "clearMiPerWorkerHour": 0.15, "horseMph": 2.0, "wearPerHour": 0.5, "hunt": "poor" },
-    "thorny":     { "passable": false, "scoutMph": 1.0,  "clearMiPerWorkerHour": 0.22, "horseMph": 2.0, "wearPerHour": 1.0, "hunt": "poor" },
-    "rocky":      { "passable": false, "scoutMph": 1.0,  "clearMiPerWorkerHour": 0.18, "horseMph": 1.5, "wearPerHour": 0.5, "hunt": "poor" }
+    "scrub":      { "passable": false, "scoutMph": 1.75, "clearMiPerWorkerHour": 0.48, "horseMph": 2.0, "wearPerHour": 0.5, "hunt": "poor" },
+    "thick":      { "passable": false, "scoutMph": 1.0,  "clearMiPerWorkerHour": 0.16, "horseMph": 2.0, "wearPerHour": 0.5, "hunt": "poor" },
+    "thorny":     { "passable": false, "scoutMph": 1.0,  "clearMiPerWorkerHour": 0.24, "horseMph": 2.0, "wearPerHour": 1.0, "hunt": "poor" },
+    "rocky":      { "passable": false, "scoutMph": 1.0,  "clearMiPerWorkerHour": 0.19, "horseMph": 1.5, "wearPerHour": 0.5, "hunt": "poor" }
   },
   "efficiency": {
     "base": 0.5,

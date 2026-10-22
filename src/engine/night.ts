@@ -1,6 +1,6 @@
 // endDay: evening orders, then the night in camp settles the costs, then dawn.
 import { T, modeTuning } from './data';
-import { blankToday, dateOf, startDay, turnHome, weatherWord } from './day';
+import { dateOf, startDay, turnHome, weatherWord } from './day';
 import { EPS, huntHabitat, zoneOf } from './map';
 import {
   clamp,
@@ -296,4 +296,3 @@ function forcedHome(ctx: Ctx) {
   say(ctx, `Forced home: ${why}.`);
 }
 
-export { blankToday };

@@ -9,7 +9,6 @@ import {
   currentSlot,
   dailyFood,
   foodLb,
-  horseCapacity,
   isAway,
   loadLb,
   member,
@@ -267,4 +266,3 @@ function apply(ctx: Ctx, ev: PendingEvent, choice: ChoiceId) {
   }
 }
 
-export { horseCapacity };
