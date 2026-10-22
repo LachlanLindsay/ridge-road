@@ -2,6 +2,7 @@
 // Drag to pan, pinch or scroll to zoom, tap a point or a ridge to select it.
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { distToSeg, hachurePath, lerp, targetPoint, type Bounds, type MapDraw, type NodeDraw, type P, type SegDraw } from './geometry';
+import { SizeButtons, type MapSize } from './MapSize';
 
 interface View {
   cx: number;
@@ -18,6 +19,8 @@ interface Props {
   moveTo: string | null;
   onTap: (id: string | null) => void;
   onKey: () => void;
+  size: MapSize;
+  onSize: (m: MapSize) => void;
 }
 
 const K_MAX = 420;
@@ -65,7 +68,7 @@ function frameCamp(draw: MapDraw, w: number, h: number): View {
   return fit(b, w, h, kMin, Math.min(kMax, Math.min(w, h) / (R * 1.2)));
 }
 
-export function MapView({ draw, campKey, selected, target, moveTo, onTap, onKey }: Props) {
+export function MapView({ draw, campKey, selected, target, moveTo, onTap, onKey, size: mapSize, onSize }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const svg = useRef<SVGSVGElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
@@ -303,6 +306,7 @@ export function MapView({ draw, campKey, selected, target, moveTo, onTap, onKey 
           <span>N</span>
         </div>
         {v && <ScaleBar k={v.k} />}
+        <SizeButtons size={mapSize} onSize={onSize} />
         <div class="map-buttons">
           <button type="button" class="map-btn" onClick={onKey} aria-label="Map key">
             Key

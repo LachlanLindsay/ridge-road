@@ -5,6 +5,7 @@ import { normalizeDraft, toPlan, type Draft } from './draft';
 import { EndScreen } from './EndScreen';
 import { EventModal } from './EventModal';
 import { mapDraw } from './geometry';
+import { Grip, readMapSize, writeMapSize, type MapSize } from './MapSize';
 import { MapView } from './MapView';
 import { Help, Journal, MapKey, Menu, Party, type OverlayId } from './Overlays';
 import { PlanSheet } from './PlanSheet';
@@ -42,7 +43,13 @@ export function App({ resume }: { resume: string | null }) {
   const [selected, setSelected] = useState<string | null>(null);
   const [overlay, setOverlay] = useState<OverlayId | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mapSize, setMapSizeState] = useState<MapSize>(() => readMapSize());
   const sheet = useRef<HTMLDivElement>(null);
+  const play = useRef<HTMLDivElement>(null);
+  const setMapSize = (m: MapSize) => {
+    setMapSizeState(m);
+    writeMapSize(m);
+  };
 
   useEffect(() => {
     if (game) writeSave(game);
@@ -103,7 +110,7 @@ export function App({ resume }: { resume: string | null }) {
   };
 
   return (
-    <div class="play">
+    <div class="play" data-map={mapSize} ref={play}>
       <TopBar state={game} onMenu={() => setOverlay('menu')} />
       <MapView
         key={game.seed}
@@ -114,7 +121,10 @@ export function App({ resume }: { resume: string | null }) {
         moveTo={current && game.leg === 'out' ? current.moveTo : null}
         onTap={setSelected}
         onKey={() => setOverlay('key')}
+        size={mapSize}
+        onSize={setMapSize}
       />
+      <Grip size={mapSize} onSize={setMapSize} play={play} />
       <div class="sheet" ref={sheet}>
         {game.phase === 'evening' ? (
           <CampSheet key={`${game.seed}:${game.day}`} state={game} onMakeCamp={makeCamp} selected={selected} setSelected={setSelected} />
