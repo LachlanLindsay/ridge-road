@@ -1,4 +1,5 @@
 import { JOURNAL_1813, type GameState } from '../engine';
+import { EndArt } from './art/scenes';
 import { CARD_TEXT } from './copy';
 import { lb, mi, plural } from './format';
 
@@ -65,6 +66,9 @@ export function EndScreen({ state, onNew, onTitle }: { state: GameState; onNew: 
   const crossed = o.result === 'crossed';
   return (
     <main class="end">
+      <div class="end-art">
+        <EndArt crossed={crossed} counts={{ servants: Math.max(0, state.men.length - 3), horses: o.horsesHome, dogs: state.dogs }} />
+      </div>
       <div class="end-inner">
         <p class="end-kicker">{crossed ? `Home on day ${o.dayHome}` : `Turned back on day ${o.turnedBackDay ?? o.dayHome}`}</p>
         <h1 class="display end-title">{crossed ? 'Crossed and returned' : 'Repulsed'}</h1>

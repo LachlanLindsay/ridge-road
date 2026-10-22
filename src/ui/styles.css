@@ -1311,7 +1311,8 @@ p {
   font-size: 1.02rem;
 }
 .title-art,
-.briefing-art {
+.briefing-art,
+.end-art {
   width: 100%;
   max-width: 46rem;
   margin-inline: auto;
@@ -1413,10 +1414,13 @@ p {
   height: 100%;
   overflow-y: auto;
 }
+.end-art {
+  padding-top: 8px;
+}
 .end-inner {
   display: grid;
   gap: 18px;
-  padding-block: 28px 40px;
+  padding-block: 8px 40px;
 }
 .end-kicker {
   font-size: 0.85rem;

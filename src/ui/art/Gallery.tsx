@@ -1,6 +1,6 @@
 // Development only (?gallery): every plate at phone width, for review.
 import { useMemo } from 'preact/hooks';
-import { country, ford, partyPlate, Plate, vista } from './scenes';
+import { country, crossed, ford, partyPlate, Plate, repulsed, vista } from './scenes';
 
 const PLATES = [
   { name: 'vista', make: () => vista() },
@@ -9,6 +9,8 @@ const PLATES = [
   { name: 'party-small', make: () => partyPlate({ servants: 0, horses: 2, dogs: 0 }) },
   { name: 'party-big', make: () => partyPlate({ servants: 6, horses: 6, dogs: 8 }) },
   { name: 'country', make: () => country() },
+  { name: 'crossed', make: () => crossed({ servants: 4, horses: 3, dogs: 4 }) },
+  { name: 'repulsed', make: () => repulsed({ servants: 4, horses: 4, dogs: 5 }) },
 ];
 
 function One({ name, make }: { name: string; make: () => ReturnType<typeof vista> }) {
