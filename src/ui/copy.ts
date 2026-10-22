@@ -21,7 +21,7 @@ export const BRIEFING: Card[] = [
     paragraphs: [
       'Seven men, four pack horses and five dogs. Only the three leaders can mark the trail, so every scouting party needs one.',
       'Gregory Blaxland, grazier: the horses lose less condition on afternoons he minds camp. William Lawson, surveyor: he reads whether a ridge falls away, right three times in four, and sees further from a lookout. William Charles Wentworth, the youngest: he cuts faster and recovers more overnight.',
-      'James Burne, servant and guide, is the best hunter. Samuel Fairs and two convict servants whose names were not recorded make up the rest. The traits are invented for play.',
+      'James Burne, servant and guide, is the best hunter. Samuel Fairs and two convict servants who have never been identified make up the rest. The traits are invented for play.',
     ],
   },
   {
@@ -107,7 +107,7 @@ export const CARD_TEXT: Record<string, string[]> = {
     'The journal notices animals mostly as food or as noise: a kangaroo an eagle had just killed, on the second day; an emu calling all night across a gully; native dogs, now called dingoes, howling round the camp; and the kangaroos the dogs ran down, welcome after nearly two weeks of salt meat.',
   ],
   viewBack: [
-    'On 19 May the party began to climb the second ridge of the mountains, and from up there they could see back over the colony: Prospect Hill to the east, a little south; the Seven Hills, Windsor and Grose Head to the north-east; Mount Banks to the north-west.',
+    'On 19 May the party began to climb the second ridge of the mountains, and from up there they could see back over the colony: Prospect Hill to the east, a little south; Windsor and Grose Head to the north-east; Mount Banks to the north-west.',
     'Mount Banks was as far as the botanist George Caley had got, in 1804.',
   ],
   rockWall: [
@@ -120,7 +120,7 @@ export const CARD_TEXT: Record<string, string[]> = {
   ],
   highHeath: [
     'On 22 May they reached the summit of the third ridge: “about two thousand acres of land clear of trees”, which they computed to be eighteen miles from the Nepean in a straight line. They camped “by the side of a fine stream of water”.',
-    'They tried to get down the cliffs by following the streams, but “were baffled in every instance”. In places, the journal says, “the perpendicular height of the rocks above the earth below could not be less than four hundred feet.”',
+    'They tried to get down the cliffs, following the streams or climbing down where the rock had fallen in, but “were baffled in every instance”. In places, the journal says, “the perpendicular height of the rocks above the earth below could not be less than four hundred feet.”',
   ],
   kangarooDogs: [
     'The kangaroo dog was bred in the colony in the early 1800s, mostly from greyhounds and Scottish deerhounds: a sighthound fast and strong enough to outrun a kangaroo and hold it, and tough enough to survive its claws. Kangaroo was a major food for the early settlers.',
@@ -166,7 +166,7 @@ export const CARD_SOURCES: Record<string, string> = {
   highHeath: 'Source: Blaxland’s journal, 22 May 1813.',
   kangarooDogs: 'Sources: Wikipedia, “Kangaroo dog”; Blaxland’s journal, 13–29 May 1813.',
   frost: 'Source: Blaxland’s journal, 30 May and 6 June 1813.',
-  saltMeat: 'Source: Blaxland’s journal, 31 May 1813.',
+  saltMeat: 'Source: Blaxland’s journal, 29 and 31 May 1813.',
   wayDown: 'Sources: Blaxland’s journal, 28–29 May 1813; Greater Blue Mountains Drive, “Colonial exploration”.',
   sugarloaf: 'Source: Blaxland’s journal, 31 May and 1 June 1813.',
   after1813: 'Sources: Wikipedia, “1813 crossing of the Blue Mountains”, “Blue Mountains (New South Wales)” and “Bathurst War”.',

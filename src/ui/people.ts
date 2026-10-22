@@ -31,7 +31,7 @@ const MODE_LABEL: Record<Mode, string> = { easy: 'Easy', historical: 'Historical
 
 const pct = (p: number) => `${Math.round(p * 100)}%`;
 
-const ATTENDED = 'Blaxland’s journal doesn’t name the four servants. It says only that the three gentlemen set out “attended by four servants”.';
+const ATTENDED = 'Blaxland’s journal never names the four servants. The three gentlemen set out “attended by four servants”, and after that the servants appear only as unnamed men.';
 
 const LEADER = 'A leader: only Blaxland, Lawson and Wentworth can mark the trail, so every scouting party needs one of them.';
 
@@ -62,7 +62,7 @@ const MEN: Record<MemberId, ManCard> = {
       'Born in Kent in 1778, he sailed for New South Wales in 1805 with his family and some livestock, and set up as a farmer with cattle. Early in 1813, wanting more grazing land, he won Governor Macquarie’s approval to try a crossing by following the ridges, and asked Lawson and Wentworth to come.',
       'His journal of the crossing, written in the third person, was printed in England in 1823; the quotations in this game come from it. He later claimed to have led the expedition, though records from the time suggest the three led it together.',
     ],
-    sources: 'Sources: Wikipedia, “Gregory Blaxland” and “1813 crossing of the Blue Mountains”.',
+    sources: 'Sources: Australian Dictionary of Biography, “Blaxland, Gregory”; Wikipedia, “Gregory Blaxland” and “1813 crossing of the Blue Mountains”.',
   },
   lawson: {
     role: 'Leader · surveyor and lieutenant, 38 in May 1813',
@@ -106,22 +106,32 @@ const MEN: Record<MemberId, ManCard> = {
     role: 'Servant · convict',
     trait: 'A steady hand',
     game: () => [PLAIN_HANDS, servantLine()],
-    history: ['Samuel Fairs was a convict who had arrived in the colony in 1810.', ATTENDED],
-    sources: 'Sources: Wikipedia, “1813 crossing of the Blue Mountains”; Blaxland’s journal, 11 May 1813.',
+    history: [
+      'Samuel Fairs was a convict who had arrived in the colony in 1810.',
+      'He was identified as one of the party only two centuries later, when the historian Christine Yeats found his 1817 petition for a conditional pardon in the NSW State Archives; the find was announced in 2013. At its foot, Wentworth’s father D’Arcy had vouched that Fairs went over the mountains with the three and served them well.',
+      ATTENDED,
+    ],
+    sources: 'Sources: Wikipedia, “1813 crossing of the Blue Mountains”; Blue Mountains Gazette, “Research hunch reveals identity of convict from Blue Mountains crossing”, April 2013; Blaxland’s journal, 11 May 1813.',
   },
   servant3: {
-    role: 'Servant · convict, name not recorded',
+    role: 'Servant · convict, identity unknown',
     trait: 'A steady hand',
     game: () => [PLAIN_HANDS, servantLine()],
-    history: ['The last two of the four servants are thought to have been convicts, but who they were is not known.', ATTENDED],
-    sources: 'Sources: Wikipedia, “1813 crossing of the Blue Mountains”; Blaxland’s journal, 11 May 1813.',
+    history: [
+      'The last two of the four servants are thought to have been convicts, but who they were is not known. Samuel Fairs was identified only in 2013, from a petition in the state archives; these two never have been.',
+      ATTENDED,
+    ],
+    sources: 'Sources: Wikipedia, “1813 crossing of the Blue Mountains”; Blue Mountains Gazette, April 2013; Blaxland’s journal, 11 May 1813.',
   },
   servant4: {
-    role: 'Servant · convict, name not recorded',
+    role: 'Servant · convict, identity unknown',
     trait: 'A steady hand',
     game: () => [PLAIN_HANDS, servantLine()],
-    history: ['The last two of the four servants are thought to have been convicts, but who they were is not known.', ATTENDED],
-    sources: 'Sources: Wikipedia, “1813 crossing of the Blue Mountains”; Blaxland’s journal, 11 May 1813.',
+    history: [
+      'The last two of the four servants are thought to have been convicts, but who they were is not known. Samuel Fairs was identified only in 2013, from a petition in the state archives; these two never have been.',
+      ATTENDED,
+    ],
+    sources: 'Sources: Wikipedia, “1813 crossing of the Blue Mountains”; Blue Mountains Gazette, April 2013; Blaxland’s journal, 11 May 1813.',
   },
   servant5: {
     role: 'Servant · not in the 1813 party',
@@ -145,7 +155,7 @@ function modeAccuracy(mode: Mode): number {
 
 const HORSE_HISTORY = [
   'Four pack horses went, “laden with provisions, ammunition, and other necessaries”. The journal never names them; the names here are invented.',
-  'Kept standing under their packs while the men cut ahead, “some of the horses, while standing, fell several times under their loads” on 13 May. Going down the cliffs on 29 May “the horses could but just keep their footing without a load”, and on the way home, on 4 June, “one of the horses fell this day with his load, quite exhausted”.',
+  'On 13 May, the day every ridge they tried ended at a precipice, “some of the horses, while standing, fell several times under their loads”. Going down the cliffs on 29 May “the horses could but just keep their footing without a load”, and on the way home, on 4 June, “one of the horses fell this day with his load, quite exhausted”.',
 ];
 
 const DOG_HISTORY = [
