@@ -102,6 +102,7 @@ function night(ctx: Ctx, tea: boolean, feedGrass: boolean) {
     s.today.dogsKilled = true;
     s.stats.kills += 1;
     say(ctx, `The dogs brought down a ${lb === T.hunting.smallLb ? 'small' : 'large'} kangaroo: ${lb} lb of fresh meat.`);
+    unlockCard(ctx, 'kangarooDogs');
   }
 
   // Night alarms.
@@ -117,7 +118,10 @@ function night(ctx: Ctx, tea: boolean, feedGrass: boolean) {
     }
   }
   const frost = s.frostTonight;
-  if (frost) say(ctx, 'A hard frost in the night.');
+  if (frost) {
+    say(ctx, 'A hard frost in the night.');
+    unlockCard(ctx, 'frost');
+  }
 
   // Water.
   const menWater = node.water !== 'none' || s.today.waterFetched;
@@ -252,6 +256,7 @@ function illness(ctx: Ctx, men: Member[], frost: boolean, covered: Set<string>) 
           addMorale(s, T.morale.fallsIll);
           say(ctx, `${m.name} is down with a bowel complaint.`);
           queueEvent(ctx, { id: 'bowel', member: m.id });
+          unlockCard(ctx, 'saltMeat');
           continue;
         }
       }

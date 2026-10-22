@@ -10,7 +10,8 @@ import { seedRng } from './rng';
 import { storesFrom } from './stores';
 import type { Action, GameState, Horse, Member, NewGameOptions, PartyChoice } from './types';
 
-const HORSE_NAMES = ['Bay', 'Grey', 'Chestnut', 'Black', 'Dun', 'Roan'];
+/** The game's names for the horses: the journal never names them. */
+export const HORSE_NAMES = ['Bay', 'Grey', 'Chestnut', 'Black', 'Dun', 'Roan'];
 
 const clampInt = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, Math.round(v)));
 

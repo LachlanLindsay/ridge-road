@@ -106,6 +106,42 @@ export const CARD_TEXT: Record<string, string[]> = {
     'On 25 May, pushing through prickly brush, the party “saw the track of the wombat”, which Blaxland describes as “an animal which burrows in the ground as a badger”.',
     'The journal notices animals mostly as food or as noise: a kangaroo an eagle had just killed, on the second day; an emu calling all night across a gully; native dogs, now called dingoes, howling round the camp; and the kangaroos the dogs ran down, welcome after nearly two weeks of salt meat.',
   ],
+  viewBack: [
+    'On 19 May the party began to climb the second ridge of the mountains, and from up there they could see back over the colony: Prospect Hill to the east, a little south; the Seven Hills, Windsor and Grose Head to the north-east; Mount Banks to the north-west.',
+    'Mount Banks was as far as the botanist George Caley had got, in 1804.',
+  ],
+  rockWall: [
+    'On 18 May the ridge was “not more than fifteen or twenty yards over, with deep precipices on each side”, and then it was blocked by a mass of rock “nearly thirty feet high, extending across the whole breadth”.',
+    'There was a small broken track through the middle, and by moving a few large stones they were able to pass.',
+  ],
+  gullyWater: [
+    'On 17 May they camped on a narrow ridge between two very deep gullies. Water had to be fetched up a precipice “about six hundred feet high”, and they “could get scarcely enough for the party”. “The horses had none this night.”',
+    'Water decided where they camped. On the second night there was “just enough for the night, contained in a hole in the rock”; further on they camped at the heads of swamps.',
+  ],
+  highHeath: [
+    'On 22 May they reached the summit of the third ridge: “about two thousand acres of land clear of trees”, which they computed to be eighteen miles from the Nepean in a straight line. They camped “by the side of a fine stream of water”.',
+    'They tried to get down the cliffs by following the streams, but “were baffled in every instance”. In places, the journal says, “the perpendicular height of the rocks above the earth below could not be less than four hundred feet.”',
+  ],
+  kangarooDogs: [
+    'The kangaroo dog was bred in the colony in the early 1800s, mostly from greyhounds and Scottish deerhounds: a sighthound fast and strong enough to outrun a kangaroo and hold it, and tough enough to survive its claws. Kangaroo was a major food for the early settlers.',
+    'The journal doesn’t say what kind of dogs the party’s five were, but it records their kills: a large kangaroo on 13 May, two small ones on 16 May, and another on 29 May, “very acceptable, as the party had lived on salt meat since they caught the last”.',
+  ],
+  frost: [
+    'Below the western cliffs, in the journal for 30 May: during the night “the ground was covered with a thick frost, and a leg of the kangaroo was quite frozen”.',
+    'When they got back on 6 June, they found that on the colony’s side “the winter had not set in”, nor had there been any frost.',
+  ],
+  saltMeat: [
+    'Between kangaroo kills the party lived on salt meat. By 31 May “the whole party were ill with bowel complaints”; the journal doesn’t say why.',
+    '“Their provisions were nearly expended, their clothes and shoes were in very bad condition”, and they decided “to return home by the track they came”.',
+  ],
+  wayDown: [
+    'On 28 May they stopped at five o’clock on the edge of the precipice, above forest land. They got the horses down “by cutting a small trench with a hoe, which kept them from slipping”, and the horses “again tasted fresh grass for the first time since they left the forest land on the other side of the mountain”.',
+    'Next morning the party went down “through a pass in the rock, about thirty feet wide”, starting at seven o’clock and reaching the foot at nine. In places “the party were obliged to carry the packages themselves”. They had come down from what is now called Mount York.',
+  ],
+  sugarloaf: [
+    'On 31 May, eight miles into the forest land beyond the cliffs, they came to “a high hill, in the shape of a sugar-loaf”, and in the afternoon “ascended its summit”. Around it lay forest and grass land “sufficient in extent in their opinion, to support the stock of the colony for the next thirty years”.',
+    '“This was the extreme point of their journey.” The next morning they turned for home.',
+  ],
   after1813: [
     'In November 1813 Governor Macquarie sent the surveyor George Evans after the party. He passed their sugarloaf hill, now Mount Blaxland, and went on to the plains where Bathurst stands.',
     'In July 1814 William Cox began a road over the mountains along the party’s line. Thirty convicts and eight guards finished it in January 1815. Each of the three leaders was granted 1,000 acres beyond the range.',
@@ -124,5 +160,14 @@ export const CARD_SOURCES: Record<string, string> = {
   'signs-woodcutter': 'Source: Blaxland’s journal, 24 May 1813.',
   'signs-camps': 'Source: Blaxland’s journal, 28, 29 and 31 May 1813.',
   wombats: 'Source: Blaxland’s journal, 12–29 May 1813.',
+  viewBack: 'Sources: Blaxland’s journal, 19 May 1813; Greater Blue Mountains Drive, “Colonial exploration”.',
+  rockWall: 'Source: Blaxland’s journal, 18 May 1813.',
+  gullyWater: 'Source: Blaxland’s journal, 12–23 May 1813.',
+  highHeath: 'Source: Blaxland’s journal, 22 May 1813.',
+  kangarooDogs: 'Sources: Wikipedia, “Kangaroo dog”; Blaxland’s journal, 13–29 May 1813.',
+  frost: 'Source: Blaxland’s journal, 30 May and 6 June 1813.',
+  saltMeat: 'Source: Blaxland’s journal, 31 May 1813.',
+  wayDown: 'Sources: Blaxland’s journal, 28–29 May 1813; Greater Blue Mountains Drive, “Colonial exploration”.',
+  sugarloaf: 'Source: Blaxland’s journal, 31 May and 1 June 1813.',
   after1813: 'Sources: Wikipedia, “1813 crossing of the Blue Mountains”, “Blue Mountains (New South Wales)” and “Bathurst War”.',
 };

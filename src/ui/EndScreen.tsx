@@ -1,9 +1,10 @@
-import { JOURNAL_1813, type GameState } from '../engine';
+import { JOURNAL_1813, freshLb, type GameState, type Item } from '../engine';
 import { useState } from 'preact/hooks';
 import { EndArt } from './art/scenes';
 import { CARD_SOURCES, CARD_TEXT } from './copy';
 import { Feedback } from './Feedback';
 import { lb, mi, plural } from './format';
+import { packHorses } from './outfitting';
 
 const REASON: Record<string, string> = {
   morale: 'the men lost heart',
@@ -63,6 +64,25 @@ function Ghost({ state }: { state: GameState }) {
   );
 }
 
+/** What the horses came home carrying: usually little but the kit, after a long trip. */
+function homeLoads(state: GameState, horses: number) {
+  const st = state.stores;
+  const loadout: Record<Item, number> = {
+    flour: st.flour,
+    saltMeat: st.saltMeat + freshLb(st),
+    tea: st.tea,
+    shots: st.shots,
+    axes: st.axes,
+    hatchets: st.hatchets,
+    hoe: st.hoe,
+    blankets: st.blankets,
+    shoes: st.shoes,
+    campKit: st.campKit,
+    grass: st.grass,
+  };
+  return packHorses({ servants: 0, horses: Math.max(1, horses), dogs: 0, loadout });
+}
+
 export function EndScreen({ state, onNew, onTitle }: { state: GameState; onNew: () => void; onTitle: () => void }) {
   const [feedback, setFeedback] = useState(false);
   const o = state.outcome!;
@@ -70,7 +90,7 @@ export function EndScreen({ state, onNew, onTitle }: { state: GameState; onNew: 
   return (
     <main class="end">
       <div class="end-art">
-        <EndArt crossed={crossed} counts={{ servants: Math.max(0, state.men.length - 3), horses: o.horsesHome, dogs: state.dogs }} />
+        <EndArt crossed={crossed} counts={{ servants: Math.max(0, state.men.length - 3), horses: o.horsesHome, dogs: state.dogs }} loads={homeLoads(state, o.horsesHome)} />
       </div>
       <div class="end-inner">
         <p class="end-kicker">{crossed ? `Home on day ${o.dayHome}` : `Turned back on day ${o.turnedBackDay ?? o.dayHome}`}</p>

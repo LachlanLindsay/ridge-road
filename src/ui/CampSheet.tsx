@@ -12,8 +12,8 @@ import {
   type Item,
   type Rations,
 } from '../engine';
-import { CONDITION_LABEL, GRASS_LABEL, horseWaterAt, itemText, lb, num, plural, shortName, waterLabel } from './format';
-import { Horses, Meter, Report, Stepper, Toggle } from './parts';
+import { GRASS_LABEL, horseWaterAt, itemText, lb, num, plural, waterLabel } from './format';
+import { Horses, ManRow, Report, Stepper, Toggle } from './parts';
 import { PlaceInfo } from './PlaceInfo';
 
 interface Props {
@@ -224,11 +224,7 @@ export function CampSheet({ state, onMakeCamp, selected, setSelected }: Props) {
 
         <section class="men" aria-label="The men">
           {men.map((m) => (
-            <div key={m.id} class="man">
-              <span class="man-name">{shortName(m.name)}</span>
-              <Meter value={m.stamina} />
-              <span class={m.condition ? 'man-cond is-warn' : 'man-cond'}>{m.condition ? CONDITION_LABEL[m.condition] : Math.round(m.stamina)}</span>
-            </div>
+            <ManRow key={m.id} state={state} m={m} />
           ))}
         </section>
         <Horses state={state} />

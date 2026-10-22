@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { GameState } from '../engine';
 import { BUILD } from './build';
-import { Sheet } from './Overlays';
+import { Sheet } from './Sheet';
 import { encodeReplay } from './replaycode';
 import { reportText } from './report';
 

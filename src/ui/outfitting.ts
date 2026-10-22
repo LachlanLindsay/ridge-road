@@ -1,6 +1,6 @@
 // Outfitting: the party and the stores it sets out with, how the horses would carry them, and how
 // long the food would last. Every number comes from tuning.json through the engine.
-import { T, itemWeight, partyOf, type Item, type Loadout } from '../engine';
+import { HORSE_NAMES, T, itemWeight, partyOf, type Item, type Loadout } from '../engine';
 
 export interface Outfit {
   servants: number;
@@ -78,9 +78,8 @@ export interface HorseLoad {
   items: Partial<Record<Item, number>>;
 }
 
-const HORSE_NAMES = ['Bay', 'Grey', 'Chestnut', 'Black', 'Dun', 'Roan'];
 const WHOLE: Item[] = ['campKit', 'axes', 'hoe', 'blankets', 'hatchets', 'shoes'];
-const LOOSE: Item[] = ['flour', 'saltMeat', 'tea', 'shots'];
+const LOOSE: Item[] = ['flour', 'saltMeat', 'tea', 'shots', 'grass'];
 
 /**
  * Pack the horses the way a packer would: the heavy single pieces first, each onto the horse

@@ -39,7 +39,7 @@ import {
 } from './party';
 import { chance } from './rng';
 import { addFresh, cacheItems, collectCache } from './stores';
-import { addMorale, arriveAt, findPass, queueEvent, say, useLookout, type Ctx } from './world';
+import { addMorale, arriveAt, findPass, queueEvent, say, unlockCard, useLookout, type Ctx } from './world';
 import type { GameState, Half, HalfDayPlan, HalfResult, Member, MemberId, Task, Terrain } from './types';
 
 type Activity = 'walk' | 'scout' | 'cut' | 'water' | 'carry' | 'hunt' | 'camp' | 'idle' | 'rest' | 'grass';
@@ -557,6 +557,7 @@ function waterHalf(ctx: HalfCtx, carriers: Member[], H: number) {
   if (trips >= T.obstacles.waterCarriers) {
     s.today.waterFetched = true;
     say(ctx, `Water carried up ${node.gullyFt} ft from the gully for the men and dogs.`);
+    unlockCard(ctx, 'gullyWater');
   } else {
     say(ctx, 'Not enough trips to the gully to water the camp.');
   }

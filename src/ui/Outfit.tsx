@@ -1,9 +1,11 @@
 // Outfitting at the Nepean: choose the party and its stores, see the horses' loads and how long the
 // food will last, then set out. The party drawing redraws as the numbers change.
 import { useState } from 'preact/hooks';
-import { T, partyOf, type Item } from '../engine';
+import { HORSE_NAMES, LEADERS, MEMBER_INFO, SERVANTS, T, partyOf, type Item } from '../engine';
 import { PartyArt } from './art/scenes';
-import { lb, num } from './format';
+import { lb, num, shortName } from './format';
+import { MeetRow } from './Info';
+import type { Who } from './people';
 import { KIT, PROVISIONS, capacityOf, checks, dailyEat, foodDays, grassNights, men, outfit1813, packHorses, sameOutfit, totalLoad, type HorseLoad, type Outfit as OutfitT, type Row } from './outfitting';
 
 function Count({ id, label, note, warn, value, min, max, step = 1, unit, onChange }: { id: string; label: string; note?: string; warn?: boolean; value: number; min: number; max: number; step?: number; unit?: string; onChange: (v: number) => void }) {
@@ -37,6 +39,13 @@ function servantNote(n: number): string {
   if (n === 1) return 'James Burne, guide and the best hunter';
   if (n === 2) return 'Burne and Samuel Fairs';
   return `Burne, Fairs and ${word(n - 2)} convict servant${n - 2 > 1 ? 's' : ''}`;
+}
+
+/** Everyone setting out, for the row of names that opens their cards. */
+function meet(o: OutfitT, loads: HorseLoad[]): { who: Who; name: string }[] {
+  const men = [...LEADERS, ...SERVANTS.slice(0, o.servants)].map((id) => ({ who: { kind: 'man', id } as Who, name: shortName(MEMBER_INFO[id].name) }));
+  const horses = Array.from({ length: o.horses }, (_, i) => ({ who: { kind: 'horse', id: i + 1, load: loads[i] } as Who, name: HORSE_NAMES[i] ?? `Horse ${i + 1}` }));
+  return [...men, ...horses, ...(o.dogs > 0 ? [{ who: { kind: 'dogs', count: o.dogs } as Who, name: 'the dogs' }] : [])];
 }
 
 function Loads({ loads }: { loads: HorseLoad[] }) {
@@ -79,6 +88,7 @@ export function Outfit({ onSetOut, onBack }: { onSetOut: (o: OutfitT) => void; o
   const stop = issues.some((c) => c.level === 'stop');
   const changed = !sameOutfit(o, outfit1813());
   const h1813 = partyOf();
+  const loads = packHorses(o);
   const rows = (list: Row[]) =>
     list.map((r) => (
       <Count
@@ -99,7 +109,7 @@ export function Outfit({ onSetOut, onBack }: { onSetOut: (o: OutfitT) => void; o
   return (
     <main class="outfit">
       <div class="outfit-art">
-        <PartyArt counts={{ servants: o.servants, horses: o.horses, dogs: o.dogs }} />
+        <PartyArt counts={{ servants: o.servants, horses: o.horses, dogs: o.dogs }} loads={loads} />
       </div>
       <div class="outfit-inner">
         <p class="end-kicker">Emu Ford on the Nepean, 11 May 1813</p>
@@ -116,6 +126,7 @@ export function Outfit({ onSetOut, onBack }: { onSetOut: (o: OutfitT) => void; o
         <section class="outfit-section">
           <h2 class="section-title">The party</h2>
           <p class="outfit-fixed">Blaxland, Lawson and Wentworth lead, and only they can mark the trail.</p>
+          <MeetRow whos={meet(o, loads)} />
           <Count id="o-servants" label="Servants" note={servantNote(o.servants)} value={o.servants} min={0} max={P.servantsMax} onChange={setServants} />
           <Count id="o-horses" label="Pack horses" note={`${T.horses.capacityLb} lb each, ${T.horses.overloadLb} at a push. Grass and water every night.`} value={o.horses} min={P.horsesMin} max={P.horsesMax} onChange={(v) => set({ horses: v })} />
           <Count id="o-dogs" label="Kangaroo dogs" note="They hunt on their own and eat ½ lb of meat a day" value={o.dogs} min={0} max={P.dogsMax} onChange={(v) => set({ dogs: v })} />
@@ -150,7 +161,7 @@ export function Outfit({ onSetOut, onBack }: { onSetOut: (o: OutfitT) => void; o
 
         <section class="outfit-section">
           <h2 class="section-title">Loading the horses</h2>
-          <Loads loads={packHorses(o)} />
+          <Loads loads={loads} />
           <p class={load > cap ? 'outfit-sum is-warn' : 'outfit-sum'}>
             {lb(load)} to carry, {lb(cap)} at an easy load.{' '}
             {load <= cap ? `Room for ${lb(cap - load)} of cut grass: ${num(grassNights(o))} night${num(grassNights(o)) === '1' ? '' : 's'} of feed for ${o.horses} horses at a dry camp.` : ''}

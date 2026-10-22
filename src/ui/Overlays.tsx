@@ -1,31 +1,17 @@
 // Full-height sheets over the game: the menu, journal, party and stores, how to play, map key.
 import type { ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
-import { CARDS, JOURNAL_1813, T, foodLb, freshLb, isAway, type GameState } from '../engine';
+import { CARDS, JOURNAL_1813, T, foodLb, freshLb, type GameState } from '../engine';
 import { BUILD } from './build';
-import { CARD_SOURCES, CARD_TEXT, HELP } from './copy';
-import { CONDITION_LABEL, isoShort, itemText, lb, longDate, plural } from './format';
-import { Horses, Meter } from './parts';
+import { BriefingArt } from './art/scenes';
+import { BRIEFING, CARD_SOURCES, CARD_TEXT, HELP } from './copy';
+import { isoShort, itemText, lb, longDate, plural } from './format';
+import { DogsRow, Horses, ManRow } from './parts';
+import { Sheet } from './Sheet';
 
-export type OverlayId = 'menu' | 'journal' | 'party' | 'help' | 'key' | 'feedback';
+export { Sheet };
 
-export function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: ComponentChildren }) {
-  return (
-    <div class="backdrop backdrop-sheet" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div class="overlay" role="dialog" aria-modal="true" aria-labelledby="overlay-title">
-        <div class="overlay-head">
-          <h2 id="overlay-title" class="display">
-            {title}
-          </h2>
-          <button type="button" class="icon-btn" onClick={onClose} aria-label="Close">
-            ×
-          </button>
-        </div>
-        <div class="overlay-body">{children}</div>
-      </div>
-    </div>
-  );
-}
+export type OverlayId = 'menu' | 'journal' | 'party' | 'briefing' | 'help' | 'key' | 'feedback';
 
 export function Menu({ state, open, onClose, onTitle, onRestart }: { state: GameState; open: (o: OverlayId) => void; onClose: () => void; onTitle: () => void; onRestart: () => void }) {
   const [confirm, setConfirm] = useState(false);
@@ -39,6 +25,10 @@ export function Menu({ state, open, onClose, onTitle, onRestart }: { state: Game
         <button type="button" class="menu-item" onClick={() => open('party')}>
           Party and stores
           <span>Men, horses, food and gear</span>
+        </button>
+        <button type="button" class="menu-item" onClick={() => open('briefing')}>
+          The briefing
+          <span>May 1813, the party and whose Country it is</span>
         </button>
         <button type="button" class="menu-item" onClick={() => open('key')}>
           Map key
@@ -128,19 +118,16 @@ export function Party({ state, onClose }: { state: GameState; onClose: () => voi
   const gear = (['tea', 'shots', 'axes', 'hatchets', 'hoe', 'blankets', 'shoes', 'grass'] as const).filter((k) => st[k] > 0);
   return (
     <Sheet title="Party and stores" onClose={onClose}>
+      <p class="fine party-hint">Tap anyone, horses and dogs too, for their part in the game and in 1813.</p>
       <section class="men">
         {state.men.map((m) => (
-          <div key={m.id} class="man">
-            <span class="man-name">
-              {m.name}
-              {m.leader ? ', leader' : ''}
-            </span>
-            <Meter value={m.stamina} />
-            <span class={m.condition ? 'man-cond is-warn' : 'man-cond'}>{isAway(state, m) ? 'Away' : m.condition ? CONDITION_LABEL[m.condition] : `Stamina ${Math.round(m.stamina)}`}</span>
-          </div>
+          <ManRow key={m.id} state={state} m={m} full />
         ))}
       </section>
       <Horses state={state} />
+      <section class="men">
+        <DogsRow state={state} />
+      </section>
       <dl class="facts">
         <div>
           <dt>Food</dt>
@@ -163,14 +150,30 @@ export function Party({ state, onClose }: { state: GameState; onClose: () => voi
           </dd>
         </div>
         <div>
-          <dt>Dogs</dt>
-          <dd>{state.dogs}, hunting on their own each day</dd>
-        </div>
-        <div>
           <dt>Set out</dt>
           <dd>{longDate(1)}</dd>
         </div>
       </dl>
+    </Sheet>
+  );
+}
+
+/** The three briefing cards again, with their plates, to reread during the expedition. */
+export function BriefingSheet({ onClose }: { onClose: () => void }) {
+  return (
+    <Sheet title="The briefing" onClose={onClose}>
+      {BRIEFING.map((c, i) => (
+        <section key={c.title} class="help briefing-again">
+          <div class="briefing-again-art">
+            <BriefingArt card={i} />
+          </div>
+          <h3 class="display">{c.title}</h3>
+          {c.paragraphs.map((p) => (
+            <p key={p}>{p}</p>
+          ))}
+          {i === 1 && <p class="fine">In the plan, press and hold a man’s name, or hover over it, for his card. Party and stores, in the menu, has everyone’s.</p>}
+        </section>
+      ))}
     </Sheet>
   );
 }

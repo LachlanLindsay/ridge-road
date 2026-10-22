@@ -18,7 +18,7 @@ import {
 } from './party';
 import { chance } from './rng';
 import { addFresh, cacheWeight } from './stores';
-import { addMorale, say, type Ctx } from './world';
+import { addMorale, say, unlockCard, type Ctx } from './world';
 import type { ChoiceId, EventCard, GameState, Member, PendingEvent } from './types';
 
 interface Option {
@@ -200,6 +200,7 @@ function apply(ctx: Ctx, ev: PendingEvent, choice: ChoiceId) {
         for (const m of pickTwo(s)) m.nightPenalty += T.stamina.recovery.nightDuty;
         s.today.waterFetched = true;
         say(ctx, 'Two men bring water up from the gully after dark.');
+        unlockCard(ctx, 'gullyWater');
       }
       return;
     case 'chill': {

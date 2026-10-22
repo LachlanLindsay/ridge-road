@@ -32,7 +32,7 @@ function Coach({ onDone }: { onDone: () => void }) {
         <li>
           The plan below is ready. Press <strong>Go</strong> to work the morning, then the afternoon; then make camp for the night.
         </li>
-        <li>Tap a man to change his job. Tap a ridge on the map to work there instead.</li>
+        <li>Tap a man to change his job; press and hold him, or hover with a mouse, to read about him. Tap a ridge on the map to work there instead.</li>
         <li>
           <strong>Menu → How to play</strong> explains the rest, and <strong>Send feedback</strong> is there too.
         </li>

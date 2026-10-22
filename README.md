@@ -10,7 +10,7 @@ A tap-driven expedition sim of the 1813 crossing of the Blue Mountains: outfit t
 | M1, engine and sim | Done: all three acceptance checks pass over 1,000 seeds. See [CALIBRATION.md](CALIBRATION.md) |
 | M2, map | Done: SVG survey plot with fog of war, pan, pinch and zoom. The route, decoy and hoe checks are in `test/map.test.ts`, the fog-of-war checks in `test/ui.test.ts` |
 | M3, play loop | Built: plan sheet, event cards, camp screen, journal. Plays through at phone size with touch in a headless browser; the check on a real iPhone in Safari is still to do |
-| M4, outfitting, end screen and history | Done: outfitting (party size, provisions, auto-packed load bars per horse), the end screen with score breakdown and ghost line, engraved plates, and every journal card written fresh with its sources, plus the 1813 party's day beside each of yours in the journal (11 May to 6 June). The Country text still needs review by a Gundungurra or Darug organisation before any public release |
+| M4, outfitting, end screen and history | Done: outfitting (party size, provisions, auto-packed load bars per horse, and a party plate whose packs follow each horse's load), the end screen with score breakdown and ghost line, engraved plates, every journal card written fresh with its sources (nineteen, found as you play), a card for each man, horse and the dogs (hover, press and hold, or tap in Party and stores), plus the 1813 party's day beside each of yours in the journal (11 May to 6 June). The Country text still needs review by a Gundungurra or Darug organisation before any public release |
 | M5, ship | Partly: save and resume are in. Installable offline app, export and import are not |
 
 ## Play on your iPhone over Tailscale
@@ -77,6 +77,9 @@ src/ui/                 the Preact app
   draft.ts              the plan sheet's draft: standing orders, rest days, illness, caches (pure, tested)
   Outfit.tsx            choosing the party and stores; outfitting.ts packs the horses (pure, tested)
   MapSize.tsx           the map's minimise and maximise controls and the drag handle
+  Info.tsx people.ts     cards for the men, horses and dogs (traits with live numbers, 1813 history), and
+                        journal cards opened from the report; hover, press and hold, or tap
+  Sheet.tsx             the full-height sheet every overlay uses
   Feedback.tsx Crash.tsx report.ts replaycode.ts   beta feedback, the crash screen, replay codes
   save.ts build.ts      saves stamped with the build, carried over between builds by replay
   PlanSheet.tsx CampSheet.tsx EventModal.tsx PlaceInfo.tsx Overlays.tsx EndScreen.tsx Title.tsx

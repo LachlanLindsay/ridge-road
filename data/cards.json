@@ -9,5 +9,14 @@
   "signs-woodcutter": { "title": "A man cutting wood", "unlock": "node", "body": null },
   "signs-camps":      { "title": "An old campsite", "unlock": "node", "body": null },
   "wombats":          { "title": "Wombat tracks", "unlock": "node", "body": null },
+  "viewBack":         { "title": "The view back", "unlock": "node", "body": null },
+  "rockWall":         { "title": "The rock wall", "unlock": "node", "body": null },
+  "gullyWater":       { "title": "Water up the cliff", "unlock": "firstWater", "body": null },
+  "highHeath":        { "title": "The high heath", "unlock": "node", "body": null },
+  "kangarooDogs":     { "title": "Kangaroo dogs", "unlock": "firstDogKill", "body": null },
+  "frost":            { "title": "Frost", "unlock": "firstFrost", "body": null },
+  "saltMeat":         { "title": "Salt meat", "unlock": "firstBowel", "body": null },
+  "wayDown":          { "title": "The way down", "unlock": "node", "body": null },
+  "sugarloaf":        { "title": "The sugarloaf hill", "unlock": "node", "body": null },
   "after1813":        { "title": "After 1813", "unlock": "end", "body": null }
 }

@@ -3,7 +3,10 @@
 // the foreground. Ridges are filled with paper so nearer ones hide what lies behind them, and each
 // one's hatching fades out before the next, leaving white haze between them.
 import { useMemo } from 'preact/hooks';
-import { figureMarks, procession, type Mark, type PartyCounts } from './figures';
+import { useInfo } from '../Info';
+import { outfit1813, packHorses } from '../outfitting';
+import type { Who } from '../people';
+import { figureMarks, procession, type Mark, type Pack, type PartyCounts, type Slot } from './figures';
 import {
   areaPath,
   bandPath,
@@ -32,6 +35,17 @@ export interface Scene {
   w: number;
   h: number;
   marks: Mark[];
+  /** Where the party's figures stand, when the scene has them. */
+  slots?: Slot[];
+  /** What each horse carries, first horse first, when the scene draws the party's loads. */
+  loads?: Pack[];
+}
+
+const COUNTS_1813: PartyCounts = { servants: 4, horses: 4, dogs: 5 };
+
+/** How the 1813 party's horses were loaded, by the same packing as the outfitting screen. */
+export function loads1813(): Pack[] {
+  return packHorses(outfit1813());
 }
 
 /** Stroke weight of hatching, by tone from the far haze (0) to the foreground ink (4). */
@@ -104,7 +118,7 @@ export function vista(seed = 3): Scene {
 }
 
 /** May 1813: the party wading the Nepean, the wall of the range beyond. */
-export function ford(seed = 11): Scene {
+export function ford(seed = 11, loads: Pack[] = loads1813()): Scene {
   const W = 400;
   const H = 200;
   const m: Mark[] = [];
@@ -118,7 +132,7 @@ export function ford(seed = 11): Scene {
   const bank = hills(m, bankGround, H, 3, { seed: seed + 32, depth: 2.5, gap: 0.9 }, 2.6);
   // The party, wading: drawn before the water, so the river hides their legs.
   const water = 141.5;
-  const { fig, scale } = procession({ servants: 4, horses: 4, dogs: 5 }, curve(-4, W + 4, () => water + 6.5), { from: 86, to: 312, maxScale: 0.6, seed: seed + 3 });
+  const { fig, scale } = procession(COUNTS_1813, curve(-4, W + 4, () => water + 6.5), { from: 86, to: 312, maxScale: 0.6, seed: seed + 3, loads });
   m.push(...figureMarks(fig));
   m.push({ d: `M-4 ${water}H${W + 4}V${H + 2}H-4Z`, c: 'pp' });
   const wh = waterHatch({ seed: seed + 40, from: -4, to: W + 4, top: water, bottom: 184, gap: 1.5, bank, squash: 1 });
@@ -135,10 +149,12 @@ export function ford(seed = 11): Scene {
   return { w: W, h: H, marks: m };
 }
 
-/** The party on the march along a ridge top, against the ranges behind. */
-export function partyPlate(counts: PartyCounts, seed = 5): Scene {
-  const W = 400;
-  const H = 170;
+/** The ranges, the ridge top and the gums of the party plate: drawn once per seed, then reused. */
+const BACKDROPS = new Map<number, { before: Mark[]; after: Mark[]; track: Curve }>();
+
+function partyBackdrop(seed: number, W: number, H: number) {
+  const hit = BACKDROPS.get(seed);
+  if (hit) return hit;
   const m: Mark[] = [];
   sky(m, { seed, w: W, horizon: 112, clouds: [cloudBank(seed + 1, 290, 30, 130, 24, 6), cloudBank(seed + 2, 120, 48, 80, 12, 4)] });
   const far = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 96, amp: 3.5, scale: 110, plateau: 0.8, gullies: 3 });
@@ -150,10 +166,24 @@ export function partyPlate(counts: PartyCounts, seed = 5): Scene {
   for (const [i, x] of [92, 214, 318, 386].entries()) gum(m, { seed: seed + 70 + i, x, y: yAt(track, x) + 1, h: 44 + (i % 2) * 14, lean: (i % 2 ? -0.05 : 0.06), density: 0.9 }, 2);
   hills(m, track, H + 2, 3, { seed: seed + 32, depth: 30, gap: 1.2, growth: 0.12, bias: 0.12 });
   m.push({ d: tufts(track, { seed: seed + 33, from: 0, to: W, every: 10, h: 5 }), c: 'l3', w: 0.45 });
-  const { fig } = procession(counts, track, { from: 44, to: 376, maxScale: 0.92, seed: seed + 3 });
-  m.push(...figureMarks(fig));
-  gum(m, { seed: seed + 60, x: 16, y: yAt(track, 16) + 16, h: 132, lean: 0.07, spread: 0.85 });
-  return { w: W, h: H, marks: m };
+  const after: Mark[] = [];
+  gum(after, { seed: seed + 60, x: 16, y: yAt(track, 16) + 16, h: 132, lean: 0.07, spread: 0.85 });
+  const out = { before: m.map((mk, i) => ({ ...mk, k: `b${i}` })), after: after.map((mk, i) => ({ ...mk, k: `a${i}` })), track };
+  BACKDROPS.set(seed, out);
+  return out;
+}
+
+/**
+ * The party on the march along a ridge top, against the ranges behind. Only the procession is
+ * drawn afresh, so the plate keeps up as the outfit changes.
+ */
+export function partyPlate(counts: PartyCounts, seed = 5, loads?: Pack[]): Scene {
+  const W = 400;
+  const H = 170;
+  const b = partyBackdrop(seed, W, H);
+  const { fig, slots } = procession(counts, b.track, { from: 44, to: 376, maxScale: 0.92, seed: seed + 3, loads });
+  const party = figureMarks(fig).map((mk, i) => ({ ...mk, k: `p${i}` }));
+  return { w: W, h: H, marks: [...b.before, ...party, ...b.after], slots, loads };
 }
 
 /** Whose Country: across a valley to a cliffed wall, smoke rising from fires far below. */
@@ -201,7 +231,7 @@ export function country(seed = 21): Scene {
 }
 
 /** Crossed: from the last ridge, open grassy country rolling west to the sugarloaf hill. */
-export function crossed(counts: PartyCounts, seed = 31): Scene {
+export function crossed(counts: PartyCounts, seed = 31, loads?: Pack[]): Scene {
   const W = 400;
   const H = 180;
   const m: Mark[] = [];
@@ -233,14 +263,14 @@ export function crossed(counts: PartyCounts, seed = 31): Scene {
   const ridge = curve(-4, 196, (x) => 150 - (x / 196) * 6 + 1.2 * Math.sin(x / 9) + (x > 170 ? ((x - 170) / 26) ** 2 * 30 : 0));
   ledge(m, ridge, H + 2, seed + 60);
   m.push({ d: tufts(ridge, { seed: seed + 61, from: 4, to: 180, every: 9, h: 6 }), c: 'l4', w: 0.5 });
-  const { fig } = procession(counts, ridge, { from: 44, to: 168, maxScale: 0.5, seed: seed + 3 });
+  const { fig, slots } = procession(counts, ridge, { from: 44, to: 168, maxScale: 0.5, seed: seed + 3, loads });
   m.push(...figureMarks(fig));
   gum(m, { seed: seed + 62, x: 18, y: yAt(ridge, 18) + 2, h: 140, lean: 0.1, spread: 0.9 });
-  return { w: W, h: H, marks: m };
+  return { w: W, h: H, marks: m, slots };
 }
 
 /** Repulsed: the ridge ends at a precipice over a gorge, and the far wall gives no way on. */
-export function repulsed(counts: PartyCounts, seed = 41): Scene {
+export function repulsed(counts: PartyCounts, seed = 41, loads?: Pack[]): Scene {
   const W = 400;
   const H = 180;
   const m: Mark[] = [];
@@ -264,34 +294,54 @@ export function repulsed(counts: PartyCounts, seed = 41): Scene {
   // A dead tree at the brink.
   const dead = gumTree({ seed: seed + 23, x: edgeX - 22, y: yAt(ridge, edgeX - 22) + 1, h: 70, lean: 0.12, spread: 1.1 });
   m.push({ d: dead.wood, c: 'f4' });
-  const { fig } = procession(counts, ridge, { from: 40, to: edgeX - 40, maxScale: 0.55, seed: seed + 3 });
+  const { fig, slots } = procession(counts, ridge, { from: 40, to: edgeX - 40, maxScale: 0.55, seed: seed + 3, loads });
   m.push(...figureMarks(fig));
-  return { w: W, h: H, marks: m };
+  return { w: W, h: H, marks: m, slots };
 }
 
 // ---------------------------------------------------------------- drawing a plate
 
-export function Plate({ scene, label, class: cls }: { scene: Scene; label: string; class?: string }) {
+/** An invisible box over one figure: point at it for that man's, horse's or the dogs' card. */
+function HitBox({ slot, dogs, load }: { slot: Slot; dogs: number; load?: Pack }) {
+  const w = slot.who;
+  const who: Who = w.kind === 'dog' ? { kind: 'dogs', count: dogs } : w.kind === 'horse' ? { ...w, load } : w;
+  const info = useInfo(who, 'tap');
+  return <rect class="art-hit" x={slot.x} y={slot.y} width={slot.w} height={slot.h} {...info.props} />;
+}
+
+export function Plate({ scene, label, class: cls, dogs }: { scene: Scene; label: string; class?: string; dogs?: number }) {
   return (
     <svg class={cls ? `art ${cls}` : 'art'} viewBox={`0 0 ${scene.w} ${scene.h}`} role="img" aria-label={label}>
       {scene.marks.map((mk, i) => (
-        <path key={i} d={mk.d} class={mk.c} stroke-width={mk.w} />
+        <path key={mk.k ?? i} d={mk.d} class={mk.c} stroke-width={mk.w} />
       ))}
+      {dogs !== undefined && scene.slots && (
+        <g aria-hidden="true">
+          {scene.slots.map((sl, i) => (
+            <HitBox key={i} slot={sl} dogs={dogs} load={sl.who.kind === 'horse' ? scene.loads?.[sl.who.id - 1] : undefined} />
+          ))}
+        </g>
+      )}
     </svg>
   );
 }
 
+/** A signature of the loads, so a plate redraws only when what the horses carry changes. */
+function loadKey(loads: Pack[] | undefined): string {
+  return loads ? loads.map((l) => `${Math.round(l.total)}:${Object.entries(l.items).map(([k, v]) => `${k}${Math.round((v ?? 0) * 10)}`).join(',')}`).join('|') : '';
+}
+
 const BRIEFING_ART = [
-  { make: () => ford(), label: 'An engraving: the party wading the Nepean River, the long wall of the Blue Mountains beyond.' },
-  { make: () => partyPlate({ servants: 4, horses: 4, dogs: 5 }), label: 'An engraving: seven men, four pack horses and five dogs walking in file along a ridge top.' },
-  { make: () => country(), label: 'An engraving: across a deep valley to a wall of sandstone cliffs, smoke rising from fires on the valley floor.' },
+  { make: () => ford(), label: 'An engraving: the party wading the Nepean River, the long wall of the Blue Mountains beyond.', hits: false },
+  { make: () => partyPlate(COUNTS_1813, 5, loads1813()), label: 'An engraving: seven men, four pack horses and five dogs walking in file along a ridge top.', hits: true },
+  { make: () => country(), label: 'An engraving: across a deep valley to a wall of sandstone cliffs, smoke rising from fires on the valley floor.', hits: false },
 ];
 
 export function BriefingArt({ card }: { card: number }) {
   const art = BRIEFING_ART[card];
   const scene = useMemo(() => art?.make() ?? null, [card]);
   if (!art || !scene) return null;
-  return <Plate scene={scene} label={art.label} class="plate" />;
+  return <Plate scene={scene} label={art.label} class="plate" dogs={art.hits ? COUNTS_1813.dogs : undefined} />;
 }
 
 export function TitleArt() {
@@ -299,14 +349,17 @@ export function TitleArt() {
   return <Plate scene={scene} label="An engraving: from a lookout, ridge after ridge of the Blue Mountains fading into haze, a gum tree leaning out over the drop." class="plate plate-title" />;
 }
 
-export function PartyArt({ counts }: { counts: PartyCounts }) {
-  const scene = useMemo(() => partyPlate(counts), [counts.servants, counts.horses, counts.dogs]);
+/** The party on the march, each horse carrying its share; point at anyone for their card. */
+export function PartyArt({ counts, loads }: { counts: PartyCounts; loads?: Pack[] }) {
+  const key = loadKey(loads);
+  const scene = useMemo(() => partyPlate(counts, 5, loads), [counts.servants, counts.horses, counts.dogs, key]);
   const men = 3 + counts.servants;
-  return <Plate scene={scene} label={`An engraving of the party: ${men} men, ${counts.horses} pack horses and ${counts.dogs} dogs on the march.`} class="plate" />;
+  return <Plate scene={scene} label={`An engraving of the party: ${men} men, ${counts.horses} pack horses and ${counts.dogs} dogs on the march.`} class="plate" dogs={counts.dogs} />;
 }
 
-export function EndArt({ crossed: won, counts }: { crossed: boolean; counts: PartyCounts }) {
-  const scene = useMemo(() => (won ? crossed(counts) : repulsed(counts)), [won, counts.servants, counts.horses, counts.dogs]);
+export function EndArt({ crossed: won, counts, loads }: { crossed: boolean; counts: PartyCounts; loads?: Pack[] }) {
+  const key = loadKey(loads);
+  const scene = useMemo(() => (won ? crossed(counts, 31, loads) : repulsed(counts, 41, loads)), [won, counts.servants, counts.horses, counts.dogs, key]);
   const label = won
     ? 'An engraving: the party on the last ridge, looking out over open grassy country to a lone conical hill.'
     : 'An engraving: the party at the end of a ridge, a sheer drop before them and a cliffed wall across the gorge.';

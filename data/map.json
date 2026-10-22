@@ -24,13 +24,13 @@
     { "region": 2, "miles": 1.0,  "terrain": "thick",      "bearing": 270, "to": { "id": "r2-1",         "water": "none", "gullyFt": 350, "grass": "none" } },
     { "region": 2, "miles": 1.0,  "terrain": "thick",      "bearing": 285, "to": { "id": "r2-2",         "water": "none", "gullyFt": 450, "grass": "none" } },
     { "region": 2, "miles": 1.5,  "terrain": "thick",      "bearing": 265, "to": { "id": "r2-3",         "water": "none", "gullyFt": 600, "grass": "none" } },
-    { "region": 2, "miles": 0.75, "terrain": "rocky",      "bearing": 275, "to": { "id": "rockstep",     "water": "none", "gullyFt": 600, "grass": "none", "feature": "rockStep", "label": "Rock step" } },
+    { "region": 2, "miles": 0.75, "terrain": "rocky",      "bearing": 275, "to": { "id": "rockstep",     "water": "none", "gullyFt": 600, "grass": "none", "feature": "rockStep", "label": "Rock step", "card": "rockWall" } },
     { "region": 2, "miles": 0.75, "terrain": "rocky",      "bearing": 282, "to": { "id": "r2-5",         "water": "none", "gullyFt": 500, "grass": "none" } },
     { "region": 2, "miles": 1.0,  "terrain": "thick",      "bearing": 270, "to": { "id": "r2-6",         "water": "none", "gullyFt": 400, "grass": "none" } },
     { "region": 2, "miles": 1.0,  "terrain": "thick",      "bearing": 260, "to": { "id": "r2-7",         "water": "rockHole", "grass": "rushy" } },
     { "region": 2, "miles": 1.0,  "terrain": "thick",      "bearing": 276, "to": { "id": "r2-8",         "water": "none", "gullyFt": 300, "grass": "rushy" } },
 
-    { "region": 3, "miles": 1.0,  "terrain": "scrub",      "bearing": 280, "to": { "id": "lookout-east", "water": "none", "gullyFt": 300, "grass": "none", "feature": "lookout", "label": "Lookout over the settlements" } },
+    { "region": 3, "miles": 1.0,  "terrain": "scrub",      "bearing": 280, "to": { "id": "lookout-east", "water": "none", "gullyFt": 300, "grass": "none", "feature": "lookout", "label": "Lookout over the settlements", "card": "viewBack" } },
     { "region": 3, "miles": 1.0,  "terrain": "swamp",      "bearing": 270, "to": { "id": "r3-2",         "water": "swamp",    "grass": "rushy", "label": "Swamp head" } },
     { "region": 3, "miles": 1.5,  "terrain": "scrub",      "bearing": 265, "to": { "id": "r3-3",         "water": "swamp", "grass": "rushy" } },
     { "region": 3, "miles": 1.0,  "terrain": "scrub",      "bearing": 276, "to": { "id": "cairn",        "water": "none",     "grass": "rushy", "feature": "cairn", "label": "The old cairn", "card": "cairn" } },
@@ -40,7 +40,7 @@
     { "region": 3, "miles": 1.0,  "terrain": "swamp",      "bearing": 274, "to": { "id": "r3-8",         "water": "swamp",    "grass": "rushy", "label": "Swamp head" } },
 
     { "region": 4, "miles": 1.5,  "terrain": "scrub",      "bearing": 286, "to": { "id": "r4-1",         "water": "swamp", "grass": "rushy" } },
-    { "region": 4, "miles": 1.0,  "terrain": "heath",      "bearing": 296, "to": { "id": "heath-top",    "water": "none",     "grass": "rushy", "feature": "lookout", "label": "High heath" } },
+    { "region": 4, "miles": 1.0,  "terrain": "heath",      "bearing": 296, "to": { "id": "heath-top",    "water": "none",     "grass": "rushy", "feature": "lookout", "label": "High heath", "card": "highHeath" } },
     { "region": 4, "miles": 1.5,  "terrain": "scrub",      "bearing": 290, "to": { "id": "stream",       "water": "stream",   "grass": "good",  "label": "A fine stream" } },
     { "region": 4, "miles": 1.0,  "terrain": "heath",      "bearing": 282, "to": { "id": "turn-north",   "water": "swamp", "grass": "rushy", "label": "The turn north" } },
 
@@ -62,11 +62,11 @@
     { "region": 5, "miles": 1.0,  "terrain": "scrub",      "bearing": 330, "to": { "id": "r5-16",        "water": "none", "gullyFt": 500, "grass": "none" } },
     { "region": 5, "miles": 1.0,  "terrain": "heath",      "bearing": 300, "to": { "id": "cliff",        "water": "none",     "grass": "rushy", "feature": "pass", "view": true, "label": "Precipice above open forest" } },
 
-    { "region": 6, "miles": 0.5,  "terrain": "meadow",     "bearing": 270, "pass": true, "to": { "id": "pass-foot", "water": "stream", "grass": "tall", "label": "Foot of the pass" } },
+    { "region": 6, "miles": 0.5,  "terrain": "meadow",     "bearing": 270, "pass": true, "to": { "id": "pass-foot", "water": "stream", "grass": "tall", "label": "Foot of the pass", "card": "wayDown" } },
     { "region": 6, "miles": 1.5,  "terrain": "meadow",     "bearing": 285, "to": { "id": "meadow",       "water": "stream",   "grass": "tall",  "label": "Meadow" } },
     { "region": 6, "miles": 1.5,  "terrain": "openForest", "bearing": 280, "to": { "id": "r6-3",         "water": "stream",   "grass": "good" } },
     { "region": 6, "miles": 1.5,  "terrain": "openForest", "bearing": 272, "to": { "id": "woodcutter",   "water": "stream",   "grass": "good",  "label": "A man cutting wood", "card": "signs-woodcutter" } },
     { "region": 6, "miles": 1.5,  "terrain": "openForest", "bearing": 288, "to": { "id": "camp-remains", "water": "stream",   "grass": "tall",  "label": "Old campsite", "card": "signs-camps" } },
-    { "region": 6, "miles": 1.5,  "terrain": "openForest", "bearing": 278, "to": { "id": "sugarloaf",    "water": "stream",   "grass": "tall",  "feature": "goal", "label": "The sugarloaf hill" } }
+    { "region": 6, "miles": 1.5,  "terrain": "openForest", "bearing": 278, "to": { "id": "sugarloaf",    "water": "stream",   "grass": "tall",  "feature": "goal", "label": "The sugarloaf hill", "card": "sugarloaf" } }
   ]
 }

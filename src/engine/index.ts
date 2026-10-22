@@ -1,6 +1,6 @@
 // Ridge Road engine: the public API. Every rule lives behind these functions; the UI, saves and
 // the sim harness only call them. All functions are pure: they return a new state.
-export { newGame, replay, applyAction, partyOf } from './state';
+export { newGame, replay, applyAction, partyOf, HORSE_NAMES } from './state';
 export {
   validatePlan,
   hoursAvailable,
@@ -64,7 +64,7 @@ export {
   SERVANTS,
   itemWeight,
 } from './party';
-export { T, MAP_DATA, JOURNAL_1813, CARDS, regionSpec, terrainSpec } from './data';
+export { T, MAP_DATA, JOURNAL_1813, CARDS, regionSpec, terrainSpec, modeTuning } from './data';
 export type * from './types';
 
 import type { GameState } from './types';

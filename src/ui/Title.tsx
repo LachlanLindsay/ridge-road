@@ -4,6 +4,8 @@ import { BriefingArt, TitleArt } from './art/scenes';
 import { BUILD } from './build';
 import { BRIEFING } from './copy';
 import { Feedback } from './Feedback';
+import { MeetRow } from './Info';
+import type { Who } from './people';
 import { shortDate } from './format';
 
 const MODES: { id: Mode; label: string; note: string }[] = [
@@ -77,6 +79,18 @@ export function Title({ save, notice = null, onContinue, onStart }: { save: Game
   );
 }
 
+/** Everyone in the 1813 party, for the briefing's card about them. */
+const PARTY_1813: { who: Who; name: string }[] = [
+  { who: { kind: 'man', id: 'blaxland' }, name: 'Blaxland' },
+  { who: { kind: 'man', id: 'lawson' }, name: 'Lawson' },
+  { who: { kind: 'man', id: 'wentworth' }, name: 'Wentworth' },
+  { who: { kind: 'man', id: 'burne' }, name: 'Burne' },
+  { who: { kind: 'man', id: 'fairs' }, name: 'Fairs' },
+  { who: { kind: 'man', id: 'servant3' }, name: 'the other two servants' },
+  { who: { kind: 'horse', id: 1 }, name: 'the horses' },
+  { who: { kind: 'dogs', count: 5 }, name: 'the dogs' },
+];
+
 export function Briefing({ onDone }: { onDone: () => void }) {
   const [i, setI] = useState(0);
   const card = BRIEFING[i]!;
@@ -87,9 +101,9 @@ export function Briefing({ onDone }: { onDone: () => void }) {
         <BriefingArt card={i} />
       </div>
       <div class="briefing-inner">
-        <p class="briefing-step" aria-label={`Card ${i + 1} of ${BRIEFING.length}`}>
-          {BRIEFING.map((_, j) => (
-            <span key={j} class={j === i ? 'dot is-on' : 'dot'} />
+        <p class="briefing-step">
+          {BRIEFING.map((c, j) => (
+            <button key={j} type="button" class={j === i ? 'dot is-on' : 'dot'} aria-label={`Card ${j + 1} of ${BRIEFING.length}: ${c.title}`} aria-current={j === i ? 'step' : undefined} onClick={() => setI(j)} />
           ))}
         </p>
         <h1 class="display briefing-title">{card.title}</h1>
@@ -98,7 +112,17 @@ export function Briefing({ onDone }: { onDone: () => void }) {
             {p}
           </p>
         ))}
+        {i === 1 && (
+          <>
+            <MeetRow whos={PARTY_1813} />
+          </>
+        )}
         <div class="briefing-actions">
+          {i > 0 && (
+            <button type="button" class="btn btn-quiet" onClick={() => setI(i - 1)}>
+              Back
+            </button>
+          )}
           <button type="button" class="btn btn-go" onClick={() => (last ? onDone() : setI(i + 1))}>
             {last ? 'Outfit the party' : 'Next'}
           </button>

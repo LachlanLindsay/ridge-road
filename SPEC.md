@@ -355,8 +355,9 @@ Everything is a tap or a click: no keyboard, no real-time action. The layout is 
 | Screen | What the player does |
 | --- | --- |
 | Title | Start a new expedition (difficulty, optional seed) or continue |
-| Briefing | Three cards: 1813 context, the party, whose Country the mountains are |
-| Outfitting | Steppers per item; auto-packed load bars per horse; warnings over 160 lb |
+| Briefing | Three cards: 1813 context, the party, whose Country the mountains are. Back, Next and Skip; the dots jump between cards; the menu has it again during play |
+| Outfitting | Steppers per item; auto-packed load bars per horse; warnings over 160 lb. The party's plate draws each horse's pack from its load: the panniers swell, the blankets, tools and camp kettle ride on top, and a horse over 160 lb hangs its head |
+| Party cards | A card for each man, each horse and the dogs: his trait in play with the numbers for the mode, how he is now, and what the record says of 1813, with sources. Hover with a mouse or press and hold a roster chip; tap anyone in Party and stores or in the party's plate |
 | Expedition | The main screen, below |
 | Event card | Short text, two or three choices with their effects shown |
 | Camp | Evening summary: food eaten, water, horse condition, who is ill; set tomorrow's rations, issue tea, call a rest day, cache items |
@@ -394,6 +395,15 @@ Rules:
 | Distance by the clock | First evening | The party estimated miles from time walked, at about 2 mph |
 | The old cairn | Reaching the cairn | The party credited it to Bass; it was later named Caley's Repulse, though Caley was reportedly never there |
 | Signs of Country | Each sign the journals record | What the party saw, and what it shows about the people already living there |
+| The view back | Reaching the lookout over the settlements | 19 May: the colony seen from the second ridge; Caley's farthest point in 1804 |
+| The rock wall | Reaching the rock step | 18 May: the narrow ridge and the wall of rock they got past by moving stones |
+| Water up the cliff | First water carried up from a gully | 17 May: water fetched up a precipice, none for the horses; camps chosen for water |
+| The high heath | Reaching the high heath | 22 May: the clear heath on the third ridge, and the cliffs that beat every attempt down |
+| Kangaroo dogs | The dogs' first kill | The colony's kangaroo dogs; the party's dogs and their kills |
+| Frost | The first frost | 30 May: the frozen kangaroo leg; no frost on the colony's side when they got home |
+| Salt meat | The first bowel complaint | Salt meat between kills; the illness, worn clothes and empty stores that turned them home |
+| The way down | Reaching the foot of the pass | 28–29 May: the hoe trench, the 30-foot pass, the men carrying the packs; Mount York |
+| The sugarloaf hill | Reaching the sugarloaf hill | 31 May: the hill, the grass land "for the next thirty years", the extreme point of the journey |
 | After 1813 | End screen | Evans, sent in November 1813, pushed on to the Bathurst plains; Cox's convict gang built a road in 1814–15; each leader got 1,000 acres; settlement spread into Wiradjuri Country and led to the Bathurst War |
 
 The end panel states the consequences plainly, alongside the achievement.

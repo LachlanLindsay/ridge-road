@@ -6,11 +6,12 @@ import { EndScreen } from './EndScreen';
 import { EventModal } from './EventModal';
 import { Feedback } from './Feedback';
 import { mapDraw } from './geometry';
+import { InfoLayer } from './Info';
 import { Grip, readMapSize, writeMapSize, type MapSize } from './MapSize';
 import { MapView } from './MapView';
 import { Outfit } from './Outfit';
 import { toOptions, type Outfit as OutfitT } from './outfitting';
-import { Help, Journal, MapKey, Menu, Party, type OverlayId } from './Overlays';
+import { BriefingSheet, Help, Journal, MapKey, Menu, Party, type OverlayId } from './Overlays';
 import { PlanSheet } from './PlanSheet';
 import { clearSave, readDraft, readSave, writeDraft, writeSave } from './save';
 import { Briefing, Title } from './Title';
@@ -109,10 +110,19 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
     setScreen('play');
   };
 
-  if (screen === 'briefing' && setup) return <Briefing onDone={() => setScreen('outfit')} />;
-  if (screen === 'outfit' && setup) return <Outfit onSetOut={setOut} onBack={() => setScreen('title')} />;
+  // Cards for the party: in play they show the game's men and horses as they are; before setting
+  // out, the party being outfitted, for the mode chosen.
+  const playing = screen === 'play' && !!game;
+  const cards = (key: string, body: preact.ComponentChildren) => (
+    <InfoLayer key={key} state={playing ? game : null} mode={playing ? game!.mode : (setup?.mode ?? 'historical')}>
+      {body}
+    </InfoLayer>
+  );
+
+  if (screen === 'briefing' && setup) return cards('briefing', <Briefing onDone={() => setScreen('outfit')} />);
+  if (screen === 'outfit' && setup) return cards('outfit', <Outfit onSetOut={setOut} onBack={() => setScreen('title')} />);
   if (screen === 'title' || !game) return <Title save={game} notice={notice} onContinue={() => setScreen('play')} onStart={start} />;
-  if (game.phase === 'over') return <EndScreen state={game} onNew={() => setScreen('title')} onTitle={() => setScreen('title')} />;
+  if (game.phase === 'over') return cards('end', <EndScreen state={game} onNew={() => setScreen('title')} onTitle={() => setScreen('title')} />);
 
   const go = () => {
     if (!current) return;
@@ -126,7 +136,8 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
     act(() => endDay(game, orders).state);
   };
 
-  return (
+  return cards(
+    'play',
     <div class="play" data-map={mapSize} ref={play}>
       <TopBar state={game} onMenu={() => setOverlay('menu')} />
       <MapView
@@ -178,9 +189,10 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
       )}
       {overlay === 'journal' && <Journal state={game} onClose={() => setOverlay('menu')} />}
       {overlay === 'party' && <Party state={game} onClose={() => setOverlay('menu')} />}
+      {overlay === 'briefing' && <BriefingSheet onClose={() => setOverlay('menu')} />}
       {overlay === 'help' && <Help onClose={() => setOverlay('menu')} />}
       {overlay === 'key' && <MapKey onClose={() => setOverlay(null)} />}
       {overlay === 'feedback' && <Feedback state={game} onClose={() => setOverlay('menu')} />}
-    </div>
+    </div>,
   );
 }

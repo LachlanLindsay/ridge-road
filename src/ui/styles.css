@@ -822,8 +822,32 @@ p {
 .chip:not(:disabled) {
   border-color: color-mix(in srgb, var(--task) 55%, var(--line));
 }
-.chip:disabled {
+.chip:disabled,
+.chip[aria-disabled='true'] {
   opacity: 0.6;
+}
+/* Press and hold opens a man's card: no text selection or callout under the finger. */
+.chip,
+.art-hit {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.roster-hint {
+  margin: 2px 0 0;
+  font-size: 0.74rem;
+  color: var(--ink-3);
+}
+.hint-mouse {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .hint-touch {
+    display: none;
+  }
+  .hint-mouse {
+    display: inline;
+  }
 }
 .task-scout {
   --task: var(--road);
@@ -901,6 +925,12 @@ p {
   gap: 3px;
   font-size: 0.76rem;
   min-width: 0;
+  margin: -4px;
+  padding: 4px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  text-align: left;
 }
 .horse-name {
   font-weight: 600;
@@ -1040,11 +1070,108 @@ p {
   align-items: center;
   gap: 10px;
   font-size: 0.84rem;
+  width: calc(100% + 12px);
+  margin: 0 -6px;
+  padding: 3px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  text-align: left;
 }
 .man-name {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.man-trait {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.man-full {
+  grid-template-columns: minmax(0, 1.5fr) minmax(3rem, 1fr) auto;
+}
+.man-full .man-name {
+  white-space: normal;
+}
+.dogs-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+@media (hover: hover) {
+  .man:hover,
+  .horse:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+.party-hint {
+  margin: 0 0 8px;
+}
+
+/* ---------------------------------------------------------------- cards for the party */
+
+.info {
+  display: grid;
+  gap: 6px;
+  font-size: 0.92rem;
+}
+.info p {
+  margin: 0;
+}
+.info .section-title {
+  margin: 8px 0 0;
+}
+.info-role {
+  font-weight: 600;
+}
+.info-now {
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.info-game {
+  margin: 0;
+  padding-left: 1.1em;
+  display: grid;
+  gap: 4px;
+}
+.info-history {
+  max-width: 62ch;
+}
+.info .card-source {
+  margin-top: 6px;
+  font-size: 0.76rem;
+  color: var(--ink-2);
+}
+.peek {
+  position: fixed;
+  z-index: 40;
+  width: min(20rem, calc(100vw - 16px));
+  padding: 10px 12px 12px;
+  background: var(--paper-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}
+.peek-title {
+  margin: 0 0 2px;
+  font-size: 1.2rem;
+  line-height: 1.15;
+}
+.info-quick {
+  gap: 4px;
+  font-size: 0.8rem;
+}
+.info-quick .section-title {
+  margin-top: 4px;
+  font-size: 0.72rem;
+}
+.info-more {
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: var(--ink-3);
 }
 .man-cond {
   color: var(--ink-2);
@@ -1399,16 +1526,36 @@ p {
 }
 .briefing-step {
   display: flex;
-  gap: 6px;
+  gap: 0;
+  margin: -8px 0 -8px -8px;
 }
+/* Each dot is a button with a finger-sized target around the small mark. */
 .dot {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.dot::before {
+  content: '';
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--line);
 }
-.dot.is-on {
+.dot.is-on::before {
   background: var(--ink);
+}
+@media (hover: hover) {
+  .dot:hover::before {
+    background: var(--ink-3);
+  }
+  .dot.is-on:hover::before {
+    background: var(--ink);
+  }
 }
 .briefing-title {
   margin: 0;
@@ -1420,9 +1567,59 @@ p {
   max-width: 62ch;
 }
 .briefing-actions {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 8px;
+}
+.briefing-actions .btn-go {
+  flex: 1 1 12rem;
+  width: auto;
+}
+.briefing-actions .btn-quiet:first-child {
+  flex: 0 0 auto;
+  min-width: 6.5rem;
+}
+.briefing-actions .btn-go + .btn-quiet {
+  flex: 1 0 100%;
+}
+.art-hint {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  color: var(--ink-2);
+}
+.meet {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--ink-2);
+  line-height: 1.7;
+}
+.meet-label {
+  color: var(--ink-2);
+}
+.meet-btn {
+  font-size: inherit;
+}
+.art-hit {
+  fill: transparent;
+  pointer-events: all;
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .art-hit:hover {
+    fill: color-mix(in srgb, var(--ink) 7%, transparent);
+  }
+}
+.report-card {
+  color: inherit;
+  text-decoration: none;
+  text-align: left;
+}
+.report-card-read {
+  color: var(--water);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
 }
 
 .end {
