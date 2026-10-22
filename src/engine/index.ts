@@ -65,6 +65,7 @@ export {
   itemWeight,
 } from './party';
 export { T, MAP_DATA, JOURNAL_1813, CARDS, regionSpec, terrainSpec, modeTuning } from './data';
+export { itemText } from './text';
 export type * from './types';
 
 import type { GameState } from './types';

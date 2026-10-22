@@ -39,6 +39,9 @@ const CACHE_ITEMS: { item: Item; step: number; label: string }[] = [
   { item: 'shots', step: 10, label: 'Shots' },
 ];
 
+/** Wear below this does nothing yet, so the shoes row stays out of the way unless a man is footsore. */
+const SHOES_SHOWN_OVER = 55;
+
 export function CampSheet({ state, onMakeCamp, selected, setSelected }: Props) {
   const node = state.map.nodes[state.camp]!;
   const st = state.stores;
@@ -103,7 +106,12 @@ export function CampSheet({ state, onMakeCamp, selected, setSelected }: Props) {
             <dt>Grass</dt>
             <dd class={goodGrass ? '' : 'is-warn'}>
               {GRASS_LABEL[node.grass]}
-              {!goodGrass && st.grass > 0 ? `. ${lb(st.grass)} of cut grass carried, ${plural(grassNights, 'horse-night')}.` : ''}
+              {!goodGrass && st.grass > 0
+                ? grassNights > 0
+                  ? `. ${lb(st.grass)} of cut grass carried, enough for ${plural(grassNights, 'horse-night')}.`
+                  : `. ${lb(st.grass)} of cut grass carried, not enough to feed a horse (${T.horses.night.grassLbPerHorse} lb each).`
+                : '.'}
+              {!goodGrass && ' Grass can only be cut to carry where it is good or tall.'}
             </dd>
           </div>
           <div>
@@ -145,13 +153,14 @@ export function CampSheet({ state, onMakeCamp, selected, setSelected }: Props) {
         {st.grass >= T.horses.night.grassLbPerHorse && !goodGrass && (
           <Toggle id="feed" checked={feed} onChange={setFeed} label="Feed the cut grass" note="Each horse eats 15 lb and counts as well fed. Untick to save it for a camp with no grass." />
         )}
-        {st.shoes > 0 && (footsore > 0 || state.wear > 40) && (
+        {st.shoes > 0 && (footsore > 0 || state.wear > SHOES_SHOWN_OVER) && (
           <Stepper
             id="shoes"
             value={shoes}
             max={st.shoes}
             onChange={setShoes}
-            label={`Spare shoes to issue (${st.shoes} pairs, wear ${Math.round(state.wear)}${footsore ? `, ${footsore} footsore` : ''})`}
+            label={`Spare shoes to issue (${plural(st.shoes, 'pair')} left${footsore ? `, ${footsore} footsore` : ''})`}
+            note={`Wear ${Math.round(state.wear)}. Each pair takes ${T.wear.shoesRelief} off and puts a footsore man back on his feet. Above ${T.illness.chill.wearOver} chills come more often; above ${T.illness.footsore.wearOver} men go footsore.`}
           />
         )}
         {hasCache && (

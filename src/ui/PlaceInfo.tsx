@@ -8,6 +8,7 @@ import {
   stepsToTarget,
   validTarget,
   type GameState,
+  type MapNode,
 } from '../engine';
 import { GRASS_LABEL, TERRAIN_LABEL, hrs, itemText, mi, num, waterLabel } from './format';
 
@@ -82,7 +83,7 @@ export function PlaceInfo({ state, id, planning, target, moveTo, hoursLeft, onTa
       if (node.id !== state.camp && validTarget(state, node.id) && !(node.feature === 'precipice' && reached)) {
         actions.push(
           <button type="button" class={isTarget ? 'btn btn-quiet is-on' : 'btn'} onClick={() => onTarget(node.id)} disabled={isTarget}>
-            {isTarget ? 'Working toward here' : node.feature === 'pass' && reached ? 'Search the cliffs here' : 'Work toward here'}
+            {isTarget ? 'Working toward here' : passAction(state, node, reached)}
           </button>,
         );
       }
@@ -153,4 +154,13 @@ export function PlaceInfo({ state, id, planning, target, moveTo, hoursLeft, onTa
       {actions.length > 0 && <div class="place-actions">{actions}</div>}
     </section>
   );
+}
+
+/** The target button at the cliff line: search until the pass is found, dig until the trench is done. */
+function passAction(state: GameState, node: MapNode, reached: boolean): string {
+  if (node.feature !== 'pass' || !reached) return 'Work toward here';
+  const pass = node.childSegs.map((c) => state.map.segments[c]!).find((g) => g.pass);
+  if (!pass?.found) return 'Search the cliffs here';
+  const need = state.stores.hoe > 0 ? T.obstacles.trenchWorkerHoursHoe : T.obstacles.trenchWorkerHoursNoHoe;
+  return (pass.trenchHours ?? 0) >= need - 1e-6 ? 'Work toward here' : 'Dig the trench here';
 }

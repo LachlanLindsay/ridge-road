@@ -575,19 +575,25 @@ function huntHalf(ctx: HalfCtx, hunters: Member[], H: number) {
     }
     s.stores.shots -= 1;
     const p = T.hunting.man[habitat] * (m.id === 'burne' ? T.hunting.burneFactor : 1);
+    // The rolls stay in this order (kill, size, stray) so saves from earlier builds replay the same.
+    let kill = 0;
     if (chance(s, p)) {
-      const lb = chance(s, T.hunting.smallChance) ? T.hunting.smallLb : T.hunting.largeLb;
-      addFresh(s, lb);
+      kill = chance(s, T.hunting.smallChance) ? T.hunting.smallLb : T.hunting.largeLb;
+      addFresh(s, kill);
       s.stats.kills += 1;
-      say(ctx, `${firstName(m)} shot a ${lb === T.hunting.smallLb ? 'small' : 'large'} kangaroo: ${lb} lb of fresh meat.`);
-    } else {
-      say(ctx, `${firstName(m)} came back from hunting empty-handed.`);
     }
+    const size = kill === T.hunting.smallLb ? 'small' : 'large';
     if (chance(s, T.hunting.strayChance * modeTuning(s.mode).eventChanceFactor)) {
       m.awayUntil = currentSlot(s) + 1;
       queueEvent(ctx, { id: 'hunterStrays', member: m.id });
-      say(ctx, `${firstName(m)} has not come back from hunting.`);
-    }
+      say(
+        ctx,
+        kill
+          ? `${firstName(m)} shot a ${size} kangaroo and sent ${kill} lb of meat back to camp, but has not come back himself.`
+          : `${firstName(m)} has not come back from hunting.`,
+      );
+    } else if (kill) say(ctx, `${firstName(m)} shot a ${size} kangaroo: ${kill} lb of fresh meat.`);
+    else say(ctx, `${firstName(m)} came back from hunting empty-handed.`);
   }
 }
 
@@ -601,6 +607,10 @@ function grassHalf(ctx: HalfCtx, men: Member[], H: number) {
   for (const m of men) {
     log(ctx, m, 'grass', H);
     cut += rate * H * efficiency(m);
+  }
+  if (!rate) {
+    say(ctx, `${node.grass === 'none' ? 'No grass' : 'Only rushy grass'} at this camp: nothing worth cutting to carry.`);
+    return;
   }
   const room = Math.max(0, capacity(s) - loadLb(s.stores));
   const add = Math.min(cut, room);

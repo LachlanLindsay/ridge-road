@@ -1,6 +1,7 @@
 // Supplies: fresh meat, caches and spare shoes.
 import { T } from './data';
-import { capacity, clamp, itemWeight, ITEMS, loadLb, round1 } from './party';
+import { capacity, clamp, itemWeight, ITEMS, loadLb } from './party';
+import { itemText } from './text';
 import type { Cache, GameState, Item, Loadout, Stores } from './types';
 
 export function storesFrom(loadout: Loadout): Stores {
@@ -29,8 +30,8 @@ export function addFresh(s: GameState, lb: number) {
 
 const UNCACHEABLE: Item[] = ['campKit'];
 
-/** Leave items at the current camp. Returns pounds cached. */
-export function cacheItems(s: GameState, cache: Cache, lines: string[]): number {
+/** Leave items at the current camp. Returns pounds cached. `why` opens the report line. */
+export function cacheItems(s: GameState, cache: Cache, lines: string[], why = 'Left at camp for the way home'): number {
   let lb = 0;
   const here = (s.caches[s.camp] ??= {});
   const parts: string[] = [];
@@ -42,15 +43,15 @@ export function cacheItems(s: GameState, cache: Cache, lines: string[]): number 
     s.stores[item] -= qty;
     here[item] = (here[item] ?? 0) + qty;
     lb += itemWeight(item, qty);
-    parts.push(`${round1(qty)} ${item}`);
+    parts.push(itemText(item, qty));
   }
   if (!Object.keys(here).length) delete s.caches[s.camp];
-  if (parts.length) lines.push(`Cached at camp: ${parts.join(', ')}.`);
+  if (parts.length) lines.push(`${why}: ${parts.join(', ')}.`);
   return lb;
 }
 
 /** Cache about this many pounds, taking the least needed goods first. */
-export function cacheWeight(s: GameState, lb: number, lines: string[]): number {
+export function cacheWeight(s: GameState, lb: number, lines: string[], why?: string): number {
   const order: Item[] = ['grass', 'tea', 'blankets', 'flour', 'saltMeat'];
   const cache: Cache = {};
   let left = lb;
@@ -63,7 +64,7 @@ export function cacheWeight(s: GameState, lb: number, lines: string[]): number {
     cache[item] = qty;
     left -= itemWeight(item, qty);
   }
-  return cacheItems(s, cache, lines);
+  return cacheItems(s, cache, lines, why);
 }
 
 /** Pick up what was cached here, as far as the horses can carry it. */
@@ -83,7 +84,7 @@ export function collectCache(s: GameState, lines: string[], at = s.camp) {
     s.stores[item] += whole;
     c[item] = qty - whole;
     if (c[item]! <= 1e-9) delete c[item];
-    parts.push(`${round1(whole)} ${item}`);
+    parts.push(itemText(item, whole));
   }
   if (!Object.keys(c).length) delete s.caches[at];
   if (parts.length) lines.push(`Collected from the cache: ${parts.join(', ')}.`);

@@ -211,7 +211,9 @@ export function validatePlan(s: GameState, plan: HalfDayPlan): Warning[] {
     else if (!node.gullyFt) out.push(warn('water', 'No gully to fetch water from here.'));
   }
   if (byTask('hunt').length > s.stores.shots) out.push(err('hunt', 'Not enough powder and shot for every hunter.'));
-  if (byTask('grass').length && (node.grass === 'none')) out.push(warn('grass', 'No grass to cut here.'));
+  if (byTask('grass').length && node.grass !== 'good' && node.grass !== 'tall') {
+    out.push(warn('grass', node.grass === 'none' ? 'No grass to cut here: men on Grass only mind camp.' : 'Rushy grass is not worth cutting: men on Grass only mind camp.'));
+  }
   if (hours <= EPS && working > 0) out.push(warn('time', 'No time left this half for work after the move.'));
   return out;
 }

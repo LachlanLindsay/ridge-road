@@ -69,6 +69,15 @@ describe('validatePlan', () => {
     expect(() => resolveHalfDay(s, { target: 's:A', tasks: { burne: 'cut' } })).toThrow(/too ill/);
   });
 
+  it('says rushy grass is not worth cutting, and the report says nothing was cut', () => {
+    const s = lineGame('scrub', 10, { marked: 10 });
+    const plan = { target: 's:A', tasks: { servant4: 'grass' as const } };
+    expect(validatePlan(s, plan).find((x) => x.code === 'grass')?.text).toBe('Rushy grass is not worth cutting: men on Grass only mind camp.');
+    const r = resolveHalfDay(s, plan);
+    expect(r.state.stores.grass).toBe(s.stores.grass);
+    expect(r.state.today.log).toContain('Only rushy grass at this camp: nothing worth cutting to carry.');
+  });
+
   it('needs a target for scouts and cutters', () => {
     const s = lineGame('scrub', 10);
     expect(validatePlan(s, { tasks: { lawson: 'scout' } }).some((x) => x.code === 'target')).toBe(true);
@@ -209,3 +218,16 @@ function eventDefault(s: GameState) {
 }
 
 export { T };
+
+describe('cache report lines', () => {
+  it('name the goods in plain words and say why they were left', async () => {
+    const { cacheItems, cacheWeight } = await import('../src/engine/stores');
+    const s = newGame({ seed: 3, mode: 'historical' });
+    const lines: string[] = [];
+    cacheItems(s, { tea: 17, saltMeat: 8 }, lines);
+    cacheWeight(s, 5, lines, 'Loads lightened after the fall, left here for the way home');
+    expect(lines[0]).toBe('Left at camp for the way home: 8 lb salt meat, 17 lb tea and sugar.');
+    expect(lines[1]).toMatch(/^Loads lightened after the fall, left here for the way home: .+ lb .+\.$/);
+    expect(lines[1]).not.toMatch(/saltMeat|\d tea\b|\d grass\b/);
+  });
+});

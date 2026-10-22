@@ -179,11 +179,12 @@ export function Toggle({ id, checked, onChange, label, note }: { id: string; che
   );
 }
 
-export function Stepper({ id, value, min = 0, max, step = 1, onChange, label, unit }: { id: string; value: number; min?: number; max: number; step?: number; onChange: (v: number) => void; label: string; unit?: string }) {
+export function Stepper({ id, value, min = 0, max, step = 1, onChange, label, unit, note }: { id: string; value: number; min?: number; max: number; step?: number; onChange: (v: number) => void; label: string; unit?: string; note?: string }) {
   return (
     <div class="stepper" role="group" aria-labelledby={`${id}-label`}>
-      <span id={`${id}-label`} class="stepper-label">
-        {label}
+      <span class="stepper-label">
+        <span id={`${id}-label`}>{label}</span>
+        {note && <span class="toggle-note stepper-note">{note}</span>}
       </span>
       <button type="button" class="step-btn" onClick={() => onChange(Math.max(min, value - step))} disabled={value <= min} aria-label={`Less ${label}`}>
         −
