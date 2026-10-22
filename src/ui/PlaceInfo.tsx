@@ -108,7 +108,7 @@ export function PlaceInfo({ state, id, planning, target, moveTo, hoursLeft, onTa
   } else if (seg) {
     const far = map.nodes[seg.b]!;
     const farKnown = seg.farKnown && far.known;
-    title = seg.deadEnd ? 'Dead end' : far.reached ? 'Ridge' : 'Unexplored ridge';
+    title = seg.deadEnd ? 'Dead end' : far.reached ? 'Ridge' : 'Ridge not yet scouted';
     rows.push(['Cover', `${TERRAIN_LABEL[seg.terrain]}${T.terrain[seg.terrain].passable ? ', horses can pass' : ', must be cleared for horses'}`]);
     rows.push(['Length', farKnown ? mi(seg.miles) : 'Not yet known']);
     const marked = seg.crossed ? seg.miles : seg.markedMiles;

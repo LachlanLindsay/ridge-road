@@ -1,10 +1,10 @@
 // Full-height sheets over the game: the menu, journal, party and stores, how to play, map key.
 import type { ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
-import { CARDS, JOURNAL_1813, T, foodLb, freshLb, type GameState } from '../engine';
+import { CARDS, JOURNAL_1813, T, foodLb, freshLb, isSignOfCountry, type GameState } from '../engine';
 import { BUILD } from './build';
 import { BriefingArt } from './art/scenes';
-import { BRIEFING, CARD_SOURCES, CARD_TEXT, HELP } from './copy';
+import { BRIEFING, CARD_SOURCES, CARD_TEXT, HELP, PARTY_CARD } from './copy';
 import { isoShort, itemText, lb, localize, longDate, plural, type Units } from './format';
 import { DogsRow, Horses, ManRow, Toggle } from './parts';
 import { encodeReplay } from './replaycode';
@@ -71,7 +71,7 @@ export function Menu({
         </button>
         <button type="button" class="menu-item" onClick={() => open('briefing')}>
           The briefing
-          <span>May 1813, the party and whose Country it is</span>
+          <span>Whose Country it is, May 1813 and the party</span>
         </button>
         <button type="button" class="menu-item" onClick={() => open('key')}>
           Map key
@@ -158,7 +158,13 @@ export function Journal({ state, unread = [], onRead, onClose }: { state: GameSt
   // Oldest first: the journal reads as a story from day 1.
   const entries = state.journal;
   const cards = state.cards.filter((c) => CARDS[c]).reverse();
-  const total = Object.keys(CARDS).filter((k) => !k.startsWith('_')).length;
+  // The Signs of Country are the people the journals record, not things to collect: they are
+  // counted apart from the cards found, and never as "still to find".
+  const ids = Object.keys(CARDS).filter((k) => !k.startsWith('_'));
+  const total = ids.filter((k) => !isSignOfCountry(k)).length;
+  const found = cards.filter((c) => !isSignOfCountry(c)).length;
+  const signs = cards.filter((c) => isSignOfCountry(c)).length;
+  const signsTotal = ids.filter((k) => isSignOfCountry(k)).length;
   // Cards come first when there is something new to read in them.
   const [tab, setTab] = useState<'days' | 'cards'>(unread.length ? 'cards' : 'days');
   const [notes, setNotes] = useState<Record<number, string>>(() => readNotes(state.seed));
@@ -180,7 +186,7 @@ export function Journal({ state, unread = [], onRead, onClose }: { state: GameSt
             {unread.length > 0 && <span class="tag-new">{unread.length} new</span>}
           </span>
           <span class="tab-note">
-            {cards.length} of {total} found
+            {found} of {total} found{signs > 0 ? ` · signs of people: ${signs}` : ''}
           </span>
         </button>
       </div>
@@ -218,7 +224,8 @@ export function Journal({ state, unread = [], onRead, onClose }: { state: GameSt
         <section class="cards" role="tabpanel" id="panel-cards" aria-labelledby="tab-cards">
           <p class="fine">
             History found on the way, from the 1813 journals and the sources each card names.
-            {cards.length < total ? ` ${plural(total - cards.length, 'card')} still to find.` : ' You have found them all.'}
+            {found < total ? ` ${plural(total - found, 'card')} still to find.` : ' You have found them all.'}
+            {signs > 0 ? ` The ${signs === 1 ? 'sign' : `${signs} signs`} of people the party saw ${signs === 1 ? 'is' : 'are'} here too: ${signs} of the ${signsTotal} the 1813 journals record.` : ''}
           </p>
           {cards.map((c) => {
             const isNew = unread.includes(c);
@@ -299,7 +306,7 @@ export function BriefingSheet({ onClose }: { onClose: () => void }) {
           {c.paragraphs.map((p) => (
             <p key={p}>{p}</p>
           ))}
-          {i === 1 && <p class="fine">In the plan, press and hold a man’s name, or hover over it, for his card. Party and stores, in the menu, has everyone’s.</p>}
+          {i === PARTY_CARD && <p class="fine">In the plan, press and hold a man’s name, or hover over it, for his card. Party and stores, in the menu, has everyone’s.</p>}
         </section>
       ))}
     </Sheet>
@@ -341,7 +348,7 @@ export function MapKey({ onClose }: { onClose: () => void }) {
             <line x1="2" y1="10" x2="40" y2="10" class="seg-seen" stroke-width="1.3" stroke-dasharray="1.5 3.5" />
             <circle cx="42" cy="10" r="4" class="lead-end" stroke-width="1.4" />
           </>,
-          'An unexplored ridge: nobody knows where it goes yet',
+          'An unexplored ridge: the party doesn’t know where it goes yet',
         )}
         {row(<line x1="2" y1="10" x2="46" y2="10" class="seg-crossed" stroke-width="2.6" stroke-dasharray="0.1 5" />, 'Walked without marking the trees: slow to find again on the way home')}
         {row(

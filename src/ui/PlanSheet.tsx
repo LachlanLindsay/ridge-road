@@ -45,7 +45,7 @@ export function describeTarget(state: GameState, id: string | null): string {
     const b = map.nodes[seg.b]!;
     const dir = compass(a, b);
     const where = seg.a === state.camp ? 'from camp' : a.label ? `from ${a.label}` : `from a point ${mi(pathMiles(map, stepsToTarget(map, state.camp, a.id)))} out`;
-    return `${b.reached ? 'The ridge' : 'The unexplored ridge'} running ${dir} ${where}`;
+    return `${b.reached ? 'The ridge' : 'The unscouted ridge'} running ${dir} ${where}`;
   }
   const n = map.nodes[id]!;
   if (n.id === map.goal && n.reached) return 'The sugarloaf hill';

@@ -331,10 +331,11 @@ function loadKey(loads: Pack[] | undefined): string {
   return loads ? loads.map((l) => `${Math.round(l.total)}:${Object.entries(l.items).map(([k, v]) => `${k}${Math.round((v ?? 0) * 10)}`).join(',')}`).join('|') : '';
 }
 
+/** One plate per briefing card, in the cards' order: whose Country, May 1813, the party. */
 const BRIEFING_ART = [
+  { make: () => country(), label: 'An engraving: across a deep valley to a wall of sandstone cliffs, smoke rising from fires on the valley floor.', hits: false },
   { make: () => ford(), label: 'An engraving: the party wading the Nepean River, the long wall of the Blue Mountains beyond.', hits: false },
   { make: () => partyPlate(COUNTS_1813, 5, loads1813()), label: 'An engraving: seven men, four pack horses and five dogs walking in file along a ridge top.', hits: true },
-  { make: () => country(), label: 'An engraving: across a deep valley to a wall of sandstone cliffs, smoke rising from fires on the valley floor.', hits: false },
 ];
 
 export function BriefingArt({ card }: { card: number }) {

@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks';
 import { computeOutcome, replay, type GameState, type Mode } from '../engine';
 import { BriefingArt, TitleArt } from './art/scenes';
 import { BUILD } from './build';
-import { BRIEFING } from './copy';
+import { ACKNOWLEDGEMENT, BRIEFING, PARTY_CARD } from './copy';
 import { Feedback } from './Feedback';
 import { MeetRow } from './Info';
 import type { Who } from './people';
@@ -120,6 +120,7 @@ export function Title({ save, notice = null, onContinue, onStart, onLoad }: { sa
             <LoadCode onLoad={onLoad} />
           </>
         )}
+        <p class="fine acknowledgement">{ACKNOWLEDGEMENT}</p>
         <p class="fine">
           An original game built on the public-domain 1813 journals. Test build {BUILD}.{' '}
           <button type="button" class="link-btn link-inline" onClick={() => setFeedback(true)}>
@@ -165,7 +166,7 @@ export function Briefing({ onDone }: { onDone: () => void }) {
             {p}
           </p>
         ))}
-        {i === 1 && (
+        {i === PARTY_CARD && (
           <>
             <MeetRow whos={PARTY_1813} />
           </>

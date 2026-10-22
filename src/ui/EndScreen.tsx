@@ -127,9 +127,12 @@ export function EndScreen({ state, onNew, onTitle }: { state: GameState; onNew: 
         <p class="end-kicker">{crossed ? `Home on day ${o.dayHome}` : `Turned back after day ${o.turnedBackDay ?? o.dayHome}`}</p>
         <h1 class="display end-title">{crossed ? 'Crossed and returned' : 'Repulsed'}</h1>
         {crossed ? (
-          <p class="end-sub">
-            <span class="display">{o.title}</span> · {o.score?.toLocaleString('en-AU')} points. You reached the sugarloaf hill on day {o.goalDay}; the 1813 party took 21.
-          </p>
+          <>
+            <p class="end-sub">
+              <span class="display">{o.title}</span> · {o.score?.toLocaleString('en-AU')} points. You reached the sugarloaf hill on day {o.goalDay}; the 1813 party took 21.
+            </p>
+            <p class="end-sub end-consequence">What followed the crossing was a road, land grants on Aboriginal land that was never ceded, and within eleven years a war at Bathurst. The rest is under After 1813, below.</p>
+          </>
         ) : (
           <p class="end-sub">
             The party turned back because {REASON[o.reason ?? ''] ?? 'it could go no further'}. Furthest point: {mi(o.furthestMiles)} from the Nepean in a straight line. The high heath, where the 1813 party turned north, is {mi(18)}.

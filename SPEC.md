@@ -355,7 +355,7 @@ Everything is a tap or a click: no keyboard, no real-time action. The layout is 
 | Screen | What the player does |
 | --- | --- |
 | Title | Start a new expedition (difficulty, optional seed) or continue |
-| Briefing | Three cards: 1813 context, the party, whose Country the mountains are. Back, Next and Skip; the dots jump between cards; the menu has it again during play |
+| Briefing | Three cards: whose Country the mountains are, 1813 context, the party. Back, Next and Skip; the dots jump between cards; the menu has it again during play |
 | Outfitting | Steppers per item; auto-packed load bars per horse; warnings over 160 lb. The party's plate draws each horse's pack from its load: the panniers swell, the blankets, tools and camp kettle ride on top, and a horse over 160 lb hangs its head |
 | Party cards | A card for each man, each horse and the dogs: his trait in play with the numbers for the mode, how he is now, and what the record says of 1813, with sources. Hover with a mouse or press and hold a roster chip; tap anyone in Party and stores or in the party's plate |
 | Expedition | The main screen, below |
@@ -378,19 +378,20 @@ Tap targets are at least 44 px, trail states differ by dash as well as colour, a
 
 ## History and Country content
 
-The game presents 1813 as the first recorded European crossing, not the first crossing. The Blue Mountains are Gundungurra and Darug Country, and local Aboriginal people knew routes over them, including Bilpin Ridge and the Coxs River.
+The game presents 1813 as the first recorded European crossing, not the first crossing. The Blue Mountains are Darug and Gundungurra Country, the plains beyond are Wiradjuri Country, and local Aboriginal people knew routes over the range, including Bilpin Ridge and the Coxs River.
 
 Rules:
 
-- Aboriginal people appear only as the presence the 1813 journals record: huts, the smoke of fires, a man cutting wood who moved off when the dogs came near, the remains of camps. Each is an info card, never an enemy, obstacle or resource.
+- Aboriginal people appear only as the presence the 1813 journals record: huts, the smoke of fires, a man cutting wood who moved off when the dogs came near, the remains of camps. Each is an info card, never an enemy, obstacle or resource, and never a collectable: the Signs of Country are counted apart from the cards found, the journal records them as "Signs of people", not "Found", and no camp is named after them.
+- The game's own voice never says "natives"; the word appears only inside the journal's quotation marks, attributed. Unwalked ground is unknown to the party, never to "nobody".
 - There is no combat. Firearms are for hunting only.
 - The party's night-time fear of being watched is shown as their assumption, not as fact.
 - Animals and plants are named as the journals name them, with a modern note where it helps.
-- Before publishing, have the Country content reviewed by a Gundungurra or Darug organisation.
+- Before publishing, have the Country content reviewed by Darug, Gundungurra and Wiradjuri organisations: the route crosses Darug and Gundungurra Country and the After 1813 card is Wiradjuri history. Reserve a card for text they author, credited to them, with their consent recorded in PROVENANCE.md; pay for the consultation. The project doc `country-review.md` rehearses the review and lists what to send.
 
 | Info card | Unlocked by | What it covers (written fresh) |
 | --- | --- | --- |
-| Whose Country | Briefing | Gundungurra and Darug peoples; the routes they already used |
+| Whose Country | Briefing | Darug, Gundungurra and Wiradjuri peoples; the routes they already used; the Nepean as a frontier; the party went without guides |
 | The ridge method | First evening | Why ridges, not valleys; earlier attempts that failed |
 | Distance by the clock | First evening | The party estimated miles from time walked, at about 2 mph |
 | The old cairn | Reaching the cairn | The party credited it to Bass; it was later named Caley's Repulse, though Caley was reportedly never there |
@@ -404,7 +405,7 @@ Rules:
 | Salt meat | The first bowel complaint | Salt meat between kills; the illness, worn clothes and empty stores that turned them home |
 | The way down | Reaching the foot of the pass | 28–29 May: the hoe trench, the 30-foot pass, the men carrying the packs; Mount York |
 | The sugarloaf hill | Reaching the sugarloaf hill | 31 May: the hill, the grass land "for the next thirty years", the extreme point of the journey |
-| After 1813 | End screen | Evans, sent in November 1813, pushed on to the Bathurst plains; Cox's convict gang built a road in 1814–15; each leader got 1,000 acres; settlement spread into Wiradjuri Country and led to the Bathurst War |
+| After 1813 | End screen | Evans, sent in November 1813, pushed on to the Bathurst plains; Cox's convict gang built a road in 1814–15 with a Darug adviser, Colebee; each leader got 1,000 acres of unceded land; Appin, April 1816; the 1820s grants of Wiradjuri land, the Bathurst War and martial law, Windradyne's peace |
 
 The end panel states the consequences plainly, alongside the achievement.
 

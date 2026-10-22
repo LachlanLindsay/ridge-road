@@ -1,5 +1,5 @@
 // endDay: evening orders, then the night in camp settles the costs, then dawn.
-import { T, modeTuning } from './data';
+import { CARDS, T, modeTuning } from './data';
 import { dateOf, startDay, turnHome, weatherWord } from './day';
 import { EPS, huntHabitat, zoneOf } from './map';
 import {
@@ -86,14 +86,17 @@ function pickNotable(lines: string[]): string[] {
 
 /**
  * The day's story for the journal: where the camp went, what was found, the dead ends, the views,
- * the pass and the hill. Cards found read as "Found: Huts."
+ * the pass and the hill. Cards found read as "Found: The rock wall."; the Signs of Country read as
+ * the card's own line ("Signs of people: huts near the ridge."), never as something found.
  */
 function pickDayNotable(lines: string[]): string[] {
   const keys = ['Camp moved', 'pushed on', 'Dead end', 'show plainly', 'A view at last', 'way down', 'trench is dug', 'Down the pass', 'Up the pass', 'sugarloaf hill', 'rock step', 'cairn', 'reached a fork', 'Collected from the cache', 'Cached at camp', 'nothing to mark'];
   const out: string[] = [];
   for (const l of lines) {
     if (l.startsWith('Journal card: ')) {
-      out.push(`Found: ${l.slice('Journal card: '.length)}`);
+      const title = l.slice('Journal card: '.length, -1);
+      const card = Object.values(CARDS).find((c) => c.title === title);
+      out.push(card?.found ?? `Found: ${title}.`);
       continue;
     }
     if (keys.some((k) => l.includes(k))) out.push(l.replace(/\. Tap one on the map\.$/, '.'));

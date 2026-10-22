@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CARDS, JOURNAL_1813 } from '../src/engine/index';
-import { BRIEFING, CARD_SOURCES, CARD_TEXT } from '../src/ui/copy';
+import { BRIEFING, CARD_SOURCES, CARD_TEXT, COUNTRY_CARD, PARTY_CARD } from '../src/ui/copy';
 
 const cardIds = Object.keys(CARDS).filter((k) => !k.startsWith('_'));
 
@@ -12,7 +12,10 @@ describe('journal content for a complete game', () => {
       expect(CARD_TEXT[id]!.join(' ').length, id).toBeGreaterThan(80);
       expect(CARD_SOURCES[id], id).toMatch(/^Sources?: /);
     }
-    expect(CARD_TEXT.whoseCountry).toBe(BRIEFING[2]!.paragraphs);
+    expect(CARD_TEXT.whoseCountry).toBe(BRIEFING[COUNTRY_CARD]!.paragraphs);
+    // Whose Country opens the briefing and cannot be skipped past by reading the first card only.
+    expect(COUNTRY_CARD).toBe(0);
+    expect(PARTY_CARD).toBeGreaterThan(0);
   });
 
   it('keeps quotation marks paired in every card', () => {

@@ -64,7 +64,7 @@ export {
   SERVANTS,
   itemWeight,
 } from './party';
-export { T, MAP_DATA, JOURNAL_1813, CARDS, regionSpec, terrainSpec, modeTuning } from './data';
+export { T, MAP_DATA, JOURNAL_1813, CARDS, isSignOfCountry, regionSpec, terrainSpec, modeTuning } from './data';
 export { itemText } from './text';
 export type * from './types';
 

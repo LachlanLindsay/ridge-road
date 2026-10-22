@@ -70,9 +70,16 @@ export interface CardSpec {
   title: string;
   unlock: string;
   body: string | null;
+  /** How the day's journal line records finding the card; the Signs of Country have one. */
+  found?: string;
 }
 
 export const CARDS = cardsJson as unknown as Record<string, CardSpec>;
+
+/** The Signs of Country: the people the 1813 journals record, kept apart from the cards collected. */
+export function isSignOfCountry(card: string): boolean {
+  return card.startsWith('signs-');
+}
 
 export interface PaceDay {
   date: string;

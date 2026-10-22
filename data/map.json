@@ -16,7 +16,7 @@
   "route": [
     { "region": 1, "miles": 1.0,  "terrain": "openForest", "bearing": 285, "to": { "id": "lagoon",       "water": "lagoon",   "grass": "good",  "label": "Lagoon" } },
     { "region": 1, "miles": 1.0,  "terrain": "openForest", "bearing": 270, "to": { "id": "r1-2",         "water": "none",     "grass": "good" } },
-    { "region": 1, "miles": 1.0,  "terrain": "scrub",      "bearing": 280, "oldTrack": true, "to": { "id": "huts", "water": "rockHole", "grass": "rushy", "label": "Huts", "card": "signs-huts" } },
+    { "region": 1, "miles": 1.0,  "terrain": "scrub",      "bearing": 280, "oldTrack": true, "to": { "id": "huts", "water": "rockHole", "grass": "rushy", "label": "Ridge by the huts", "card": "signs-huts" } },
     { "region": 1, "miles": 1.0,  "terrain": "scrub",      "bearing": 292, "to": { "id": "rockhole",     "water": "rockHole", "grass": "good",  "label": "Rock-hole camp" } },
     { "region": 1, "miles": 1.0,  "terrain": "scrub",      "bearing": 275, "to": { "id": "r1-5",         "water": "none",     "grass": "rushy" } },
     { "region": 1, "miles": 1.0,  "terrain": "openForest", "bearing": 265, "to": { "id": "tract",        "water": "stream",   "grass": "good",  "label": "Forest tract" } },
@@ -45,7 +45,7 @@
     { "region": 4, "miles": 1.0,  "terrain": "heath",      "bearing": 282, "to": { "id": "turn-north",   "water": "swamp", "grass": "rushy", "label": "The turn north" } },
 
     { "region": 5, "miles": 1.5,  "terrain": "scrub",      "bearing": 345, "to": { "id": "r5-1",         "water": "swamp",    "grass": "rushy", "label": "Swamp head" } },
-    { "region": 5, "miles": 1.0,  "terrain": "heath",      "bearing": 335, "to": { "id": "r5-2",         "water": "swamp", "grass": "rushy" } },
+    { "region": 5, "miles": 1.0,  "terrain": "heath",      "bearing": 335, "to": { "id": "r5-2",         "water": "swamp", "grass": "rushy", "label": "Swamp by the woodcutter", "card": "signs-woodcutter" } },
     { "region": 5, "miles": 1.5,  "terrain": "scrub",      "bearing": 328, "to": { "id": "smoke",        "water": "swamp",    "grass": "rushy", "label": "Smoke below", "card": "signs-smoke" } },
     { "region": 5, "miles": 1.5,  "terrain": "thorny",     "bearing": 340, "to": { "id": "r5-4",         "water": "swamp", "grass": "rushy" } },
     { "region": 5, "miles": 1.5,  "terrain": "scrub",      "bearing": 325, "to": { "id": "r5-5",         "water": "swamp",    "grass": "rushy", "label": "Swamp head" } },
@@ -65,8 +65,8 @@
     { "region": 6, "miles": 0.5,  "terrain": "meadow",     "bearing": 270, "pass": true, "to": { "id": "pass-foot", "water": "stream", "grass": "tall", "label": "Foot of the pass", "card": "wayDown" } },
     { "region": 6, "miles": 1.5,  "terrain": "meadow",     "bearing": 285, "to": { "id": "meadow",       "water": "stream",   "grass": "tall",  "label": "Meadow" } },
     { "region": 6, "miles": 1.5,  "terrain": "openForest", "bearing": 280, "to": { "id": "r6-3",         "water": "stream",   "grass": "good" } },
-    { "region": 6, "miles": 1.5,  "terrain": "openForest", "bearing": 272, "to": { "id": "woodcutter",   "water": "stream",   "grass": "good",  "label": "A man cutting wood", "card": "signs-woodcutter" } },
-    { "region": 6, "miles": 1.5,  "terrain": "openForest", "bearing": 288, "to": { "id": "camp-remains", "water": "stream",   "grass": "tall",  "label": "Old campsite", "card": "signs-camps" } },
+    { "region": 6, "miles": 1.5,  "terrain": "openForest", "bearing": 272, "to": { "id": "woodcutter",   "water": "stream",   "grass": "good",  "label": "Forest camp" } },
+    { "region": 6, "miles": 1.5,  "terrain": "openForest", "bearing": 288, "to": { "id": "camp-remains", "water": "stream",   "grass": "tall",  "label": "Near the old fires", "card": "signs-camps" } },
     { "region": 6, "miles": 1.5,  "terrain": "openForest", "bearing": 278, "to": { "id": "sugarloaf",    "water": "stream",   "grass": "tall",  "feature": "goal", "label": "The sugarloaf hill", "card": "sugarloaf" } }
   ]
 }
