@@ -97,7 +97,9 @@ export function Journal({ state, onClose }: { state: GameState; onClose: () => v
       </ol>
       {cards.length > 0 && (
         <section class="cards">
-          <h3 class="section-title">Cards found</h3>
+          <h3 class="section-title">
+            Cards found: {cards.length} of {Object.keys(CARDS).filter((k) => !k.startsWith('_')).length}
+          </h3>
           {cards.map((c) => (
             <details key={c} class="card-item">
               <summary>{CARDS[c]!.title}</summary>
