@@ -1,7 +1,9 @@
 import { useState } from 'preact/hooks';
 import type { GameState, Mode } from '../engine';
 import { BriefingArt, TitleArt } from './art/scenes';
+import { BUILD } from './build';
 import { BRIEFING } from './copy';
+import { Feedback } from './Feedback';
 import { shortDate } from './format';
 
 const MODES: { id: Mode; label: string; note: string }[] = [
@@ -10,8 +12,9 @@ const MODES: { id: Mode; label: string; note: string }[] = [
   { id: 'hard', label: 'Hard', note: 'More dead ends, slower cutting, a warier party' },
 ];
 
-export function Title({ save, onContinue, onStart }: { save: GameState | null; onContinue: () => void; onStart: (mode: Mode) => void }) {
+export function Title({ save, notice = null, onContinue, onStart }: { save: GameState | null; notice?: string | null; onContinue: () => void; onStart: (mode: Mode) => void }) {
   const [mode, setMode] = useState<Mode>('historical');
+  const [feedback, setFeedback] = useState(false);
   const [choosing, setChoosing] = useState(!save || save.phase === 'over');
   const resumable = save && save.phase !== 'over';
   return (
@@ -24,6 +27,11 @@ export function Title({ save, onContinue, onStart }: { save: GameState | null; o
         <TitleArt />
       </div>
       <div class="title-inner title-actions">
+        {notice && (
+          <p class="notice" role="status">
+            {notice}
+          </p>
+        )}
         {resumable && !choosing && (
           <>
             <button type="button" class="btn btn-go" onClick={onContinue}>
@@ -57,8 +65,14 @@ export function Title({ save, onContinue, onStart }: { save: GameState | null; o
             {resumable && <p class="fine">Starting again replaces the expedition saved on this device.</p>}
           </>
         )}
-        <p class="fine">An original game built on the public-domain 1813 journals.</p>
+        <p class="fine">
+          An original game built on the public-domain 1813 journals. Test build {BUILD}.{' '}
+          <button type="button" class="link-btn link-inline" onClick={() => setFeedback(true)}>
+            Send feedback
+          </button>
+        </p>
       </div>
+      {feedback && <Feedback state={save} onClose={() => setFeedback(false)} />}
     </main>
   );
 }

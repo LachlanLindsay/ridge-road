@@ -1,4 +1,5 @@
 // The plan sheet: one half-day at a time. Pick a target on the map, move camp, set each man's task, Go.
+import { useState } from 'preact/hooks';
 import {
   canAdvance,
   capacity,
@@ -18,6 +19,30 @@ import { excessCache, overload, tapTask, taskCounts, toPlan, type Draft } from '
 import { compass, hrs, itemText, lb, mi } from './format';
 import { Horses, Report, Roster, Toggle } from './parts';
 import { PlaceInfo } from './PlaceInfo';
+import { readFlag, writeFlag } from './save';
+
+const COACH_KEY = 'ridge-road.coach.v1';
+
+/** For a first expedition: what the screen is for, until the player says they have it. */
+function Coach({ onDone }: { onDone: () => void }) {
+  return (
+    <aside class="coach" aria-label="Getting started">
+      <p class="coach-title display">Your first day</p>
+      <ul>
+        <li>
+          The plan below is ready. Press <strong>Go</strong> to work the morning, then the afternoon; then make camp for the night.
+        </li>
+        <li>Tap a man to change his job. Tap a ridge on the map to work there instead.</li>
+        <li>
+          <strong>Menu → How to play</strong> explains the rest, and <strong>Send feedback</strong> is there too.
+        </li>
+      </ul>
+      <button type="button" class="btn btn-small" onClick={onDone}>
+        Got it
+      </button>
+    </aside>
+  );
+}
 
 interface Props {
   state: GameState;
@@ -76,6 +101,7 @@ export function PlanSheet({ state, draft, setDraft, selected, setSelected, onGo 
   const dew = state.phase === 'morning' ? state.today.dewStart : 0;
   const halfName = state.phase === 'morning' ? 'Morning' : 'Afternoon';
 
+  const [coach, setCoach] = useState(() => !readFlag(COACH_KEY));
   const set = (patch: Partial<Draft>) => setDraft({ ...draft, ...patch });
   const cycle = (m: Member) => setDraft(tapTask(state, draft, m));
 
@@ -85,6 +111,14 @@ export function PlanSheet({ state, draft, setDraft, selected, setSelected, onGo 
 
   return (
     <div class="sheet-inner">
+      {coach && state.day === 1 && state.leg === 'out' && (
+        <Coach
+          onDone={() => {
+            writeFlag(COACH_KEY);
+            setCoach(false);
+          }}
+        />
+      )}
       <Report lines={state.today.log} />
       {selected && (
         <PlaceInfo

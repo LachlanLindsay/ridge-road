@@ -1816,3 +1816,113 @@ p {
   color: var(--ink-2);
   font-variant-numeric: tabular-nums;
 }
+
+/* ---------------------------------------------------------------- beta: coach, feedback, crash */
+
+.coach {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  background: var(--paper-3);
+}
+.coach-title {
+  font-size: 1.25rem;
+}
+.coach ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+  font-size: 0.9rem;
+}
+.coach .btn {
+  justify-self: start;
+  min-height: 40px;
+}
+.feedback {
+  display: grid;
+  gap: 12px;
+}
+.field {
+  display: grid;
+  gap: 4px;
+}
+.field-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.field textarea,
+.report-manual {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-3);
+  color: var(--ink);
+  font: inherit;
+  /* 16px or more keeps iOS from zooming the page when the field takes focus. */
+  font-size: max(16px, 1rem);
+  line-height: 1.4;
+  resize: vertical;
+}
+.field textarea:focus,
+.report-manual:focus {
+  outline: 2px solid var(--water);
+  outline-offset: 1px;
+}
+.report-manual {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+}
+.report-actions {
+  display: grid;
+  gap: 8px;
+}
+.report-preview summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--ink-2);
+}
+.report-preview pre {
+  margin: 8px 0 0;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--paper-2);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.link-inline {
+  display: inline;
+  padding: 0;
+  font-size: inherit;
+}
+.title-actions .notice {
+  border-color: var(--warn);
+}
+.crash {
+  height: 100%;
+  overflow-y: auto;
+  background: var(--paper);
+}
+.crash-inner {
+  width: 100%;
+  max-width: 34rem;
+  margin: 0 auto;
+  display: grid;
+  gap: 14px;
+  padding: 32px var(--gutter-r) 40px var(--gutter-l);
+}
+.crash-title {
+  margin: 0;
+  font-size: clamp(2.2rem, 10vw, 3rem);
+  line-height: 1;
+}
+.crash-actions {
+  display: grid;
+  gap: 8px;
+}

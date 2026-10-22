@@ -4,6 +4,7 @@ import { CampSheet } from './CampSheet';
 import { normalizeDraft, toPlan, type Draft } from './draft';
 import { EndScreen } from './EndScreen';
 import { EventModal } from './EventModal';
+import { Feedback } from './Feedback';
 import { mapDraw } from './geometry';
 import { Grip, readMapSize, writeMapSize, type MapSize } from './MapSize';
 import { MapView } from './MapView';
@@ -38,8 +39,10 @@ function randomSeed(): number {
   }
 }
 
-export function App({ resume }: { resume: string | null }) {
-  const [game, setGame] = useState<GameState | null>(() => readSave(resume));
+export function App({ resume, resumeBuild = null }: { resume: string | null; resumeBuild?: string | null }) {
+  const [boot] = useState(() => readSave(resume, resumeBuild));
+  const [game, setGame] = useState<GameState | null>(boot.game);
+  const [notice, setNotice] = useState<string | null>(boot.notice);
   const [screen, setScreen] = useState<Screen>('title');
   const [draft, setDraft] = useState<Draft | null>(() => readDraft());
   const [selected, setSelected] = useState<string | null>(null);
@@ -89,6 +92,7 @@ export function App({ resume }: { resume: string | null }) {
   };
 
   const start = (mode: Mode) => {
+    setNotice(null);
     setSetup({ mode, seed: startSeed() });
     setScreen('briefing');
   };
@@ -107,7 +111,7 @@ export function App({ resume }: { resume: string | null }) {
 
   if (screen === 'briefing' && setup) return <Briefing onDone={() => setScreen('outfit')} />;
   if (screen === 'outfit' && setup) return <Outfit onSetOut={setOut} onBack={() => setScreen('title')} />;
-  if (screen === 'title' || !game) return <Title save={game} onContinue={() => setScreen('play')} onStart={start} />;
+  if (screen === 'title' || !game) return <Title save={game} notice={notice} onContinue={() => setScreen('play')} onStart={start} />;
   if (game.phase === 'over') return <EndScreen state={game} onNew={() => setScreen('title')} onTitle={() => setScreen('title')} />;
 
   const go = () => {
@@ -176,6 +180,7 @@ export function App({ resume }: { resume: string | null }) {
       {overlay === 'party' && <Party state={game} onClose={() => setOverlay('menu')} />}
       {overlay === 'help' && <Help onClose={() => setOverlay('menu')} />}
       {overlay === 'key' && <MapKey onClose={() => setOverlay(null)} />}
+      {overlay === 'feedback' && <Feedback state={game} onClose={() => setOverlay('menu')} />}
     </div>
   );
 }

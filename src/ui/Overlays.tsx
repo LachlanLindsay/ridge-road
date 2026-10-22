@@ -2,11 +2,12 @@
 import type { ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
 import { CARDS, JOURNAL_1813, T, foodLb, freshLb, isAway, type GameState } from '../engine';
+import { BUILD } from './build';
 import { CARD_TEXT, HELP } from './copy';
 import { CONDITION_LABEL, isoShort, itemText, lb, longDate, plural } from './format';
 import { Horses, Meter } from './parts';
 
-export type OverlayId = 'menu' | 'journal' | 'party' | 'help' | 'key';
+export type OverlayId = 'menu' | 'journal' | 'party' | 'help' | 'key' | 'feedback';
 
 export function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: ComponentChildren }) {
   return (
@@ -45,6 +46,10 @@ export function Menu({ state, open, onClose, onTitle, onRestart }: { state: Game
         <button type="button" class="menu-item" onClick={() => open('help')}>
           How to play
         </button>
+        <button type="button" class="menu-item" onClick={() => open('feedback')}>
+          Send feedback
+          <span>Your note, with a code that replays this expedition</span>
+        </button>
         <button type="button" class="menu-item" onClick={onTitle}>
           Title screen
           <span>The expedition is saved on this device</span>
@@ -68,7 +73,7 @@ export function Menu({ state, open, onClose, onTitle, onRestart }: { state: Game
         )}
       </nav>
       <p class="fine">
-        Seed {state.seed} · {state.mode} · {plural(state.actions.length, 'order')} given
+        Seed {state.seed} · {state.mode} · {plural(state.actions.length, 'order')} given · build {BUILD}
       </p>
     </Sheet>
   );

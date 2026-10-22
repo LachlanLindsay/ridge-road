@@ -40,7 +40,12 @@ npm run typecheck
 npm run sim -- --bot historical --runs 1000   # or naive, cautious, all
 npm run sim -- --bot historical --runs 1 --seed 3 --trace   # one run, half by half
 npm run build:artifact                        # one self-contained page: dist/ridge-road.html
+npm run replay -- report.txt --trace          # replay a tester's expedition from their feedback report
 ```
+
+## Beta feedback
+
+Menu → Send feedback (also on the title and end screens) builds a report: the tester's note, the build, the expedition's seed, mode and day, the device, and a replay code of about 1 KB holding the new-game options and every order given. Testers share or copy it into a message. `npm run replay -- <report or code>` rebuilds the exact game in Node (`--trace` prints each order and what it led to, `--until N` stops early, `--save out.json` writes a save to load into the browser). Saves are stamped with the build, and a save from an older build is rebuilt by replaying its orders, so fixes can ship mid-beta. A crash shows a screen with the same report instead of a blank page. In development, `?crash` shows that screen.
 
 `npm run sim -- --bot all` ends with the M1 acceptance checks. `--mode easy|hard` and `--json` are also available.
 
@@ -72,6 +77,8 @@ src/ui/                 the Preact app
   draft.ts              the plan sheet's draft: standing orders, rest days, illness, caches (pure, tested)
   Outfit.tsx            choosing the party and stores; outfitting.ts packs the horses (pure, tested)
   MapSize.tsx           the map's minimise and maximise controls and the drag handle
+  Feedback.tsx Crash.tsx report.ts replaycode.ts   beta feedback, the crash screen, replay codes
+  save.ts build.ts      saves stamped with the build, carried over between builds by replay
   PlanSheet.tsx CampSheet.tsx EventModal.tsx PlaceInfo.tsx Overlays.tsx EndScreen.tsx Title.tsx
   art/                  the engraved plates, drawn in code from a seed: kit.ts (ridges, hatching, cliffs,
                         sky, water, gums), figures.ts (horses, men, dogs, the procession), scenes.tsx.

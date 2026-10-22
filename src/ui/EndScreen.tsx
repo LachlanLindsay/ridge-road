@@ -1,6 +1,8 @@
 import { JOURNAL_1813, type GameState } from '../engine';
+import { useState } from 'preact/hooks';
 import { EndArt } from './art/scenes';
 import { CARD_TEXT } from './copy';
+import { Feedback } from './Feedback';
 import { lb, mi, plural } from './format';
 
 const REASON: Record<string, string> = {
@@ -62,6 +64,7 @@ function Ghost({ state }: { state: GameState }) {
 }
 
 export function EndScreen({ state, onNew, onTitle }: { state: GameState; onNew: () => void; onTitle: () => void }) {
+  const [feedback, setFeedback] = useState(false);
   const o = state.outcome!;
   const crossed = o.result === 'crossed';
   return (
@@ -133,6 +136,9 @@ export function EndScreen({ state, onNew, onTitle }: { state: GameState; onNew: 
           <button type="button" class="btn btn-go" onClick={onNew}>
             New expedition
           </button>
+          <button type="button" class="btn btn-quiet" onClick={() => setFeedback(true)}>
+            Send feedback on this expedition
+          </button>
           <button type="button" class="btn btn-quiet" onClick={onTitle}>
             Title screen
           </button>
@@ -141,6 +147,7 @@ export function EndScreen({ state, onNew, onTitle }: { state: GameState; onNew: 
           Seed {state.seed} · {state.mode}
         </p>
       </div>
+      {feedback && <Feedback state={state} onClose={() => setFeedback(false)} />}
     </main>
   );
 }
