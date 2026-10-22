@@ -1,7 +1,7 @@
 import { JOURNAL_1813, type GameState } from '../engine';
 import { useState } from 'preact/hooks';
 import { EndArt } from './art/scenes';
-import { CARD_TEXT } from './copy';
+import { CARD_SOURCES, CARD_TEXT } from './copy';
 import { Feedback } from './Feedback';
 import { lb, mi, plural } from './format';
 
@@ -130,6 +130,7 @@ export function EndScreen({ state, onNew, onTitle }: { state: GameState; onNew: 
           {CARD_TEXT.after1813!.map((p) => (
             <p key={p}>{p}</p>
           ))}
+          <p class="card-source">{CARD_SOURCES.after1813}</p>
         </section>
 
         <div class="end-actions">

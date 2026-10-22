@@ -3,7 +3,7 @@ import type { ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
 import { CARDS, JOURNAL_1813, T, foodLb, freshLb, isAway, type GameState } from '../engine';
 import { BUILD } from './build';
-import { CARD_TEXT, HELP } from './copy';
+import { CARD_SOURCES, CARD_TEXT, HELP } from './copy';
 import { CONDITION_LABEL, isoShort, itemText, lb, longDate, plural } from './format';
 import { Horses, Meter } from './parts';
 
@@ -80,7 +80,8 @@ export function Menu({ state, open, onClose, onTitle, onRestart }: { state: Game
 }
 
 export function Journal({ state, onClose }: { state: GameState; onClose: () => void }) {
-  const ghost = new Map(JOURNAL_1813.days.map((d) => [d.date, d]));
+  // The 1813 party's day for each date: the way out, then the way home.
+  const then1813 = new Map<string, string>([...JOURNAL_1813.days, ...JOURNAL_1813.home].map((d) => [d.date, d.text]));
   const entries = [...state.journal].reverse();
   const cards = state.cards.filter((c) => CARDS[c]);
   return (
@@ -88,15 +89,18 @@ export function Journal({ state, onClose }: { state: GameState; onClose: () => v
       {entries.length === 0 && <p class="fine">The first entry is written tonight.</p>}
       <ol class="journal">
         {entries.map((j) => {
-          const g = ghost.get(j.date);
-          const then = g ? (g.kind === 'move' ? `camp moved ${g.move} mi${g.est ? ' (estimated)' : ''}` : g.kind === 'cut' ? 'camp stayed while the men cut ahead' : 'a rest day') : null;
+          const then = then1813.get(j.date);
           return (
             <li key={j.day}>
               <span class="journal-date display">
                 Day {j.day} · {isoShort(j.date)}
               </span>
               <span class="journal-text">{j.text}</span>
-              {then && <span class="journal-1813">1813: {then}.</span>}
+              {then && (
+                <span class="journal-1813">
+                  <span class="journal-1813-label">In 1813:</span> {then}
+                </span>
+              )}
             </li>
           );
         })}
@@ -107,9 +111,10 @@ export function Journal({ state, onClose }: { state: GameState; onClose: () => v
           {cards.map((c) => (
             <details key={c} class="card-item">
               <summary>{CARDS[c]!.title}</summary>
-              {(CARD_TEXT[c] ?? ['The text for this card is still being written from the 1813 journals.']).map((p) => (
+              {(CARD_TEXT[c] ?? []).map((p) => (
                 <p key={p}>{p}</p>
               ))}
+              {CARD_SOURCES[c] && <p class="card-source">{CARD_SOURCES[c]}</p>}
             </details>
           ))}
         </section>

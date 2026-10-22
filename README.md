@@ -10,7 +10,7 @@ A tap-driven expedition sim of the 1813 crossing of the Blue Mountains: outfit t
 | M1, engine and sim | Done: all three acceptance checks pass over 1,000 seeds. See [CALIBRATION.md](CALIBRATION.md) |
 | M2, map | Done: SVG survey plot with fog of war, pan, pinch and zoom. The route, decoy and hoe checks are in `test/map.test.ts`, the fog-of-war checks in `test/ui.test.ts` |
 | M3, play loop | Built: plan sheet, event cards, camp screen, journal. Plays through at phone size with touch in a headless browser; the check on a real iPhone in Safari is still to do |
-| M4, outfitting, end screen and history | Partly: outfitting (party size, provisions, auto-packed load bars per horse) and the end screen with score breakdown and ghost line are in, with engraved plates on the title, briefing and outfitting screens. Sourced info-card text is not |
+| M4, outfitting, end screen and history | Done: outfitting (party size, provisions, auto-packed load bars per horse), the end screen with score breakdown and ghost line, engraved plates, and every journal card written fresh with its sources, plus the 1813 party's day beside each of yours in the journal (11 May to 6 June). The Country text still needs review by a Gundungurra or Darug organisation before any public release |
 | M5, ship | Partly: save and resume are in. Installable offline app, export and import are not |
 
 ## Play on your iPhone over Tailscale
@@ -58,8 +58,8 @@ data/
   tuning.json           every number the engine uses
   map.json              the true route (six regions, 58 mi) and each region's decoy rules
   events.json           event card titles, text and choice labels
-  cards.json            info card titles (sourced bodies are M4)
-  journal-1813.json     the 1813 party's daily pace, for the journal and the end screen's ghost line
+  cards.json            journal card titles and when each unlocks (bodies and sources are in src/ui/copy.ts)
+  journal-1813.json     the 1813 party's days, 11 May to 6 June: a line for the journal and the miles for the ghost line
 src/engine/             the pure, deterministic engine
   index.ts              public API
   types.ts              GameState and friends

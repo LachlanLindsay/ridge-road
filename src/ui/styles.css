@@ -1202,7 +1202,16 @@ p {
 .journal-1813 {
   font-family: var(--font-display);
   font-style: italic;
+  font-size: 0.98rem;
+  line-height: 1.35;
   color: var(--ink-2);
+}
+.journal-1813-label {
+  font-style: normal;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 .cards {
   display: grid;
@@ -1223,6 +1232,12 @@ p {
 .card-item p {
   margin-top: 6px;
   font-size: 0.9rem;
+}
+.card-item .card-source,
+.history .card-source {
+  margin-top: 8px;
+  font-size: 0.76rem;
+  color: var(--ink-2);
 }
 .help h3 {
   margin: 0 0 4px;

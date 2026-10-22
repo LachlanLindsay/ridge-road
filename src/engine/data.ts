@@ -79,9 +79,17 @@ export interface PaceDay {
   move: number;
   kind: 'move' | 'cut' | 'rest';
   est: boolean;
+  /** What the 1813 party did that day, for the journal. */
+  text: string;
 }
 
-export const JOURNAL_1813 = journalJson as unknown as { reckoningMiles: number; days: PaceDay[] };
+/** A day of the 1813 party's journey home, for the journal. */
+export interface HomeDay {
+  date: string;
+  text: string;
+}
+
+export const JOURNAL_1813 = journalJson as unknown as { reckoningMiles: number; days: PaceDay[]; home: HomeDay[] };
 
 export type ModeTuning = Tuning['modes']['historical'];
 

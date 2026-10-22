@@ -1,5 +1,5 @@
 {
-  "_doc": "Info cards the engine unlocks. Titles only for M1. Each body must be written fresh and sourced in M4 (see SPEC.md 'History and Country content').",
+  "_doc": "Info cards the engine unlocks: titles and when each unlocks. The bodies and their sources are in src/ui/copy.ts (CARD_TEXT, CARD_SOURCES), written fresh from the 1813 journals and the sources in SPEC.md.",
   "whoseCountry":     { "title": "Whose Country", "unlock": "briefing", "body": null },
   "ridgeMethod":      { "title": "The ridge method", "unlock": "firstEvening", "body": null },
   "distanceByClock":  { "title": "Distance by the clock", "unlock": "firstEvening", "body": null },

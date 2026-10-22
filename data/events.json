@@ -1,5 +1,5 @@
 {
-  "_doc": "Choice event cards. Text is placeholder copy written fresh for M1; the engine fills in each choice's effect line with live numbers. Final card writing is M3.",
+  "_doc": "Choice event cards, written fresh from situations in the 1813 journals (the journals supply situations, not wording). The engine fills in each choice's effect line with live numbers.",
   "dew": {
     "title": "Heavy dew",
     "text": "The brush is soaked to the shoulder. Wet clothes all day, or a late start.",

@@ -1,27 +1,179 @@
 {
-  "_doc": "The 1813 party's camp-to-camp miles per day from Blaxland's 1823 account, 11-31 May 1813 (SPEC.md, 'The 1813 map'). Used for the end screen's ghost line, plotted as share of route. May 13 and 19 are estimates. Journal entry text for each date is still to be added (M3), quoting only the explorers' own words.",
+  "_doc": "The 1813 party's days from Blaxland's 1823 account (Project Gutenberg Australia, in Ernest Scott's Australian Discovery). 'days' (11-31 May) carry the camp-to-camp miles for the end screen's ghost line, plotted as share of route, and a line for the journal; 'home' (1-6 June) carries the journey back. May 13 and 19 are estimates; 22 May is 3.25, 'rather more than three miles'. The lines are written fresh from the journal's facts.",
   "reckoningMiles": 58,
   "days": [
-    { "date": "1813-05-11", "move": 2,    "kind": "move", "est": false },
-    { "date": "1813-05-12", "move": 3.25, "kind": "move", "est": false },
-    { "date": "1813-05-13", "move": 2,    "kind": "move", "est": true },
-    { "date": "1813-05-14", "move": 0,    "kind": "cut",  "est": false },
-    { "date": "1813-05-15", "move": 0,    "kind": "cut",  "est": false },
-    { "date": "1813-05-16", "move": 0,    "kind": "rest", "est": false },
-    { "date": "1813-05-17", "move": 6.5,  "kind": "move", "est": false },
-    { "date": "1813-05-18", "move": 0,    "kind": "cut",  "est": false },
-    { "date": "1813-05-19", "move": 2,    "kind": "move", "est": true },
-    { "date": "1813-05-20", "move": 5,    "kind": "move", "est": false },
-    { "date": "1813-05-21", "move": 4,    "kind": "move", "est": false },
-    { "date": "1813-05-22", "move": 4.5,  "kind": "move", "est": false },
-    { "date": "1813-05-23", "move": 3.5,  "kind": "move", "est": false },
-    { "date": "1813-05-24", "move": 4.5,  "kind": "move", "est": false },
-    { "date": "1813-05-25", "move": 3.5,  "kind": "move", "est": false },
-    { "date": "1813-05-26", "move": 2.75, "kind": "move", "est": false },
-    { "date": "1813-05-27", "move": 5.25, "kind": "move", "est": false },
-    { "date": "1813-05-28", "move": 5.75, "kind": "move", "est": false },
-    { "date": "1813-05-29", "move": 2.5,  "kind": "move", "est": false },
-    { "date": "1813-05-30", "move": 0,    "kind": "rest", "est": false },
-    { "date": "1813-05-31", "move": 6,    "kind": "move", "est": false }
+    {
+      "date": "1813-05-11",
+      "move": 2,
+      "kind": "move",
+      "est": false,
+      "text": "Set out from Blaxland’s farm at South Creek, crossed the Nepean at the ford, and camped at the foot of the first ridge, about two miles on."
+    },
+    {
+      "date": "1813-05-12",
+      "move": 3.25,
+      "kind": "move",
+      "est": false,
+      "text": "Passed a large lagoon and made about three and a quarter miles. Camped by a deep gully with water in a rock hole, and found a kangaroo just killed by an eagle."
+    },
+    {
+      "date": "1813-05-13",
+      "move": 2,
+      "kind": "move",
+      "est": true,
+      "text": "Found a track blazed by some European before them, and native huts in several places. Every ridge they explored ended at a cliff and the brush ahead was too thick to pass, so they camped in a forest tract, not two miles on."
+    },
+    {
+      "date": "1813-05-14",
+      "move": 0,
+      "kind": "cut",
+      "est": false,
+      "text": "Two men stayed with the horses while the rest cut a path about five miles through the brush, then walked back to camp."
+    },
+    {
+      "date": "1813-05-15",
+      "move": 0,
+      "kind": "cut",
+      "est": false,
+      "text": "Cut two miles further. There was no feed for the horses the whole way, and an emu called all night across the gully."
+    },
+    {
+      "date": "1813-05-16",
+      "move": 0,
+      "kind": "rest",
+      "est": false,
+      "text": "Sunday: a rest and a plan for the days ahead, though it gave the men time to brood on the danger. The dogs killed two small kangaroos, and native dogs howled round the camp at night."
+    },
+    {
+      "date": "1813-05-17",
+      "move": 6.5,
+      "kind": "move",
+      "est": false,
+      "text": "The whole party moved six and a half miles along the cut path to a narrow neck between deep gullies. Water had to be fetched up a precipice of about six hundred feet, and the horses had none."
+    },
+    {
+      "date": "1813-05-18",
+      "move": 0,
+      "kind": "cut",
+      "est": false,
+      "text": "Cut a mile and a half further. A wall of rock nearly thirty feet high crossed the ridge; they got through by moving a few large stones."
+    },
+    {
+      "date": "1813-05-19",
+      "move": 2,
+      "kind": "move",
+      "est": true,
+      "text": "Climbed the second ridge, with a first wide view back over the settlements. Found a pile of stones they took to be Bass’s, and camped at the head of a swamp."
+    },
+    {
+      "date": "1813-05-20",
+      "move": 5,
+      "kind": "move",
+      "est": false,
+      "text": "Nearly five miles. Camped at noon by a swamp of about three acres of coarse rushy grass. One man was ill with a cold."
+    },
+    {
+      "date": "1813-05-21",
+      "move": 4,
+      "kind": "move",
+      "est": false,
+      "text": "Nearly four miles to a well-watered swamp. Early in the night the dogs ran off barking; the party believed natives had come close."
+    },
+    {
+      "date": "1813-05-22",
+      "move": 3.25,
+      "kind": "move",
+      "est": false,
+      "text": "A little over three miles to the top of the third and highest ridge: about two thousand acres of heath, eighteen miles from the Nepean in a straight line. They camped by a fine stream, but every way down the cliffs beat them."
+    },
+    {
+      "date": "1813-05-23",
+      "move": 3.5,
+      "kind": "move",
+      "est": false,
+      "text": "About three and a half miles. The horses struggled once off the open heath, so the afternoon went on clearing a track for the next day."
+    },
+    {
+      "date": "1813-05-24",
+      "move": 4.5,
+      "kind": "move",
+      "est": false,
+      "text": "Four and a half miles, to a swamp. When the clouds lifted they could see the country below, and they heard a man chopping wood close by."
+    },
+    {
+      "date": "1813-05-25",
+      "move": 3.5,
+      "kind": "move",
+      "est": false,
+      "text": "Only three and a half miles, through prickly brush. They saw the track of a wombat."
+    },
+    {
+      "date": "1813-05-26",
+      "move": 2.75,
+      "kind": "move",
+      "est": false,
+      "text": "Two and three-quarter miles. They saw the fires of about thirty people in the country below."
+    },
+    {
+      "date": "1813-05-27",
+      "move": 5.25,
+      "kind": "move",
+      "est": false,
+      "text": "Five and a quarter miles. More fires below, with about as many people, and forest land in sight beneath the cliffs."
+    },
+    {
+      "date": "1813-05-28",
+      "move": 5.75,
+      "kind": "move",
+      "est": false,
+      "text": "Five and three-quarter miles, with no water, to the edge of the cliff. That evening they cut a trench along the slope with a hoe and got the horses down to grass and water."
+    },
+    {
+      "date": "1813-05-29",
+      "move": 2.5,
+      "kind": "move",
+      "est": false,
+      "text": "Down through a pass about thirty feet wide, the men carrying some of the packs, then two miles to a stream. The dogs killed a kangaroo, the first fresh meat in nearly two weeks."
+    },
+    {
+      "date": "1813-05-30",
+      "move": 0,
+      "kind": "rest",
+      "est": false,
+      "text": "Sunday: a rest. A kangaroo was shot across a wide valley, and a hard frost fell in the night."
+    },
+    {
+      "date": "1813-05-31",
+      "move": 6,
+      "kind": "move",
+      "est": false,
+      "text": "About six miles south-west and west, through forest and meadow, to a hill shaped like a sugarloaf: the end of the journey out, about 58 miles from the Nepean by their reckoning. With food nearly gone, clothes and shoes worn out and the men ill, they turned for home."
+    }
+  ],
+  "home": [
+    {
+      "date": "1813-06-01",
+      "text": "Back to the foot of the mountain they had come down, and camped there."
+    },
+    {
+      "date": "1813-06-02",
+      "text": "Climbed the mountain from seven to ten in the morning, carrying some of the packs themselves, and camped at one of their old stations."
+    },
+    {
+      "date": "1813-06-03",
+      "text": "Reached another of their old stations, and heard sounds rising from the settlements below."
+    },
+    {
+      "date": "1813-06-04",
+      "text": "Reached the end of their marked track and camped in the forest. One horse fell from exhaustion."
+    },
+    {
+      "date": "1813-06-05",
+      "text": "The hardest day, with no marked track to follow. They reached the river at four in the afternoon and got a little flour from a settlement across it."
+    },
+    {
+      "date": "1813-06-06",
+      "text": "Sunday: crossed the Nepean after breakfast and reached home, all in good health."
+    }
   ]
 }

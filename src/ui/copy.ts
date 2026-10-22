@@ -62,13 +62,68 @@ export const HELP: Card[] = [
   },
 ];
 
-/** Bodies for the journal cards this build can show. The rest are titles until their text is written and sourced. */
+/**
+ * The journal cards, written fresh from Blaxland's 1823 account of the crossing and the sources in
+ * SPEC.md. Quotations are the 1813 party's own words, as Blaxland printed them; everything else is
+ * new writing. Each card's sources are in CARD_SOURCES.
+ */
 export const CARD_TEXT: Record<string, string[]> = {
   whoseCountry: BRIEFING[2]!.paragraphs,
-  cairn: ['The party credited this cairn to the explorer George Bass. It was later named Caley’s Repulse, though Caley was reportedly never there.'],
-  after1813: [
-    'In November 1813 the surveyor George Evans was sent after the party and pushed on to the Bathurst plains.',
-    'In 1814–15 William Cox’s convict gang built a road over the mountains. Each of the three leaders was granted 1,000 acres.',
-    'Settlement spread west into Wiradjuri Country and led to the Bathurst War.',
+  ridgeMethod: [
+    'From the colony’s first years, people tried to get through the mountains. Most followed the rivers upstream and were stopped by rapids and sheer cliffs; others lost themselves in gorges or gave up in the scrub. Francis Barrallier was turned back by a waterfall in 1802.',
+    'Blaxland’s plan turned that around: keep to the line of ridges running west between two river valleys, and never go down into them. It was hard going. On the third day, every ridge they explored “proved to terminate in a deep rocky precipice”.',
+    'So they worked in stages. Two men stayed with the horses while the rest went ahead, marked trees along the line and cut a path back to camp; then the whole party moved up. Some ground was walked three times over.',
   ],
+  distanceByClock: [
+    'Blaxland’s journal gives each day’s distance as an estimate. It “was computed by time, the rate being estimated at about two miles per hour”: hours on the move, at a guessed pace.',
+    'By that reckoning the sugarloaf hill was about 58 miles from the Nepean, counting the descent of the last mountain as half a mile. The route in this game is laid out to the same reckoning.',
+    'William Lawson, a trained surveyor, kept a careful record of their progress west, and his journal is the one later travellers used to retrace the route.',
+  ],
+  cairn: [
+    'On 19 May, on the second ridge, the party found a pile of stones. “This pile they concluded to be the one erected by Mr. Bass, to mark the end of his journey.”',
+    'Historians doubt George Bass came this far. In 1814 William Cox, building the road over the mountains, called it Caley’s pile, after the botanist George Caley, and the place is still known as Caley’s Repulse, though Caley is not known to have reached it either.',
+    'Who piled the stones, and why, is not known. The cairn may be Aboriginal.',
+  ],
+  'signs-huts': [
+    'On the third day the party came on a line of trees blazed by some European before them, the bark cut to mark the way. In different places, “several native huts presented themselves”.',
+    'They are the journal’s first sign that the ridges were not empty country. People lived and travelled here, and had for a very long time.',
+    'Later, west of the range, the journal remarks that the people there “appear to have no huts like those on the eastern side”.',
+  ],
+  'signs-smoke': [
+    'On 26 May, from the high ground, the party “saw the fires of some natives below” and put their number at about thirty: men, women and children.',
+    'The next day they saw more fires and about as many people, further along the way they were heading. They also made out forest land below the cliffs: the country they had come to find, already lived in.',
+  ],
+  'signs-woodcutter': [
+    'On 24 May, camped at a swamp, the party “heard a native chopping wood very near them, who fled at the approach of the dogs”.',
+    'He was heard, not seen. Nowhere in the journal does the party meet the people whose Country it crossed: they are heard, or seen from a distance, or known by what they left behind.',
+  ],
+  'signs-camps': [
+    'West of the range, on 31 May, “traces of the natives presented themselves in the fires they had left the day before”.',
+    'For three days the people ahead had kept their distance; the journal says they “moved before them”, the smoke of their fires showing where they went. On this side of the mountains, it notes, they “appear to have no huts like those on the eastern side”.',
+    'The country beyond the mountains, which the party had come to find for the colony’s flocks, was already somebody’s home.',
+  ],
+  wombats: [
+    'On 25 May, pushing through prickly brush, the party “saw the track of the wombat”, which Blaxland describes as “an animal which burrows in the ground as a badger”.',
+    'The journal notices animals mostly as food or as noise: a kangaroo an eagle had just killed, on the second day; an emu calling all night across a gully; native dogs, now called dingoes, howling round the camp; and the kangaroos the dogs ran down, welcome after nearly two weeks of salt meat.',
+    'Common wombats still live in these mountains.',
+  ],
+  after1813: [
+    'In November 1813 Governor Macquarie sent the surveyor George Evans after the party. He passed their sugarloaf hill, now Mount Blaxland, and went on to the plains where Bathurst stands.',
+    'In July 1814 William Cox began a road over the mountains along the party’s line. Thirty convicts and eight guards finished it in January 1815. Each of the three leaders was granted 1,000 acres beyond the range.',
+    'Settlement spread fast into Wiradjuri Country. In 1824 the Wiradjuri, led by Windradyne, fought the colony in what became known as the Bathurst War; martial law was declared that August.',
+  ],
+};
+
+/** Where each card's facts come from, shown under the card. */
+export const CARD_SOURCES: Record<string, string> = {
+  whoseCountry: 'Sources: Wikipedia, “Blue Mountains (New South Wales)” and “1813 crossing of the Blue Mountains”.',
+  ridgeMethod: 'Sources: Blaxland’s journal, 13–14 May 1813; State Library of NSW, “Finding the way west” and “Crossing the Blue Mountains”.',
+  distanceByClock: 'Sources: Blaxland’s journal, 11 and 31 May 1813; State Library of NSW, “Finding the way west”.',
+  cairn: 'Sources: Blaxland’s journal, 19 May 1813; Penrith City Library, Caley’s Repulse; the Cox’s Road heritage listing at Linden.',
+  'signs-huts': 'Source: Blaxland’s journal, 13 and 31 May 1813.',
+  'signs-smoke': 'Source: Blaxland’s journal, 26 and 27 May 1813.',
+  'signs-woodcutter': 'Source: Blaxland’s journal, 24 May 1813.',
+  'signs-camps': 'Source: Blaxland’s journal, 29 and 31 May 1813.',
+  wombats: 'Source: Blaxland’s journal, 12–29 May 1813.',
+  after1813: 'Sources: Wikipedia, “1813 crossing of the Blue Mountains”, “Blue Mountains (New South Wales)” and “Bathurst War”.',
 };
