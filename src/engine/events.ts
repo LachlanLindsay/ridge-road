@@ -25,6 +25,8 @@ interface Option {
   id: ChoiceId;
   effect: string;
   disabled?: string;
+  /** The effect is bad news the player may miss: the card shows it as a warning. */
+  warn?: boolean;
 }
 
 function mealCost(s: GameState, days: number): number {
@@ -63,6 +65,7 @@ function options(s: GameState, ev: PendingEvent): Option[] {
       const fed = node.water !== 'none' && node.water !== 'rockHole' && node.grass !== 'none';
       const rest: Option = {
         id: 'rest',
+        warn: !fed,
         effect: fed
           ? `Nobody works tomorrow; ${h?.name ?? 'the horse'} eats and drinks here and recovers a little`
           : `Nobody works tomorrow, but there is ${node.grass === 'none' ? 'no grass' : 'no water for horses'} here, so ${h?.name ?? 'the horse'} will not recover`,
@@ -139,7 +142,7 @@ export function eventCard(s: GameState): EventCard | null {
     id: ev.id,
     title: who && (ev.member || ev.horse !== undefined) ? `${txt.title}: ${who}` : txt.title,
     text: txt.text,
-    choices: options(s, ev).map((o) => ({ id: o.id, label: txt.choices[o.id] ?? o.id, effect: o.effect, ...(o.disabled ? { disabled: o.disabled } : {}) })),
+    choices: options(s, ev).map((o) => ({ id: o.id, label: txt.choices[o.id] ?? o.id, effect: o.effect, ...(o.disabled ? { disabled: o.disabled } : {}), ...(o.warn ? { warn: true } : {}) })),
   };
 }
 

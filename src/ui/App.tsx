@@ -35,7 +35,8 @@ function Coach({ onDone }: { onDone: () => void }) {
         </h2>
         <ul>
           <li>
-            The plan on the right is ready. Press <strong>Go</strong> to work the morning, then the afternoon; then make camp for the night.
+            The plan <span class="when-below">under the map</span>
+            <span class="when-beside">beside the map</span> is ready. Press <strong>Go</strong> to work the morning, then the afternoon; then make camp for the night.
           </li>
           <li>Tap a man to choose his job; press and hold him, or hover with a mouse, to read about him. Tap a ridge on the map to work there instead.</li>
           <li>The horses need water and grass every night. The camp suggestion looks for both.</li>

@@ -40,21 +40,25 @@ export function useInfo(who: Who | null, mode: 'hold' | 'tap' = 'hold') {
     timer.current = null;
   };
   useEffect(() => clear, []);
+  const peeking = useRef(false);
   const props = useMemo(() => {
     if (!api || !who) return {};
+    // The quick card waits for the mouse to move over the control. A pointer that is already
+    // resting there when the page changes under it (Next on the briefing, a resize) opens nothing.
+    const hover = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse' || timer.current !== null || peeking.current) return;
+      const el = e.currentTarget as Element;
+      timer.current = window.setTimeout(() => {
+        timer.current = null;
+        peeking.current = true;
+        api.peek(who, el, mode === 'tap');
+      }, PEEK_MS);
+    };
     const base = {
-      onPointerEnter: (e: PointerEvent) => {
-        if (e.pointerType !== 'mouse') return;
-        clear();
-        const el = e.currentTarget as Element;
-        timer.current = window.setTimeout(() => {
-          timer.current = null;
-          api.peek(who, el, mode === 'tap');
-        }, PEEK_MS);
-      },
       onPointerLeave: (e: PointerEvent) => {
         if (e.pointerType !== 'mouse') return;
         clear();
+        peeking.current = false;
         api.unpeek();
       },
       onContextMenu: (e: MouseEvent) => {
@@ -68,6 +72,7 @@ export function useInfo(who: Who | null, mode: 'hold' | 'tap' = 'hold') {
     if (mode === 'tap') {
       return {
         ...base,
+        onPointerMove: hover,
         onClick: () => {
           clear();
           api.unpeek();
@@ -81,6 +86,7 @@ export function useInfo(who: Who | null, mode: 'hold' | 'tap' = 'hold') {
         wasHeld.current = false;
         clear();
         if (e.pointerType === 'mouse') {
+          peeking.current = true;
           api.unpeek();
           return;
         }
@@ -92,6 +98,10 @@ export function useInfo(who: Who | null, mode: 'hold' | 'tap' = 'hold') {
         }, HOLD_MS);
       },
       onPointerMove: (e: PointerEvent) => {
+        if (e.pointerType === 'mouse') {
+          hover(e);
+          return;
+        }
         const o = origin.current;
         if (!o || timer.current === null) return;
         if (Math.hypot(e.clientX - o[0], e.clientY - o[1]) > SLOP_PX) clear();

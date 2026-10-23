@@ -178,6 +178,8 @@ export interface EventChoiceView {
   label: string;
   effect: string;
   disabled?: string;
+  /** Bad news in the effect that is easy to miss, such as resting a horse where it cannot eat. */
+  warn?: boolean;
 }
 
 export interface EventCard {

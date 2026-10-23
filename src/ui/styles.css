@@ -413,7 +413,17 @@ p {
   gap: 6px;
   pointer-events: auto;
 }
+/* Words that depend on where the plan sits: under the map on a phone, beside it on a wide screen. */
+.when-beside {
+  display: none;
+}
 @media (min-width: 900px), (orientation: landscape) and (min-width: 640px) {
+  .when-beside {
+    display: inline;
+  }
+  .when-below {
+    display: none;
+  }
   .play,
   .play[data-map] {
     grid-template-columns: minmax(0, 1fr) minmax(20rem, 27rem);
@@ -475,6 +485,32 @@ p {
   gap: 3px;
   width: 6.5rem;
   flex: none;
+}
+/* The horses under the morale meter: a silhouette each, head down and coloured when weak. */
+.herd {
+  display: flex;
+  gap: 2px;
+  height: 12px;
+}
+.herd-mark {
+  flex: none;
+  fill: var(--ink-2);
+  stroke: var(--ink-2);
+}
+.herd-mark .herd-leg {
+  fill: none;
+  stroke-linecap: round;
+}
+.herd-weak {
+  fill: var(--warn);
+  stroke: var(--warn);
+}
+.herd-spent {
+  fill: var(--road);
+  stroke: var(--road);
+}
+.herd-gone {
+  opacity: 0.25;
 }
 
 /* The map */

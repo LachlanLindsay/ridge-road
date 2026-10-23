@@ -192,7 +192,7 @@ export function PlanSheet({ state, draft, setDraft, selected, setSelected, onGo 
                 ) : resting ? (
                   'Stays put: a rest day. The men can still hunt, cut grass or fetch water.'
                 ) : (
-                  'Stays put. Tap a point on the red path to move camp there.'
+                  reach.size > 1 ? 'Stays put. Tap a point on the red path to move camp there.' : 'Stays put: there is no cleared path to move along yet.'
                 )}
               </span>
             </div>

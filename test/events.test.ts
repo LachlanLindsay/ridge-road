@@ -69,3 +69,17 @@ describe('event cards', () => {
     expect(() => resolveHalfDay(t, { target: 's:A', tasks: { fairs: 'cut' } })).toThrow(/kept at camp/);
   });
 });
+
+describe('the spent-horse card', () => {
+  it('warns when resting here cannot help the horse, and not when it can', () => {
+    const s = lineGame('scrub', 2);
+    s.pending = [{ id: 'horseExhausted', horse: 1 }];
+    s.map.nodes[s.camp]!.grass = 'none';
+    const dry = eventCard(s)!.choices.find((c) => c.id === 'rest')!;
+    expect(dry.warn).toBe(true);
+    expect(dry.effect).toMatch(/will not recover/);
+    s.map.nodes[s.camp]!.grass = 'good';
+    s.map.nodes[s.camp]!.water = 'stream';
+    expect(eventCard(s)!.choices.find((c) => c.id === 'rest')!.warn).toBeUndefined();
+  });
+});

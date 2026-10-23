@@ -66,22 +66,33 @@ function Ghost({ state }: { state: GameState }) {
         <path d={path(ghost)} class="ghost-1813" />
         <path d={path(yours)} class="ghost-you" />
         {(() => {
-          // The two labels sit at the ends of their lines; when both end near the top right they
-          // would collide, so the lower one drops below its line and the higher one rises above.
+          // The two labels sit at the ends of their lines. When their words would touch, the lower
+          // line's label drops below it and the higher one's rises above, clear of each other.
           const gx = x(ghost.length);
           const gy = y(ghost[ghost.length - 1]!);
           const yx = Math.min(x(yours.length) + 4, W - R);
           const yy = y(yours[yours.length - 1] ?? 0);
-          const close = Math.abs(gx - yx) < 40 && Math.abs(gy - yy) < 22;
-          const youAbove = yy <= gy;
-          const gLabelY = close ? (youAbove ? gy + 14 : gy - 6) : gy + 12;
-          const yLabelY = close ? (youAbove ? yy - 6 : yy + 14) : yy - 6;
+          const youEnd = x(yours.length) > W - 60;
+          const you: [number, number] = youEnd ? [yx - 24, yx] : [yx, yx + 24];
+          const then: [number, number] = [gx + 2 - 30, gx + 2];
+          const touchX = Math.min(you[1], then[1]) - Math.max(you[0], then[0]) > -6;
+          let gLabelY = gy + 12;
+          let yLabelY = yy - 6;
+          if (touchX && Math.abs(gLabelY - yLabelY) < 14) {
+            if (yy <= gy) {
+              yLabelY = yy - 6;
+              gLabelY = Math.max(gy + 14, yLabelY + 14);
+            } else {
+              gLabelY = Math.max(Tp - 4, gy - 6);
+              yLabelY = Math.max(yy + 14, gLabelY + 14);
+            }
+          }
           return (
             <>
               <text x={gx + 2} y={gLabelY} class="ghost-label ghost-label-1813" text-anchor="end">
                 1813
               </text>
-              <text x={yx} y={yLabelY} class="ghost-label" text-anchor={x(yours.length) > W - 60 ? 'end' : 'start'}>
+              <text x={yx} y={yLabelY} class="ghost-label" text-anchor={youEnd ? 'end' : 'start'}>
                 You
               </text>
             </>
