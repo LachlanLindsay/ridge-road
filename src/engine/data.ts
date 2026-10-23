@@ -70,18 +70,33 @@ export interface CardSpec {
   title: string;
   unlock: string;
   body: string | null;
+  /** How the day's journal line records finding the card; the Signs of Country have one. */
+  found?: string;
 }
 
 export const CARDS = cardsJson as unknown as Record<string, CardSpec>;
+
+/** The Signs of Country: the people the 1813 journals record, kept apart from the cards collected. */
+export function isSignOfCountry(card: string): boolean {
+  return card.startsWith('signs-');
+}
 
 export interface PaceDay {
   date: string;
   move: number;
   kind: 'move' | 'cut' | 'rest';
   est: boolean;
+  /** What the 1813 party did that day, for the journal. */
+  text: string;
 }
 
-export const JOURNAL_1813 = journalJson as unknown as { reckoningMiles: number; days: PaceDay[] };
+/** A day of the 1813 party's journey home, for the journal. */
+export interface HomeDay {
+  date: string;
+  text: string;
+}
+
+export const JOURNAL_1813 = journalJson as unknown as { reckoningMiles: number; days: PaceDay[]; home: HomeDay[] };
 
 export type ModeTuning = Tuning['modes']['historical'];
 

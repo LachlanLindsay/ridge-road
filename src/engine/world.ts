@@ -135,7 +135,7 @@ export function arriveAt(ctx: Ctx, id: string, lawson: boolean): Stop {
     if (node.card) unlockCard(ctx, node.card);
     if (node.feature === 'cairn') {
       addMorale(s, T.morale.cairn);
-      say(ctx, 'The old cairn: an earlier explorer turned back here.');
+      say(ctx, 'The old cairn: a pile of stones the 1813 party took to mark an earlier explorer’s farthest point.');
     }
   }
   if (node.feature === 'precipice') {

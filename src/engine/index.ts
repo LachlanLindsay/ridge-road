@@ -1,6 +1,6 @@
 // Ridge Road engine: the public API. Every rule lives behind these functions; the UI, saves and
 // the sim harness only call them. All functions are pure: they return a new state.
-export { newGame, replay, applyAction } from './state';
+export { newGame, replay, applyAction, partyOf, HORSE_NAMES } from './state';
 export {
   validatePlan,
   hoursAvailable,
@@ -10,10 +10,22 @@ export {
   markedAhead,
   assignments,
   loadAfterCache,
+  validTarget,
 } from './plan';
 export { resolveHalfDay } from './half';
+export {
+  leads,
+  chooseTarget,
+  furthestReachable,
+  horseWater,
+  campChoice,
+  canAdvance,
+  suggestCampMove,
+  targetSpent,
+  stableNoise,
+} from './advice';
 export { chooseEvent, eventCard } from './events';
-export { endDay } from './night';
+export { endDay, dogOdds } from './night';
 export { computeOutcome, routeShare } from './score';
 export { dateOf, weekday } from './day';
 export {
@@ -26,6 +38,9 @@ export {
   straightMiles,
   walkedMiles,
   openMiles,
+  pathMiles,
+  zoneOf,
+  trenchNeed,
   EPS,
 } from './map';
 export {
@@ -40,9 +55,17 @@ export {
   freshLb,
   dailyFood,
   horseCapacity,
+  horseLoads,
+  withParty,
+  rationLevel,
   MEMBER_ORDER,
+  MEMBER_INFO,
+  LEADERS,
+  SERVANTS,
+  itemWeight,
 } from './party';
-export { T, MAP_DATA, JOURNAL_1813, CARDS } from './data';
+export { T, MAP_DATA, JOURNAL_1813, CARDS, isSignOfCountry, regionSpec, terrainSpec, modeTuning } from './data';
+export { itemText } from './text';
 export type * from './types';
 
 import type { GameState } from './types';

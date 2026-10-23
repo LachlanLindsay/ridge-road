@@ -1,0 +1,2819 @@
+/* Layout: a surveyor's field book. The plot of the ridges fills the top of the screen; the day's
+   plan sits below like the facing page. On a wide screen the plan moves beside the plot. */
+:root {
+  --paper: #e8ebe3; /* cool cartridge paper, a breath of the range's eucalyptus haze */
+  --paper-2: #dde2d7; /* the facing page: sheets and bars */
+  --paper-3: #f4f5f0; /* slips laid on the page: cards, chips */
+  --ink: #2b2420; /* iron-gall ink */
+  --ink-2: #5d564d; /* faded ink */
+  --ink-3: #8c877c; /* pencil */
+  --line: #c6ccbf;
+  --road: #a3302a; /* surveyor's red, for the road */
+  --water: #2b5c7d; /* Prussian blue */
+  --grass: #56723a; /* sap green */
+  --brush: #4d6338; /* olive: scrub and trees on the map */
+  --warn: #93590e;
+  --haze-1: #b8c4cc;
+  --haze-2: #95a6b2;
+  --haze-3: #6d8090;
+  --scrim: rgba(28, 26, 22, 0.42);
+  --on-ink: #f4f5f0;
+  /* The engravings: haze from far (0) to near (3), then ink. */
+  --art-0: #aebcc4;
+  --art-1: #8a9ba7;
+  --art-2: #627585;
+  --art-3: #3c4953;
+  --art-4: var(--ink);
+  --art-water: #4d7795;
+  --art-smoke: #8c877c;
+  --food: #b5813a;
+  --gear: #8c877c;
+  --font-display: 'IM Fell English', 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --radius: 10px;
+  --gutter-l: max(16px, env(safe-area-inset-left, 0px));
+  --gutter-r: max(16px, env(safe-area-inset-right, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper: #1b2026;
+    --paper-2: #222830;
+    --paper-3: #2a3139;
+    --ink: #e5e0d4;
+    --ink-2: #b3ada2;
+    --ink-3: #7f8389;
+    --line: #3a424c;
+    --road: #e2765f;
+    --water: #7cb3d6;
+    --grass: #9dc173;
+    --brush: #86a066;
+    --warn: #e2a54c;
+    --haze-1: #2f3a45;
+    --haze-2: #3e4c59;
+    --haze-3: #52646f;
+    --scrim: rgba(0, 0, 0, 0.55);
+    --on-ink: #1b2026;
+    --art-0: #3b4651;
+    --art-1: #53636f;
+    --art-2: #788a96;
+    --art-3: #a9b4ba;
+    --art-water: #7aa8c6;
+    --art-smoke: #8e9399;
+    --food: #d2a25a;
+    --gear: #7f8389;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --paper: #1b2026;
+  --paper-2: #222830;
+  --paper-3: #2a3139;
+  --ink: #e5e0d4;
+  --ink-2: #b3ada2;
+  --ink-3: #7f8389;
+  --line: #3a424c;
+  --road: #e2765f;
+  --water: #7cb3d6;
+  --grass: #9dc173;
+  --brush: #86a066;
+  --warn: #e2a54c;
+  --haze-1: #2f3a45;
+  --haze-2: #3e4c59;
+  --haze-3: #52646f;
+  --scrim: rgba(0, 0, 0, 0.55);
+  --on-ink: #1b2026;
+  --art-0: #3b4651;
+  --art-1: #53636f;
+  --art-2: #788a96;
+  --art-3: #a9b4ba;
+  --art-water: #7aa8c6;
+  --art-smoke: #8e9399;
+  --food: #d2a25a;
+  --gear: #7f8389;
+  color-scheme: dark;
+}
+
+html {
+  box-sizing: border-box;
+  height: 100%;
+  background: var(--paper);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+@supports (font: -apple-system-body) {
+  html {
+    font: -apple-system-body;
+  }
+}
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  line-height: 1.4;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+#app {
+  height: 100%;
+}
+button,
+input,
+output {
+  font: inherit;
+  color: inherit;
+}
+button {
+  touch-action: manipulation;
+  cursor: pointer;
+}
+button:disabled {
+  cursor: default;
+}
+:focus-visible {
+  outline: 2px solid var(--water);
+  outline-offset: 2px;
+}
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+  font-weight: 400;
+}
+p {
+  margin: 0;
+}
+.display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.005em;
+}
+.fine {
+  font-size: 0.78rem;
+  color: var(--ink-2);
+}
+.section-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink-2);
+  margin: 0 0 4px;
+  padding: 0;
+}
+.is-warn {
+  color: var(--warn);
+}
+
+/* ---------------------------------------------------------------- buttons and controls */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--paper-3);
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-align: center;
+}
+.btn:disabled {
+  opacity: 0.45;
+}
+.btn-go {
+  width: 100%;
+  background: var(--ink);
+  color: var(--on-ink);
+  font-size: 1.05rem;
+  min-height: 50px;
+}
+.btn-small {
+  font-size: 0.85rem;
+  padding: 6px 12px;
+}
+.btn-quiet {
+  border-color: var(--line);
+  background: transparent;
+  font-weight: 500;
+}
+.btn-quiet.is-on {
+  border-color: var(--ink-3);
+}
+.btn-danger {
+  border-color: var(--road);
+  color: var(--road);
+}
+.link-btn {
+  border: 0;
+  background: none;
+  padding: 10px 0;
+  color: var(--water);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-size: 0.9rem;
+  text-align: left;
+}
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--ink-2);
+}
+.btn-glyph {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.toggle {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 44px;
+  padding: 6px 0;
+  cursor: pointer;
+}
+.toggle input,
+.seg input,
+.mode input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+}
+.toggle-box {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin-top: 1px;
+  border: 1.5px solid var(--ink);
+  border-radius: 6px;
+  background: var(--paper-3);
+  display: grid;
+  place-items: center;
+}
+.toggle input:checked + .toggle-box {
+  background: var(--ink);
+}
+.toggle input:checked + .toggle-box::after {
+  content: '';
+  width: 6px;
+  height: 11px;
+  margin-top: -3px;
+  border: solid var(--on-ink);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.toggle input:focus-visible + .toggle-box {
+  outline: 2px solid var(--water);
+  outline-offset: 2px;
+}
+.toggle-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.toggle-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.toggle-note {
+  font-size: 0.82rem;
+  color: var(--ink-2);
+}
+
+.stepper {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px 3.5rem 44px;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+}
+.stepper-label {
+  font-size: 0.88rem;
+  min-width: 0;
+}
+.stepper-note {
+  display: block;
+  margin-top: 2px;
+}
+.step-btn {
+  width: 44px;
+  height: 44px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-3);
+  font-size: 1.2rem;
+}
+.step-btn:disabled {
+  opacity: 0.4;
+}
+.step-value {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.meter {
+  display: block;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+.meter i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--grass);
+}
+.meter-mid i {
+  background: var(--warn);
+}
+.meter-low i {
+  background: var(--road);
+}
+
+/* ---------------------------------------------------------------- the play screen */
+
+.play {
+  height: 100%;
+  display: grid;
+  /* Top bar, map, the handle between them, and the plan. MapSize.tsx shares these numbers. */
+  grid-template-rows: auto minmax(0, 55fr) auto minmax(0, 45fr);
+}
+.play[data-map='min'] {
+  grid-template-rows: auto minmax(0, 22fr) auto minmax(0, 78fr);
+}
+.play[data-map='max'] {
+  grid-template-rows: auto minmax(0, 1fr) auto minmax(0, 9.5rem);
+}
+.play[data-map='min'] .map-buttons {
+  grid-auto-flow: column;
+}
+.grip {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: var(--paper-2);
+  touch-action: none;
+  cursor: row-resize;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.grip-pill {
+  width: 40px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--ink-3);
+}
+.grip:active .grip-pill {
+  background: var(--ink-2);
+}
+.grip + .sheet {
+  border-top: 0;
+}
+.grip + .sheet .sheet-inner {
+  padding-top: 4px;
+}
+.map-size {
+  position: absolute;
+  top: 10px;
+  right: max(10px, env(safe-area-inset-right, 0px));
+  display: flex;
+  gap: 6px;
+  pointer-events: auto;
+}
+.theme-choice {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.theme-choice .seg {
+  min-height: 44px;
+  align-content: center;
+  text-align: center;
+}
+/* Words that depend on where the plan sits: under the map on a phone, beside it on a wide screen. */
+.when-beside {
+  display: none;
+}
+@media (min-width: 900px), (orientation: landscape) and (min-width: 640px) {
+  .when-beside {
+    display: inline;
+  }
+  .when-below {
+    display: none;
+  }
+  .play,
+  .play[data-map] {
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 27rem);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .play[data-map] .map-buttons {
+    grid-auto-flow: row;
+  }
+  .grip,
+  .map-size {
+    display: none;
+  }
+  .topbar {
+    grid-column: 1 / -1;
+  }
+  .sheet,
+  .grip + .sheet {
+    border-top: 0;
+    border-left: 1px solid var(--line);
+  }
+  .grip + .sheet .sheet-inner {
+    padding-top: 12px;
+  }
+}
+
+.topbar {
+  /* Above the map, so the journal slip can hang over it. */
+  position: relative;
+  z-index: 20;
+  background: var(--paper-2);
+  border-bottom: 1px solid var(--line);
+}
+.topbar-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-block: 6px;
+  padding-left: var(--gutter-l);
+  padding-right: max(4px, env(safe-area-inset-right, 0px));
+}
+.topbar-date {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+}
+.date {
+  font-size: 1.15rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.topbar-meta {
+  font-size: 0.78rem;
+  color: var(--ink-2);
+}
+.topbar-morale {
+  display: grid;
+  gap: 3px;
+  width: 6.5rem;
+  flex: none;
+}
+/* The horses under the morale meter: a silhouette each, head down and coloured when weak. */
+.herd {
+  display: flex;
+  gap: 2px;
+  height: 12px;
+}
+.herd-mark {
+  flex: none;
+  fill: var(--ink-2);
+  stroke: var(--ink-2);
+}
+.herd-mark .herd-leg {
+  fill: none;
+  stroke-linecap: round;
+}
+.herd-weak {
+  fill: var(--warn);
+  stroke: var(--warn);
+}
+.herd-spent {
+  fill: var(--road);
+  stroke: var(--road);
+}
+.herd-gone {
+  opacity: 0.25;
+}
+
+/* The map */
+.map {
+  position: relative;
+  overflow: hidden;
+  background: var(--paper);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.map-svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+}
+.map-svg:active {
+  cursor: grabbing;
+}
+.map-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.map-north {
+  position: absolute;
+  top: 10px;
+  left: max(14px, env(safe-area-inset-left, 0px));
+  display: grid;
+  justify-items: center;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  color: var(--ink-2);
+}
+.north-arrow {
+  fill: var(--ink-2);
+}
+.map-scale {
+  position: absolute;
+  left: max(14px, env(safe-area-inset-left, 0px));
+  bottom: 10px;
+  display: grid;
+  gap: 2px;
+  font-size: 0.72rem;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.scale-line {
+  fill: none;
+  stroke: var(--ink-2);
+  stroke-width: 1.5;
+}
+.map-buttons {
+  position: absolute;
+  right: max(10px, env(safe-area-inset-right, 0px));
+  bottom: 10px;
+  display: grid;
+  gap: 6px;
+  pointer-events: auto;
+}
+.map-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-3);
+  font-size: 1.35rem;
+  line-height: 1;
+  color: var(--ink);
+}
+.map-btn:first-child {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* The haze over country the party has not seen: ruled lines like an engraved sky. */
+.map-haze path {
+  fill: none;
+  stroke: var(--art-0);
+  stroke-linecap: butt;
+  opacity: 0.8;
+}
+.map-haze .map-haze-edge {
+  opacity: 0.4;
+}
+.map-hachure {
+  fill: none;
+  stroke: var(--ink-3);
+  opacity: 0.45;
+  stroke-linecap: round;
+}
+/* Cover along the ridges. Brush to be cut is stippled crowns, rows of round dots; the rest are small marks. */
+.cover path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.cover .cover-brush {
+  stroke: var(--brush);
+  stroke-linecap: round;
+  opacity: 0.62;
+}
+.cover .cover-brush-cut {
+  opacity: 0.5;
+}
+.cover .cover-rocks {
+  fill: var(--paper-2);
+  stroke: var(--ink-2);
+}
+.cover .cover-gum-wood {
+  stroke: var(--ink-2);
+}
+.cover .cover-gum-crown {
+  fill: var(--brush);
+  opacity: 0.8;
+}
+.cover .cover-heath {
+  stroke: var(--art-2);
+}
+.cover .cover-meadow {
+  stroke: var(--grass);
+}
+.cover .cover-marsh {
+  stroke: var(--water);
+  opacity: 0.7;
+}
+.seg-casing {
+  stroke: var(--paper);
+  opacity: 0.85;
+  stroke-linecap: round;
+}
+.seg-seen {
+  stroke: var(--ink-3);
+  stroke-linecap: round;
+}
+.seg-marked {
+  stroke: var(--ink);
+  stroke-linecap: butt;
+}
+.seg-open {
+  stroke: var(--road);
+  stroke-linecap: round;
+}
+.seg-crossed {
+  stroke: var(--road);
+  stroke-linecap: round;
+}
+.seg-dead {
+  stroke: var(--ink-3);
+  opacity: 0.7;
+  stroke-linecap: round;
+}
+.seg-selected {
+  stroke: var(--haze-2);
+  opacity: 0.55;
+  stroke-linecap: round;
+}
+.lead-end {
+  fill: var(--paper);
+  stroke: var(--ink-2);
+}
+.node {
+  fill: var(--paper);
+  stroke: var(--ink);
+}
+.node-reached {
+  fill: var(--ink);
+}
+.node-selected {
+  fill: none;
+  stroke: var(--haze-2);
+}
+.glyph-trig,
+.glyph-cliff,
+.glyph-cliff-face,
+.glyph-water-line {
+  fill: none;
+  stroke: var(--ink);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.glyph-cliff-face {
+  stroke: var(--ink-2);
+}
+.glyph-trench {
+  fill: none;
+  stroke: var(--road);
+  stroke-linecap: round;
+}
+.glyph-water-line {
+  stroke: var(--water);
+}
+.glyph-pool {
+  fill: color-mix(in srgb, var(--water) 14%, var(--paper));
+  stroke: var(--water);
+}
+.glyph-rush {
+  fill: none;
+  stroke: var(--grass);
+  stroke-linecap: round;
+}
+.glyph-rock {
+  fill: var(--paper-2);
+  stroke: var(--ink-2);
+  stroke-linejoin: round;
+}
+.glyph-rockhole {
+  fill: var(--water);
+}
+.glyph-grass {
+  fill: none;
+  stroke: var(--grass);
+  stroke-linecap: round;
+}
+.glyph-grass-rushy {
+  opacity: 0.7;
+}
+.glyph-goal {
+  fill: var(--grass);
+  fill-opacity: 0.35;
+  stroke: var(--ink);
+}
+.glyph-step {
+  fill: var(--ink-2);
+  stroke: var(--ink);
+}
+.glyph-step-done {
+  fill: none;
+}
+.glyph-cairn {
+  fill: var(--ink-2);
+  stroke: var(--ink);
+}
+.glyph-cache {
+  fill: var(--paper-3);
+  stroke: var(--ink-2);
+}
+.glyph-horse {
+  fill: none;
+  stroke: var(--road);
+  stroke-linecap: round;
+}
+.map-label {
+  font-family: var(--font-display);
+  font-style: italic;
+  fill: var(--ink);
+  stroke: var(--paper);
+  paint-order: stroke;
+  stroke-linejoin: round;
+}
+/* Lawson's readings, pencilled beside the ridge; a wrong one is struck through in red ink. */
+.map-hint text {
+  font-family: var(--font-display);
+  font-style: italic;
+  fill: var(--ink-2);
+  stroke: var(--paper);
+  paint-order: stroke;
+  stroke-linejoin: round;
+}
+/* The struck words stay as dark as an open reading, so the strike reads as a correction to
+   them and not as a scrap of red road. */
+.map-hint-wrong text {
+  opacity: 0.8;
+}
+.map-hint-strike {
+  fill: none;
+  stroke: var(--road);
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+.tent {
+  fill: var(--ink);
+  stroke: var(--ink);
+  stroke-linejoin: round;
+}
+.tent-door {
+  fill: var(--paper-2);
+}
+.tent-smoke {
+  fill: none;
+  stroke: var(--ink-3);
+  stroke-linecap: round;
+}
+.flag-pole {
+  stroke: var(--ink);
+  stroke-linecap: round;
+}
+.flag-cloth {
+  fill: var(--road);
+  stroke: var(--ink);
+  stroke-linejoin: round;
+}
+.move-ring {
+  fill: none;
+  stroke: var(--road);
+}
+
+/* The facing page */
+.sheet {
+  position: relative;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  background: var(--paper-2);
+  border-top: 1px solid var(--line);
+}
+.sheet-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 100%;
+  padding-top: 12px;
+  padding-left: var(--gutter-l);
+  padding-right: var(--gutter-r);
+}
+.sheet-foot {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  margin-left: calc(-1 * var(--gutter-l));
+  margin-right: calc(-1 * var(--gutter-r));
+  padding-top: 10px;
+  padding-bottom: 12px;
+  padding-left: var(--gutter-l);
+  padding-right: var(--gutter-r);
+  background: var(--paper-2);
+  border-top: 1px solid var(--line);
+}
+
+.report ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 3px;
+}
+.report li {
+  position: relative;
+  padding-left: 14px;
+  font-size: 0.9rem;
+}
+.report li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0.62em;
+  width: 6px;
+  border-top: 1.5px solid var(--ink-3);
+}
+
+.plan {
+  display: grid;
+  gap: 12px;
+}
+.plan-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.plan-head h2 {
+  margin: 0;
+  font-size: 1.55rem;
+  line-height: 1.1;
+}
+.plan-hours {
+  font-size: 0.82rem;
+  color: var(--ink-2);
+}
+.plan-row {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  gap: 10px;
+  align-items: baseline;
+  font-size: 0.92rem;
+}
+.plan-key {
+  color: var(--ink-2);
+  font-size: 0.85rem;
+}
+.plan-val .btn {
+  margin-top: 6px;
+}
+.plan-line {
+  font-size: 0.88rem;
+  color: var(--ink-2);
+}
+
+.roster {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.4rem, 1fr));
+  gap: 8px;
+}
+.chip {
+  --task: var(--ink-2);
+  display: grid;
+  gap: 3px;
+  align-content: start;
+  min-height: 72px;
+  padding: 8px 9px 9px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-3);
+  text-align: left;
+  min-width: 0;
+}
+.chip:not(:disabled) {
+  border-color: color-mix(in srgb, var(--task) 55%, var(--line));
+}
+.chip:disabled,
+.chip[aria-disabled='true'] {
+  opacity: 0.6;
+}
+/* Press and hold opens a man's card: no text selection or callout under the finger. */
+.chip,
+.art-hit {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.roster-hint {
+  margin: 2px 0 0;
+  font-size: 0.74rem;
+  color: var(--ink-3);
+}
+.hint-mouse {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .hint-touch {
+    display: none;
+  }
+  .hint-mouse {
+    display: inline;
+  }
+}
+.task-scout {
+  --task: var(--road);
+}
+.task-cut {
+  --task: var(--ink);
+}
+.task-camp {
+  --task: var(--haze-3);
+}
+.task-water {
+  --task: var(--water);
+}
+.task-hunt,
+.task-grass {
+  --task: var(--grass);
+}
+.task-rest,
+.task-off {
+  --task: var(--ink-3);
+}
+.chip-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chip-task {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--task);
+}
+.chip-hint {
+  font-size: 0.72rem;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.warnings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 0.86rem;
+}
+.warnings li {
+  padding-left: 14px;
+  position: relative;
+}
+.warnings li::before {
+  content: '!';
+  position: absolute;
+  left: 2px;
+  font-weight: 800;
+}
+.is-error {
+  color: var(--road);
+}
+
+.horses {
+  display: grid;
+  gap: 6px;
+}
+.horses-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.horse {
+  display: grid;
+  gap: 3px;
+  font-size: 0.76rem;
+  min-width: 0;
+  margin: -4px;
+  padding: 4px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  text-align: left;
+}
+.horse-name {
+  font-weight: 600;
+}
+.horse-note {
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.horse-gone {
+  opacity: 0.55;
+}
+.horses-load {
+  font-size: 0.8rem;
+  color: var(--ink-2);
+}
+.horses-load.is-over {
+  color: var(--warn);
+}
+
+.place {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper-3);
+}
+.place-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: -6px -8px -4px 0;
+}
+.place-head h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+.place-note {
+  font-size: 0.88rem;
+}
+.place-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.facts {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+}
+.facts > div {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  gap: 10px;
+}
+.facts dt {
+  font-size: 0.82rem;
+  color: var(--ink-2);
+}
+.facts dd {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.segmented {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.seg-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.seg {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  min-height: 54px;
+  padding: 8px 10px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-2);
+  cursor: pointer;
+}
+.seg.is-on {
+  border-color: var(--ink);
+  background: var(--paper-3);
+}
+.seg:focus-within {
+  outline: 2px solid var(--water);
+  outline-offset: 2px;
+}
+.seg-label {
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+.seg-note {
+  font-size: 0.75rem;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.disclosure {
+  display: grid;
+  gap: 4px;
+}
+.cache-list {
+  display: grid;
+  gap: 2px;
+}
+.confirm {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1.5px solid var(--road);
+  border-radius: 12px;
+  background: var(--paper-3);
+  font-size: 0.92rem;
+}
+.confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.men {
+  display: grid;
+  gap: 5px;
+}
+.man {
+  display: grid;
+  grid-template-columns: minmax(0, 7rem) minmax(0, 1fr) minmax(0, 7.5rem);
+  align-items: center;
+  gap: 10px;
+  font-size: 0.84rem;
+  width: calc(100% + 12px);
+  margin: 0 -6px;
+  padding: 3px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  text-align: left;
+}
+.man-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.man-trait {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.man-full {
+  grid-template-columns: minmax(0, 1.5fr) minmax(3rem, 1fr) auto;
+}
+.man-full .man-name {
+  white-space: normal;
+}
+.dogs-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+@media (hover: hover) {
+  .man:hover,
+  .horse:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+}
+.party-hint {
+  margin: 0 0 8px;
+}
+
+/* ---------------------------------------------------------------- cards for the party */
+
+.info {
+  display: grid;
+  gap: 6px;
+  font-size: 0.92rem;
+}
+.info p {
+  margin: 0;
+}
+.info .section-title {
+  margin: 8px 0 0;
+}
+.info-role {
+  font-weight: 600;
+}
+.info-now {
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.info-game {
+  margin: 0;
+  padding-left: 1.1em;
+  display: grid;
+  gap: 4px;
+}
+.info-history {
+  max-width: 62ch;
+}
+.info .card-source {
+  margin-top: 6px;
+  font-size: 0.76rem;
+  color: var(--ink-2);
+}
+.peek {
+  position: fixed;
+  z-index: 40;
+  width: min(20rem, calc(100vw - 16px));
+  padding: 10px 12px 12px;
+  background: var(--paper-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}
+.peek-title {
+  margin: 0 0 2px;
+  font-size: 1.2rem;
+  line-height: 1.15;
+}
+.info-quick {
+  gap: 4px;
+  font-size: 0.8rem;
+}
+.info-quick .section-title {
+  margin-top: 4px;
+  font-size: 0.72rem;
+}
+.info-more {
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: var(--ink-3);
+}
+.man-cond {
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------- cards over the game */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-top: max(24px, env(safe-area-inset-top, 0px));
+  background: var(--scrim);
+}
+@media (min-width: 700px) {
+  .backdrop {
+    align-items: center;
+    padding-bottom: 24px;
+  }
+}
+.event-card,
+.overlay {
+  width: min(100%, 36rem);
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--paper-3);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.22);
+}
+@media (min-width: 700px) {
+  .event-card,
+  .overlay {
+    border-radius: 16px;
+  }
+}
+.event-card {
+  display: grid;
+  gap: 12px;
+  padding-top: 22px;
+  padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  padding-left: var(--gutter-l);
+  padding-right: var(--gutter-r);
+}
+.event-title {
+  margin: 0;
+  font-size: 1.65rem;
+  line-height: 1.15;
+}
+.event-text {
+  font-size: 0.98rem;
+  max-width: 60ch;
+}
+.choices {
+  display: grid;
+  gap: 8px;
+  margin-top: 4px;
+}
+.choice {
+  display: grid;
+  gap: 3px;
+  min-height: 56px;
+  padding: 11px 14px;
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  background: var(--paper);
+  text-align: left;
+}
+.choice:disabled {
+  border-color: var(--line);
+  opacity: 0.55;
+}
+.choice-label {
+  font-weight: 650;
+  font-size: 1rem;
+}
+.choice-effect {
+  font-size: 0.84rem;
+  color: var(--ink-2);
+}
+
+.overlay {
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+}
+.overlay-head {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 10px;
+  padding-bottom: 6px;
+  padding-left: var(--gutter-l);
+  padding-right: max(6px, env(safe-area-inset-right, 0px));
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+.overlay-head h2 {
+  margin: 0;
+  font-size: 1.45rem;
+}
+.overlay-body {
+  display: grid;
+  gap: 16px;
+  padding-top: 12px;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  padding-left: var(--gutter-l);
+  padding-right: var(--gutter-r);
+}
+.menu {
+  display: grid;
+}
+.menu-item {
+  display: grid;
+  gap: 2px;
+  min-height: 52px;
+  padding: 12px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  text-align: left;
+  font-size: 1.05rem;
+}
+.menu-item span {
+  font-size: 0.8rem;
+  color: var(--ink-2);
+}
+.menu-item .menu-item-head,
+.tab .menu-item-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: inherit;
+  color: inherit;
+}
+.menu-danger {
+  color: var(--road);
+}
+.journal {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.journal li {
+  display: grid;
+  gap: 3px;
+  padding-block: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.journal-date {
+  font-size: 1.02rem;
+}
+.journal-text {
+  font-size: 0.9rem;
+}
+.journal-1813 {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.98rem;
+  line-height: 1.35;
+  color: var(--ink-2);
+}
+.journal-1813-label {
+  font-style: normal;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.cards {
+  display: grid;
+  gap: 6px;
+}
+.card-item {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  background: var(--paper-3);
+}
+.card-item summary {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  cursor: pointer;
+  min-height: 28px;
+}
+.card-item p {
+  margin-top: 6px;
+  font-size: 0.9rem;
+}
+.card-item .card-source,
+.history .card-source {
+  margin-top: 8px;
+  font-size: 0.76rem;
+  color: var(--ink-2);
+}
+.help h3 {
+  margin: 0 0 4px;
+  font-size: 1.2rem;
+}
+.help p + p {
+  margin-top: 6px;
+}
+.key {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.key li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+.key svg {
+  flex: none;
+}
+
+.toast {
+  position: fixed;
+  z-index: 40;
+  left: var(--gutter-l);
+  right: var(--gutter-r);
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 6px 6px 14px;
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--on-ink);
+  font-size: 0.9rem;
+}
+.toast .icon-btn {
+  color: var(--on-ink);
+}
+
+/* ---------------------------------------------------------------- title, briefing, end */
+
+.title,
+.briefing,
+.end {
+  min-height: 100%;
+  background: var(--paper);
+}
+.title {
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-block: 24px 32px;
+}
+.title > :first-child {
+  margin-top: auto;
+}
+.title > :last-child {
+  margin-bottom: auto;
+}
+.title-inner,
+.briefing-inner,
+.end-inner {
+  width: 100%;
+  max-width: 34rem;
+  margin: 0 auto;
+  padding-left: var(--gutter-l);
+  padding-right: var(--gutter-r);
+}
+.title-name {
+  margin: 0;
+  font-size: clamp(3.2rem, 15vw, 5.6rem);
+  line-height: 0.95;
+}
+.title-sub {
+  margin-top: 10px;
+  max-width: 30ch;
+  color: var(--ink-2);
+  font-size: 1.02rem;
+}
+.title-art,
+.briefing-art,
+.end-art {
+  width: 100%;
+  max-width: 46rem;
+  margin-inline: auto;
+}
+.briefing-art {
+  animation: plate-in 0.5s ease both;
+}
+@keyframes plate-in {
+  from {
+    opacity: 0;
+  }
+}
+.title-actions {
+  display: grid;
+  gap: 10px;
+}
+.modes {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.mode {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  min-height: 56px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper-2);
+  cursor: pointer;
+}
+.mode.is-on {
+  border-color: var(--ink);
+  background: var(--paper-3);
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+}
+/* A tick on the chosen difficulty, so "selected" reads as selected and not as "plain". */
+.mode.is-on::after {
+  content: '✓';
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+.mode.is-on .mode-label,
+.mode.is-on .mode-note {
+  padding-right: 28px;
+}
+.mode:focus-within {
+  outline: 2px solid var(--water);
+  outline-offset: 2px;
+}
+.mode-label {
+  font-weight: 650;
+}
+.mode-note {
+  font-size: 0.84rem;
+  color: var(--ink-2);
+}
+
+.briefing {
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-block: 12px 32px;
+}
+/* Centred when there is room; scrolls from the top when there is not. */
+.briefing > :first-child {
+  margin-top: auto;
+}
+.briefing > :last-child {
+  margin-bottom: auto;
+}
+.briefing-inner {
+  display: grid;
+  gap: 14px;
+}
+.briefing-step {
+  display: flex;
+  gap: 0;
+  margin: -8px 0 -8px -8px;
+}
+/* Each dot is a button with a finger-sized target around the small mark. */
+.dot {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.dot::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--line);
+}
+.dot.is-on::before {
+  background: var(--ink);
+}
+@media (hover: hover) {
+  .dot:hover::before {
+    background: var(--ink-3);
+  }
+  .dot.is-on:hover::before {
+    background: var(--ink);
+  }
+}
+.briefing-title {
+  margin: 0;
+  font-size: clamp(2.2rem, 10vw, 3.2rem);
+  line-height: 1;
+}
+.briefing-text {
+  font-size: 1.02rem;
+  max-width: 62ch;
+}
+.briefing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.briefing-actions .btn-go {
+  flex: 1 1 12rem;
+  width: auto;
+}
+.briefing-actions .btn-quiet:first-child {
+  flex: 0 0 auto;
+  min-width: 6.5rem;
+}
+.briefing-actions .btn-go + .btn-quiet {
+  flex: 1 0 100%;
+}
+.art-hint {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  color: var(--ink-2);
+}
+.meet {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--ink-2);
+  line-height: 1.7;
+}
+.meet-label {
+  color: var(--ink-2);
+}
+.meet-btn {
+  font-size: inherit;
+}
+.art-hit {
+  fill: transparent;
+  pointer-events: all;
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .art-hit:hover {
+    fill: color-mix(in srgb, var(--ink) 7%, transparent);
+  }
+}
+.report-card {
+  color: inherit;
+  text-decoration: none;
+  text-align: left;
+}
+.report-card-read {
+  color: var(--water);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+
+.end {
+  height: 100%;
+  overflow-y: auto;
+}
+.end-art {
+  padding-top: 8px;
+}
+.end-inner {
+  display: grid;
+  gap: 18px;
+  padding-block: 8px 40px;
+}
+.end-kicker {
+  font-size: 0.85rem;
+  color: var(--ink-2);
+}
+.end-title {
+  margin: -10px 0 0;
+  font-size: clamp(2.4rem, 11vw, 3.6rem);
+  line-height: 1;
+}
+.end-sub {
+  font-size: 1rem;
+}
+.end-sub .display {
+  font-size: 1.2rem;
+}
+.score {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.score td {
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.score .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  padding-left: 12px;
+  white-space: nowrap;
+}
+.score-total td {
+  font-weight: 700;
+  border-bottom: 0;
+  border-top: 2px solid var(--ink);
+}
+.ghost {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+.ghost svg {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
+.ghost figcaption {
+  font-size: 0.78rem;
+  color: var(--ink-2);
+}
+.ghost-grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.ghost-axis {
+  fill: var(--ink-2);
+  font-size: 10px;
+  font-family: var(--font-ui);
+}
+.ghost-1813 {
+  fill: none;
+  stroke: var(--ink-3);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+}
+.ghost-you {
+  fill: none;
+  stroke: var(--road);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+.ghost-label {
+  fill: var(--road);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-ui);
+}
+.ghost-label-1813 {
+  fill: var(--ink-2);
+}
+.history h2 {
+  margin: 0 0 6px;
+  font-size: 1.5rem;
+}
+.history p + p {
+  margin-top: 6px;
+}
+.end-actions {
+  display: grid;
+  gap: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.notice {
+  padding: 10px 12px;
+  border: 1.5px solid var(--warn);
+  border-radius: 12px;
+  background: var(--paper-3);
+  font-size: 0.9rem;
+}
+.notice .btn {
+  margin-top: 8px;
+}
+.map-river path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.map-river .map-river-bank {
+  stroke: var(--water);
+  opacity: 0.7;
+}
+.map-river .map-river-water {
+  stroke: var(--paper);
+}
+.map-river .map-river-line {
+  stroke: var(--water);
+  opacity: 0.5;
+}
+.map-river-label {
+  font-family: var(--font-display);
+  font-style: italic;
+  fill: var(--water);
+  opacity: 0.8;
+  letter-spacing: 0.08em;
+}
+
+/* ---------------------------------------------------------------- engravings */
+
+.art {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.art path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.art .pp {
+  fill: var(--paper);
+}
+.art .l0 {
+  stroke: var(--art-0);
+}
+.art .l1 {
+  stroke: var(--art-1);
+}
+.art .l2 {
+  stroke: var(--art-2);
+}
+.art .l3 {
+  stroke: var(--art-3);
+}
+.art .l4 {
+  stroke: var(--art-4);
+}
+.art .f0 {
+  fill: var(--art-0);
+}
+.art .f1 {
+  fill: var(--art-1);
+}
+.art .f2 {
+  fill: var(--art-2);
+}
+.art .f3 {
+  fill: var(--art-3);
+}
+.art .f4 {
+  fill: var(--art-4);
+}
+.art .lw {
+  stroke: var(--art-water);
+}
+.art .ls {
+  stroke: var(--art-smoke);
+}
+.art .lp {
+  stroke: var(--paper);
+}
+.art .pk {
+  fill: var(--paper);
+  stroke: var(--art-4);
+}
+.art .o1 {
+  opacity: 0.7;
+}
+.art .o2 {
+  opacity: 0.42;
+}
+/* A plate fades out at its sides and foot, the way a vignetted book engraving does. */
+.plate {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent), linear-gradient(to bottom, transparent, #000 5%, #000 82%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent), linear-gradient(to bottom, transparent, #000 5%, #000 82%, transparent);
+  mask-composite: intersect;
+}
+
+/* ---------------------------------------------------------------- outfitting */
+
+.outfit {
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+}
+.outfit-art {
+  /* The party stays in view while the lists scroll under it, so each change shows on the horses. */
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  width: 100%;
+  padding-top: 8px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+.outfit-art svg {
+  display: block;
+  width: 100%;
+  max-width: 46rem;
+  max-height: 30vh;
+  margin-inline: auto;
+}
+.outfit-inner {
+  width: 100%;
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 4px var(--gutter-r) 20px var(--gutter-l);
+  display: grid;
+  gap: 12px;
+}
+.outfit-title {
+  margin: -6px 0 0;
+  font-size: clamp(2.2rem, 10vw, 3.2rem);
+  line-height: 1;
+}
+.outfit-lede {
+  font-size: 1rem;
+}
+.outfit-inner > .link-btn {
+  justify-self: start;
+  padding-block: 2px;
+}
+.outfit-section {
+  display: grid;
+  margin-top: 8px;
+}
+.outfit-fixed {
+  font-size: 0.86rem;
+  color: var(--ink-2);
+  margin-bottom: 2px;
+}
+.ostep {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px 4.8rem 44px;
+  align-items: center;
+  gap: 6px;
+  min-height: 58px;
+  padding-block: 6px;
+  border-bottom: 1px solid var(--line);
+}
+.ostep-fixed {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.ostep-text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.ostep-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.ostep-note {
+  font-size: 0.8rem;
+  color: var(--ink-2);
+}
+.ostep-note.is-warn {
+  color: var(--warn);
+}
+.step-unit {
+  font-weight: 400;
+  font-size: 0.78rem;
+  color: var(--ink-2);
+}
+.ostep-none {
+  padding-right: 6px;
+  color: var(--ink-2);
+}
+.outfit-sum {
+  margin-top: 8px;
+  font-size: 0.88rem;
+}
+.outfit-sum.is-warn {
+  color: var(--warn);
+}
+.loads {
+  display: grid;
+  gap: 7px;
+  margin-top: 6px;
+}
+.load-row {
+  display: grid;
+  grid-template-columns: 4.4rem minmax(0, 1fr) 3.6rem;
+  align-items: center;
+  gap: 10px;
+}
+.load-name {
+  font-size: 0.88rem;
+}
+.load-bar {
+  position: relative;
+  display: flex;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+/* The last fifth of the bar, 160 to 200 lb, is load carried only at a push. */
+.load-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 80%;
+  right: 0;
+  border-left: 1.5px solid var(--ink-2);
+  background: repeating-linear-gradient(135deg, transparent 0 3px, var(--paper) 3px 4.5px);
+  opacity: 0.6;
+}
+.load-food {
+  background: var(--food);
+}
+.load-gear {
+  background: var(--gear);
+}
+.load-lb {
+  text-align: right;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+.load-lb.is-warn {
+  color: var(--warn);
+  font-weight: 600;
+}
+.load-lb.is-over {
+  color: var(--road);
+  font-weight: 700;
+}
+.load-key {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin-top: 2px;
+  font-size: 0.76rem;
+  color: var(--ink-2);
+}
+.key-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+.key-line {
+  display: inline-block;
+  height: 12px;
+  margin-left: 6px;
+  border-left: 1.5px solid var(--ink-2);
+}
+.outfit-checks {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  font-size: 0.88rem;
+}
+.outfit-checks .is-over {
+  color: var(--road);
+  font-weight: 600;
+}
+.outfit-foot {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  display: grid;
+  gap: 6px;
+  padding: 8px var(--gutter-r) 12px var(--gutter-l);
+  background: var(--paper-2);
+  border-top: 1px solid var(--line);
+}
+.outfit-foot > * {
+  width: 100%;
+  max-width: 34rem;
+  margin-inline: auto;
+}
+.outfit-foot-sum {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------- beta: coach, feedback, crash */
+
+.coach ul {
+  margin: 0 0 10px;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  font-size: 0.95rem;
+}
+.feedback {
+  display: grid;
+  gap: 12px;
+}
+.field {
+  display: grid;
+  gap: 4px;
+}
+.field-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.field textarea,
+.report-manual {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-3);
+  color: var(--ink);
+  font: inherit;
+  /* 16px or more keeps iOS from zooming the page when the field takes focus. */
+  font-size: max(16px, 1rem);
+  line-height: 1.4;
+  resize: vertical;
+}
+.field textarea:focus,
+.report-manual:focus {
+  outline: 2px solid var(--water);
+  outline-offset: 1px;
+}
+.report-manual {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+}
+.report-actions {
+  display: grid;
+  gap: 8px;
+}
+.report-preview summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--ink-2);
+}
+.report-preview pre {
+  margin: 8px 0 0;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--paper-2);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.link-inline {
+  display: inline;
+  padding: 0;
+  font-size: inherit;
+}
+.title-actions .notice {
+  border-color: var(--warn);
+}
+.crash {
+  height: 100%;
+  overflow-y: auto;
+  background: var(--paper);
+}
+.crash-inner {
+  width: 100%;
+  max-width: 34rem;
+  margin: 0 auto;
+  display: grid;
+  gap: 14px;
+  padding: 32px var(--gutter-r) 40px var(--gutter-l);
+}
+.crash-title {
+  margin: 0;
+  font-size: clamp(2.2rem, 10vw, 3rem);
+  line-height: 1;
+}
+.crash-actions {
+  display: grid;
+  gap: 8px;
+}
+
+/* ---- Added for the school playtest fixes ---- */
+
+/* On short screens the plates shrink so the buttons stay above the fold. */
+@media (max-height: 820px) and (min-width: 640px) {
+  .title-art svg,
+  .briefing-art svg,
+  .outfit-art svg,
+  .end-art svg {
+    height: 38vh;
+    width: auto;
+    max-width: 100%;
+    margin-inline: auto;
+    display: block;
+  }
+}
+
+/* The task picker under the roster. */
+.chip.is-open {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+.task-picker {
+  /* Sticks into view just above the Go button when the roster sits below the fold. */
+  position: sticky;
+  bottom: 84px;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 8px;
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  background: var(--paper-3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+.task-picker-name {
+  flex-basis: 100%;
+  font-weight: 650;
+  font-size: 0.9rem;
+}
+.task-choice {
+  --task: var(--ink-2);
+  display: grid;
+  gap: 2px;
+  flex: 1 1 7rem;
+  min-height: 48px;
+  padding: 6px 9px;
+  border: 1.5px solid color-mix(in srgb, var(--task) 55%, var(--line));
+  border-radius: 10px;
+  background: var(--paper);
+  text-align: left;
+  cursor: pointer;
+}
+.task-choice.is-on {
+  background: color-mix(in srgb, var(--task) 14%, var(--paper));
+  border-color: var(--task);
+}
+.task-choice .chip-hint {
+  color: var(--ink-3);
+}
+.task-picker-close {
+  align-self: center;
+}
+
+.plan-note {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.84rem;
+  color: var(--ink-2);
+}
+.plan-line.is-warn {
+  color: var(--warn);
+}
+
+.event-remember {
+  margin-top: 10px;
+  min-height: 36px;
+}
+.event-remember .toggle-label {
+  font-size: 0.92rem;
+}
+.event-remember .toggle-note {
+  font-size: 0.8rem;
+}
+
+.lesson {
+  margin: 14px 0 6px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--line);
+  border-left: 4px solid var(--road);
+  border-radius: 10px;
+  background: var(--paper-3);
+}
+.lesson p {
+  margin: 4px 0 0;
+}
+
+.load-code {
+  display: grid;
+  gap: 8px;
+}
+.load-code textarea,
+.owner-field,
+.journal-note {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  padding: 8px 10px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.journal-note {
+  margin-top: 6px;
+  font-size: 0.9rem;
+  resize: vertical;
+  min-height: 2.2rem;
+}
+.journal-note::placeholder {
+  color: var(--ink-3);
+}
+.journal-hint {
+  margin-bottom: 8px;
+}
+.menu-setting {
+  cursor: default;
+}
+.menu-setting .toggle {
+  min-height: 0;
+  padding: 0;
+}
+
+/* Wide, short screens (a laptop): the plate sits beside the words so the buttons are never below
+   the fold. The phone layout above stays as it is. */
+@media (min-width: 1040px) and (max-height: 900px) {
+  .title {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'art head'
+      'art actions';
+    grid-template-rows: auto auto;
+    align-content: center;
+    align-items: start;
+    column-gap: 24px;
+    padding-inline: 24px;
+  }
+  .title > :first-child,
+  .title > :last-child {
+    margin: 0;
+  }
+  .title > .title-inner:first-child {
+    grid-area: head;
+    align-self: end;
+  }
+  .title-art {
+    grid-area: art;
+    align-self: center;
+    max-width: none;
+  }
+  .title-art svg {
+    height: auto;
+    width: 100%;
+    max-height: 78vh;
+  }
+  .title-actions {
+    grid-area: actions;
+  }
+  .briefing {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-content: center;
+    align-items: center;
+    column-gap: 24px;
+    padding-inline: 24px;
+  }
+  .briefing-art {
+    max-width: none;
+  }
+  .briefing-art svg {
+    height: auto;
+    width: 100%;
+    max-height: 78vh;
+  }
+  .briefing > :first-child,
+  .briefing > :last-child {
+    margin: 0;
+  }
+}
+
+/* ---------------------------------------------------------------- the journal: new cards */
+
+.menu-btn {
+  position: relative;
+}
+.menu-badge {
+  position: absolute;
+  top: 5px;
+  right: 3px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--road);
+  color: var(--on-ink);
+  font: 600 0.7rem/18px var(--font-ui);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.tag-new,
+.menu-item .tag-new {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 9px;
+  background: var(--road);
+  color: var(--on-ink);
+  font: 600 0.7rem/1.4 var(--font-ui);
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+}
+.card-item summary .tag-new {
+  margin-left: 8px;
+}
+.card-item.is-new {
+  border-color: var(--road);
+}
+
+.journal-slip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: var(--gutter-l);
+  right: var(--gutter-r);
+  max-width: 27rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+  padding: 10px 4px 10px 12px;
+  background: var(--paper-3);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--road);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  animation: slip-in 260ms ease-out;
+}
+@keyframes slip-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .journal-slip {
+    animation: none;
+  }
+}
+.journal-glyph {
+  flex: none;
+  margin-top: 2px;
+}
+.journal-glyph-book,
+.journal-glyph-lines {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.journal-glyph-lines {
+  stroke: var(--ink-3);
+  stroke-width: 1.2;
+}
+.journal-glyph-ribbon {
+  fill: var(--road);
+}
+.journal-slip-body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.journal-slip-label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--road);
+}
+.journal-slip-title {
+  justify-self: start;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-size: 1.15rem;
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .journal-slip-title:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+.journal-slip-lede {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.35;
+  color: var(--ink-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.journal-slip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.journal-slip-list .journal-slip-title {
+  min-height: 28px;
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-underline-offset: 3px;
+}
+.journal-slip-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.report-card .journal-glyph {
+  vertical-align: -4px;
+  margin: 0 2px 0 0;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.tab {
+  display: grid;
+  gap: 2px;
+  min-height: 52px;
+  padding: 8px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-2);
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.tab.is-on {
+  border-color: var(--ink);
+  background: var(--paper-3);
+}
+.tab-note {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--ink-2);
+}
+
+/* ---------------------------------------------------------------- card art */
+
+/* An event card's strip: the figures stand near its foot, so it fades at the sides only. */
+.plate.plate-strip {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 96%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 96%, transparent);
+}
+/* A night sky's ruling: dark ink by day; on dark paper only just visible, so the night stays dark
+   and the figures, pale, stand in it. */
+.art .ln {
+  stroke: var(--art-3);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .art .ln {
+    stroke: #333d47;
+  }
+}
+:root[data-theme='dark'] .art .ln {
+  stroke: #333d47;
+}
+
+/* A journal card's plate: across the head of the card, edge to edge. */
+.card-art {
+  margin: -12px calc(-1 * var(--gutter-r)) 2px calc(-1 * var(--gutter-l));
+}
+.card-art-milestone {
+  margin-bottom: 6px;
+}
+.sheet-card .overlay-body {
+  padding-top: 12px;
+}
+
+/* An event card's strip, across the top of the card under its rounded corners. */
+.event-card.has-art {
+  padding-top: 0;
+}
+.event-art {
+  margin: 0 calc(-1 * var(--gutter-r)) -2px calc(-1 * var(--gutter-l));
+}
+
+/* The journal's cards: a thumbnail of each card's plate beside its title. */
+.card-item summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  list-style: none;
+}
+.card-item summary::-webkit-details-marker {
+  display: none;
+}
+.card-item summary::after {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-left: auto;
+  border-right: 1.5px solid var(--ink-2);
+  border-bottom: 1.5px solid var(--ink-2);
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 0.15s;
+}
+.card-item[open] summary::after {
+  transform: rotate(-135deg) translate(-2px, 0);
+}
+.card-item-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.card-thumb {
+  flex: none;
+  display: block;
+  width: 96px;
+  height: 54px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+}
+.card-thumb .art {
+  width: 100%;
+  height: 100%;
+}
+/* Opened, a card shows its plate across the card's full width, and the thumbnail steps aside. */
+.card-item[open] .card-thumb {
+  display: none;
+}
+.card-item .card-art {
+  margin: 10px -12px 4px;
+  border-block: 1px solid var(--line);
+}
+.card-item .card-art .plate {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* The small figure on a roster chip: a leader's tall hat and tailcoat, or a servant's low hat. */
+.chip {
+  position: relative;
+}
+.chip-name {
+  padding-right: 14px;
+}
+.art.man-mark {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  width: auto;
+  height: 30px;
+  pointer-events: none;
+}
+
+/* The figure in the head of a card for a man, a horse or the dogs. */
+.art.who-figure {
+  flex: none;
+  width: auto;
+  height: 40px;
+  margin-right: -2px;
+}
+.art.who-horse {
+  height: 34px;
+}
+.art.who-dog {
+  height: 22px;
+}
+.overlay-head:has(.who-figure) {
+  justify-content: flex-start;
+}
+.overlay-head:has(.who-figure) .icon-btn {
+  margin-left: auto;
+}
+/* The event card is a lighter slip than the page: the strip's paper matches it. */
+.event-art .art .pp,
+.coach-art .art .pp {
+  fill: var(--paper-3);
+}
+/* The first-day card opens on the party wading the Nepean, like an event card's strip. */
+.coach-art {
+  margin: 0 calc(-1 * var(--gutter-r)) -2px calc(-1 * var(--gutter-l));
+}
+.coach-art .art .lp {
+  stroke: var(--paper-3);
+}
+.coach-art .art .pk {
+  fill: var(--paper-3);
+}
+/* A choice whose effect is easy to miss and bad: the effect is set as a warning. */
+.choice-warn .choice-effect {
+  color: var(--warn);
+}
+.event-art .art .lp {
+  stroke: var(--paper-3);
+}
+.event-art .art .pk {
+  fill: var(--paper-3);
+}

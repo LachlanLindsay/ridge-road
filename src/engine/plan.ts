@@ -12,7 +12,7 @@ import {
   walkedMiles,
   type Step,
 } from './map';
-import { canWork, isAway, isBusy, itemWeight, loadLb, capacity, MEMBER_ORDER, round1 } from './party';
+import { canWork, isAway, isBusy, itemWeight, loadLb, capacity, round1 } from './party';
 import type { GameState, HalfDayPlan, Item, MemberId, Task, Warning } from './types';
 
 export type Assignment = Task | 'away' | 'busy';
@@ -22,8 +22,8 @@ export const AT_CAMP_TASKS: Task[] = ['camp', 'rest', 'grass'];
 
 export function assignments(s: GameState, plan: HalfDayPlan): Map<MemberId, Assignment> {
   const out = new Map<MemberId, Assignment>();
-  for (const id of MEMBER_ORDER) {
-    const m = s.men.find((x) => x.id === id)!;
+  for (const m of s.men) {
+    const id = m.id;
     if (isAway(s, m)) out.set(id, 'away');
     else if (isBusy(s, m)) out.set(id, 'busy');
     else out.set(id, plan.tasks[id] ?? 'camp');
@@ -198,7 +198,9 @@ export function validatePlan(s: GameState, plan: HalfDayPlan): Warning[] {
       const walk = (2 * m) / T.time.walkMph;
       out.push(warn('walk', `Work front is ${round1(m)} miles away: ${round1(walk)} hours of walking.`));
     }
-    if (markedAhead(s, from, plan.target!) < EPS) out.push(warn('cut', 'Nothing marked to cut on the way to that target.'));
+    // Cutters follow the scouts' fresh blazes in the same half, so the warning only applies when
+    // nobody is scouting that way.
+    if (markedAhead(s, from, plan.target!) < EPS && !scouts.length) out.push(warn('cut', 'Nothing is marked to cut that way, and nobody is scouting: the cutters will have no work. Send a leader to scout.'));
   }
   if (scouts.length && validTarget(s, plan.target)) {
     const m = scoutFrontMiles(s, from, plan.target!);
@@ -211,7 +213,9 @@ export function validatePlan(s: GameState, plan: HalfDayPlan): Warning[] {
     else if (!node.gullyFt) out.push(warn('water', 'No gully to fetch water from here.'));
   }
   if (byTask('hunt').length > s.stores.shots) out.push(err('hunt', 'Not enough powder and shot for every hunter.'));
-  if (byTask('grass').length && (node.grass === 'none')) out.push(warn('grass', 'No grass to cut here.'));
+  if (byTask('grass').length && node.grass !== 'good' && node.grass !== 'tall') {
+    out.push(warn('grass', node.grass === 'none' ? 'No grass to cut here: men on Grass only mind camp.' : 'Rushy grass is not worth cutting: men on Grass only mind camp.'));
+  }
   if (hours <= EPS && working > 0) out.push(warn('time', 'No time left this half for work after the move.'));
   return out;
 }

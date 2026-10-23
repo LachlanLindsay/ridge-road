@@ -55,7 +55,8 @@ export function startDay(s: GameState, lines: string[]) {
     m.workedWet = false;
     m.workedRough = false;
     m.nightPenalty = 0;
-    m.keepAtCamp = false;
+    // A man kept at camp with a chill stays there until it passes; the flag outlives the day.
+    if (m.condition !== 'chill') m.keepAtCamp = false;
   }
   s.restToday = s.restTomorrow;
   s.restTomorrow = false;
@@ -64,7 +65,7 @@ export function startDay(s: GameState, lines: string[]) {
   s.weather = pickWeighted(s, { fair: w.fair, dew: w.dew, cloud: w.cloud, rain: w.rain }) as Weather;
   s.today.cloudLifts = s.weather === 'cloud' && chance(s, T.weather.cloudLiftChance);
   s.frostTonight = chance(s, w.frost);
-  lines.push(`${dateOf(s.day)}: ${weatherWord(s.weather)}.`);
+  lines.push(`Dawn: ${weatherWord(s.weather).toLowerCase()}.`);
   if (s.weather === 'dew' && !s.restToday) s.pending.push({ id: 'dew' });
 }
 

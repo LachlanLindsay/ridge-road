@@ -84,6 +84,24 @@ How the engine settles each one. All are easy to change.
 | Gaps filled with a number | Grass cutting rate, grass stamina cost (−4/h), advance stamina (leaders −5/h, others −3/h), horse rejoin condition (30), the stray delay cap. Listed under `_specGaps` in tuning.json |
 | Difficulty | Proposed, not in the spec: easy has one fewer decoy per region, hints right 85%, clearing ×1.1, morale 75, event odds ×0.75; hard is the mirror (one more decoy, 65%, ×0.9, morale 65, ×1.25) |
 
+## Changes after the school playtest (22 October 2026)
+
+Played on a laptop the way a Year 5 class would, the defaults lost: a player who accepted every suggestion and took the first option on every card was repulsed at the pass with four spent horses, then walked home past a cache of flour. These engine rules changed; the sim acceptance still passes (historical median 22 days over 300 seeds, dry nights down from 2.4 to 1.3 a run, horses home up from 2.9 to 3.3).
+
+| Rule | Was | Now |
+| --- | --- | --- |
+| Camp suggestion | Morning: furthest reachable node unless horse water lies within a mile short of it. Afternoon: furthest reachable | Both halves: the node that scores best on miles gained less a penalty for a poor night (`advice.campPenalty` in tuning.json: no water 1.5, rock hole 1, no grass 0.5, rushy 0.25). The button says what the camp has |
+| The advance | Stopped wherever the half ran out | Will not leave a node with horse water for one without, when the party could not get beyond the dry node that half anyway (`leavesWaterForDry`). Day 1 now ends at the lagoon, not two miles on in the scrub |
+| "Keep him at camp" (chill) | One day | Until the chill has gone; a man mending from too ill stays at camp too |
+| Spent horse, "Cache goods here"; horse fall, "Lighten" | Cached tea, blankets, then flour | Cached grass, then food beyond a reserve for the way home (`pathHomeDays` × full rations + 2 days), then spare shoes beyond two pairs, then tea. Blankets stay |
+| Collecting a cache | Only what the horses could carry, so spent horses meant none | On the way home each fit man carries 15 lb (`returnLeg.manCarryLb`), as the packs went down the pass |
+| Card option order | Fixed | Bowel complaint: push on, hunt, rest. Spent horse: rest first where the camp has water and grass, otherwise spread the load first |
+| "Nothing marked to cut" | Whenever nothing was marked at plan time | Only when nobody is scouting toward the target; cutters follow the scouts' blazes in the same half |
+| Horse fall | "A horse fell: 2 h" when two fell, one card | Counts them; the card choices say what they do (reloading costs nothing further) |
+| Homeward halts | Standing orders (scout, cut) | Rest, hunt, grass, water, camp only |
+
+Log lines name items ("87 lb of flour", not "87 flour"); the descent and the climb home are narrated; scouts who stop at an unread fork say so; the journal line carries the day's finds, dead ends and views.
+
 ## Re-running
 
 ```sh

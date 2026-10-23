@@ -1,5 +1,5 @@
 // endDay: evening orders, then the night in camp settles the costs, then dawn.
-import { T, modeTuning } from './data';
+import { CARDS, T, modeTuning } from './data';
 import { dateOf, startDay, turnHome, weatherWord } from './day';
 import { EPS, huntHabitat, zoneOf } from './map';
 import {
@@ -19,6 +19,13 @@ import { chance } from './rng';
 import { addFresh, cacheItems, collectCache, issueShoes } from './stores';
 import { addMorale, queueEvent, say, unlockCard, type Ctx } from './world';
 import type { EatenLevel, EndDayResult, EveningOrders, GameState, Member } from './types';
+
+/** A bigger pack is likelier to bring something down; five dogs, as in 1813, keep the tuned odds. */
+export function dogOdds(p: number, dogs: number): number {
+  if (dogs <= 0) return 0;
+  if (dogs === T.dogs.count) return p;
+  return 1 - (1 - p) ** (dogs / T.dogs.count);
+}
 
 export function endDay(state: GameState, orders: EveningOrders): EndDayResult {
   if (state.phase !== 'evening') throw new Error('Evening orders are given in camp, after the afternoon.');
@@ -47,14 +54,16 @@ export function endDay(state: GameState, orders: EveningOrders): EndDayResult {
     unlockCard(ctx, 'distanceByClock');
   }
 
-  const summary = summarise(s);
+  const dayNotes = pickDayNotable(state.today.log);
+  const summary = summarise(s, dayNotes.some((l) => l.startsWith('Camp moved') || l.includes('pushed on')));
   night(ctx, tea, orders.feedGrass !== false);
   if (s.leg === 'out') forcedHome(ctx);
 
-  const journal = { day, date: dateOf(day), text: [summary, ...pickNotable(ctx.lines)].join(' ') };
+  const journal = { day, date: dateOf(day), text: [summary, ...dayNotes, ...pickNotable(ctx.lines)].join(' ') };
   s.journal.push(journal);
 
   s.pending.push(...ctx.events);
+  s.stats.campMilesByDay.push(Math.round(s.furthestCampMiles * 100) / 100);
   s.day += 1;
   s.phase = 'morning';
   startDay(s, ctx.lines);
@@ -62,16 +71,37 @@ export function endDay(state: GameState, orders: EveningOrders): EndDayResult {
   return { state: s, journal };
 }
 
-function summarise(s: GameState): string {
+function summarise(s: GameState, moveTold: boolean): string {
   const parts = [`${weatherWord(s.weather)}.`];
-  if (s.today.movedMiles > EPS) parts.push(`Camp moved ${round1(s.today.movedMiles)} mi.`);
-  else parts.push(s.today.fieldWork ? 'Camp stayed; the men worked ahead.' : 'A day in camp.');
+  if (s.today.movedMiles > EPS) {
+    if (!moveTold) parts.push(`Camp moved ${round1(s.today.movedMiles)} mi.`);
+  } else parts.push(s.today.fieldWork ? 'Camp stayed; the men worked ahead.' : 'A day in camp.');
   return parts.join(' ');
 }
 
 function pickNotable(lines: string[]): string[] {
   const keys = ['chill', 'ill', 'kangaroo', 'collapsed', 'Forced', 'turns', 'Dingoes', 'mending'];
   return lines.filter((l) => keys.some((k) => l.includes(k))).slice(0, 3);
+}
+
+/**
+ * The day's story for the journal: where the camp went, what was found, the dead ends, the views,
+ * the pass and the hill. Cards found read as "Found: The rock wall."; the Signs of Country read as
+ * the card's own line ("Signs of people: huts near the ridge."), never as something found.
+ */
+function pickDayNotable(lines: string[]): string[] {
+  const keys = ['Camp moved', 'pushed on', 'Dead end', 'show plainly', 'A view at last', 'way down', 'trench is dug', 'Down the pass', 'Up the pass', 'sugarloaf hill', 'rock step', 'cairn', 'reached a fork', 'Collected from the cache', 'Cached at camp', 'nothing to mark'];
+  const out: string[] = [];
+  for (const l of lines) {
+    if (l.startsWith('Journal card: ')) {
+      const title = l.slice('Journal card: '.length, -1);
+      const card = Object.values(CARDS).find((c) => c.title === title);
+      out.push(card?.found ?? `Found: ${title}.`);
+      continue;
+    }
+    if (keys.some((k) => l.includes(k))) out.push(l.replace(/\. Tap one on the map\.$/, '.'));
+  }
+  return out.slice(0, 4);
 }
 
 function blanketed(s: GameState, men: Member[]): Set<string> {
@@ -88,12 +118,13 @@ function night(ctx: Ctx, tea: boolean, feedGrass: boolean) {
 
   // Dogs hunt on their own.
   const habitat = huntHabitat(s.map, s.camp);
-  if (s.dogs > 0 && chance(s, T.hunting.dogs[habitat])) {
+  if (s.dogs > 0 && chance(s, dogOdds(T.hunting.dogs[habitat], s.dogs))) {
     const lb = chance(s, T.hunting.smallChance) ? T.hunting.smallLb : T.hunting.largeLb;
     addFresh(s, lb);
     s.today.dogsKilled = true;
     s.stats.kills += 1;
     say(ctx, `The dogs brought down a ${lb === T.hunting.smallLb ? 'small' : 'large'} kangaroo: ${lb} lb of fresh meat.`);
+    unlockCard(ctx, 'kangarooDogs');
   }
 
   // Night alarms.
@@ -109,7 +140,10 @@ function night(ctx: Ctx, tea: boolean, feedGrass: boolean) {
     }
   }
   const frost = s.frostTonight;
-  if (frost) say(ctx, 'A hard frost in the night.');
+  if (frost) {
+    say(ctx, 'A hard frost in the night.');
+    unlockCard(ctx, 'frost');
+  }
 
   // Water.
   const menWater = node.water !== 'none' || s.today.waterFetched;
@@ -244,6 +278,7 @@ function illness(ctx: Ctx, men: Member[], frost: boolean, covered: Set<string>) 
           addMorale(s, T.morale.fallsIll);
           say(ctx, `${m.name} is down with a bowel complaint.`);
           queueEvent(ctx, { id: 'bowel', member: m.id });
+          unlockCard(ctx, 'saltMeat');
           continue;
         }
       }
@@ -262,6 +297,7 @@ function illness(ctx: Ctx, men: Member[], frost: boolean, covered: Set<string>) 
       } else if (chance(s, I.chill.recoverIfRested)) {
         m.condition = null;
         m.workingWithChill = false;
+        m.keepAtCamp = false;
         say(ctx, `${m.name} has shaken off his chill.`);
       }
     } else if (m.condition === 'bowel') {
@@ -272,6 +308,7 @@ function illness(ctx: Ctx, men: Member[], frost: boolean, covered: Set<string>) 
     } else if (m.condition === 'tooIll') {
       if (chance(s, I.tooIll.toChill)) {
         m.condition = 'chill';
+        m.keepAtCamp = true; // he rests on until the chill has gone
         say(ctx, `${m.name} is mending, though still chilled.`);
       }
     }
