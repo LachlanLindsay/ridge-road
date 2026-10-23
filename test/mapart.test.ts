@@ -108,6 +108,19 @@ describe('labels', () => {
     expect(placed.map((p) => p.anchor)).toEqual(['start', 'end']);
   });
 
+  it('keeps a label on the side it took last frame while that side is clear', () => {
+    const opts = [
+      { x: 10, y: 10, anchor: 'start' as const, box: { x0: 10, y0: 0, x1: 90, y1: 13 } },
+      { x: -10, y: 10, anchor: 'end' as const, box: { x0: -90, y0: 0, x1: -10, y1: 13 } },
+    ];
+    const last = new Map<string, number>([['a', 1]]);
+    expect(placeLabels([{ id: 'a', text: 'Swamp', size: 13, options: opts }], [], undefined, last)[0]!.anchor).toBe('end');
+    // Once its side is blocked it moves, and remembers the move.
+    const wall = { x0: -100, y0: -5, x1: -5, y1: 20 };
+    expect(placeLabels([{ id: 'a', text: 'Swamp', size: 13, options: opts }], [wall], undefined, last)[0]!.anchor).toBe('start');
+    expect(last.get('a')).toBe(0);
+  });
+
   it('leaves an optional label off rather than pile it on another', () => {
     const box = { x0: 0, y0: 0, x1: 80, y1: 13 };
     const placed = placeLabels([{ id: 'c', text: 'Camp', size: 13, optional: true, options: [{ x: 0, y: 10, anchor: 'start', box }] }], [box]);

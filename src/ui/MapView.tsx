@@ -104,6 +104,8 @@ function coverBox(box: Bounds, kCover: number): Bounds {
 export function MapView({ draw, campKey, selected, target, moveTo, onTap, onKey, size: mapSize, onSize }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const svg = useRef<SVGSVGElement>(null);
+  // Where each label and pencilled reading sat last frame, so they keep their side while panning.
+  const labelSides = useRef({ names: new Map<string, number>(), hints: new Map<string, number>() });
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [view, setView] = useState<View | null>(null);
   const viewRef = useRef<View | null>(null);
@@ -326,7 +328,7 @@ export function MapView({ draw, campKey, selected, target, moveTo, onTap, onKey,
   const hb = box ? hazeBox(box, sw) : null;
   const hazeKey = hb ? `${sw}:${hb.minX}:${hb.minY}:${hb.maxX}:${hb.maxY}` : '';
   const fog = useMemo(() => (hb ? haze(draw, 7 / sw, hb) : null), [draw, hazeKey]);
-  const text = useMemo(() => (v && box ? mapText(draw, v.k, kGlyph, box, ui) : null), [draw, v?.k, v?.cx, v?.cy, w, h]);
+  const text = useMemo(() => (v && box ? mapText(draw, v.k, kGlyph, box, ui, labelSides.current) : null), [draw, v?.k, v?.cx, v?.cy, w, h]);
 
   return (
     <div class="map" ref={wrap}>
@@ -585,7 +587,7 @@ interface Text {
  * Place labels and Lawson's pencilled readings in screen space, clear of each other and of the
  * marks, then hand back positions in map units.
  */
-function mapText(draw: MapDraw, k: number, kGlyph: number, box: Bounds, ui: number): Text {
+function mapText(draw: MapDraw, k: number, kGlyph: number, box: Bounds, ui: number, last: { names: Map<string, number>; hints: Map<string, number> }): Text {
   const sx = (p: P) => (p.x - box.minX) * k;
   const sy = (p: P) => (p.y - box.minY) * k;
   const g = k / kGlyph;
@@ -640,7 +642,7 @@ function mapText(draw: MapDraw, k: number, kGlyph: number, box: Bounds, ui: numb
     hintMeta.set(s.id, { wrong: s.hintMark === 'wrong' });
   }
   const frame: Rect = { x0: 4, y0: 4, x1: W - 4, y1: H - 4 };
-  const placedHints = placeLabels(hintItems, obstacles, frame);
+  const placedHints = placeLabels(hintItems, obstacles, frame, last.hints);
   const hints: Text['hints'] = [];
   for (const p of placedHints) {
     const meta = hintMeta.get(p.id)!;
@@ -681,7 +683,7 @@ function mapText(draw: MapDraw, k: number, kGlyph: number, box: Bounds, ui: numb
       options: [mk(x + 10 * g, y + 4.5 * g, 'start'), mk(x - 16 * g, y + 4.5 * g, 'end'), mk(x, y + 22 * g, 'middle'), mk(x, y - 18 * g, 'middle')],
     };
   });
-  const placed = placeLabels(items, obstacles, frame);
+  const placed = placeLabels(items, obstacles, frame, last.names);
   return {
     labels: placed.map((p) => ({ id: p.id, x: box.minX + p.x / k, y: box.minY + p.y / k, anchor: p.anchor, text: p.text, size: p.size / k })),
     hints,
