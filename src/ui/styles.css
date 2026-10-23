@@ -26,6 +26,12 @@
   --art-4: var(--ink);
   --art-water: #4d7795;
   --art-smoke: #8c877c;
+  /* Horses' coats, palest (1) to black (4). Unlike the rest of the engraving these keep their order
+     in the dark theme too, so the black horse is the darkest in both. */
+  --coat-1: #a3b0b8;
+  --coat-2: #7b8c98;
+  --coat-3: #4f5d68;
+  --coat-4: var(--ink);
   --food: #b5813a;
   --gear: #8c877c;
   --font-display: 'IM Fell English', 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
@@ -62,6 +68,10 @@
     --art-3: #a9b4ba;
     --art-water: #7aa8c6;
     --art-smoke: #8e9399;
+    --coat-1: #dfe3e2;
+    --coat-2: #a9b4ba;
+    --coat-3: #788a96;
+    --coat-4: #4c5966;
     --food: #d2a25a;
     --gear: #7f8389;
     color-scheme: dark;
@@ -92,6 +102,10 @@
   --art-3: #a9b4ba;
   --art-water: #7aa8c6;
   --art-smoke: #8e9399;
+  --coat-1: #dfe3e2;
+  --coat-2: #a9b4ba;
+  --coat-3: #788a96;
+  --coat-4: #4c5966;
   --food: #d2a25a;
   --gear: #7f8389;
   color-scheme: dark;
@@ -1968,6 +1982,30 @@ p {
 .art .pk {
   fill: var(--paper);
   stroke: var(--art-4);
+}
+.art .hc1 {
+  fill: var(--coat-1);
+}
+.art .hc2 {
+  fill: var(--coat-2);
+}
+.art .hc3 {
+  fill: var(--coat-3);
+}
+.art .hc4 {
+  fill: var(--coat-4);
+}
+.art .hl1 {
+  stroke: var(--coat-1);
+}
+.art .hl2 {
+  stroke: var(--coat-2);
+}
+.art .hl3 {
+  stroke: var(--coat-3);
+}
+.art .hl4 {
+  stroke: var(--coat-4);
 }
 .art .o1 {
   opacity: 0.7;

@@ -3,7 +3,7 @@
 import { createContext, type ComponentChildren } from 'preact';
 import { useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { CARDS, type GameState, type Mode } from '../engine';
-import { CardArt, WhoFigure } from './art/cardArt';
+import { CardArt, WhoArt, WhoFigure } from './art/cardArt';
 import { CARD_SOURCES, CARD_TEXT } from './copy';
 import { infoFor, type Info, type Who } from './people';
 import { Sheet } from './Sheet';
@@ -318,7 +318,8 @@ export function InfoLayer({
       {children}
       {peek && peekInfo && <Peek info={peekInfo} rect={peek.rect} click={peek.click} />}
       {openInfo && (
-        <Sheet title={openInfo.title} onClose={() => setOpen(null)} class="sheet-info" icon={open && open.kind !== 'card' ? <WhoFigure who={open} /> : undefined}>
+        <Sheet title={openInfo.title} onClose={() => setOpen(null)} class="sheet-info sheet-card" icon={open && open.kind !== 'card' ? <WhoFigure who={open} /> : undefined}>
+          {open && open.kind !== 'card' && <WhoArt who={open} state={state} />}
           <InfoBody info={openInfo} />
         </Sheet>
       )}

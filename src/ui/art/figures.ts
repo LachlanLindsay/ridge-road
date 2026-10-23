@@ -436,8 +436,12 @@ export function procession(
   return { fig, scale: s, slots };
 }
 
-/** The marks for a figure, in drawing order: far limbs, bodies, near limbs, loads, ropes. */
-export function figureMarks(fig: Figure, tone = 'f4'): Mark[] {
+/**
+ * The marks for a figure, in drawing order: far limbs, bodies, near limbs, loads, ropes. `legs`
+ * overrides the classes of the near and far limbs, for a horse whose legs are darker or lighter
+ * than its body, and of the ink lying on its load (`top`), which stays ink whatever the coat.
+ */
+export function figureMarks(fig: Figure, tone = 'f4', legs?: { near: string; far: string; top?: string }): Mark[] {
   const out: Mark[] = [];
   const join = (xs: { d: string; w: number }[], c: string) => {
     // Group by width so each stroke width is one path.
@@ -445,13 +449,13 @@ export function figureMarks(fig: Figure, tone = 'f4'): Mark[] {
     for (const x of xs) byW.set(Math.round(x.w * 100) / 100, [...(byW.get(Math.round(x.w * 100) / 100) ?? []), x.d]);
     for (const [w, ds] of byW) out.push({ d: ds.join(''), c, w });
   };
-  join(fig.farLimbs, 'l3');
+  join(fig.farLimbs, legs?.far ?? 'l3');
   out.push({ d: fig.ink.join(''), c: tone });
-  join(fig.limbs, tone === 'f4' ? 'l4' : 'l3');
+  join(fig.limbs, legs?.near ?? (tone === 'f4' ? 'l4' : 'l3'));
   join(fig.back, 'pk');
   join(fig.paper, 'pk');
   join(fig.front, 'pk');
-  if (fig.topInk.length) out.push({ d: fig.topInk.join(''), c: tone });
+  if (fig.topInk.length) out.push({ d: fig.topInk.join(''), c: legs?.top ?? tone });
   join(fig.rope, 'l4');
   return out;
 }
@@ -488,7 +492,7 @@ function upperBody(p: Pt, s: number, leader: boolean): { ink: string; brim: { d:
   };
 }
 
-export type Arms = 'down' | 'call' | 'kettle' | 'point' | 'folded' | 'stone' | 'gun' | 'gunRest' | 'axe' | 'haul';
+export type Arms = 'down' | 'call' | 'kettle' | 'point' | 'folded' | 'stone' | 'gun' | 'gunRest' | 'axe' | 'haul' | 'notes';
 
 /**
  * A man standing still, feet on y = 0, facing right (or left with dir -1): the figure `man` draws,
@@ -545,6 +549,17 @@ export function standing(fig: Figure, X: number, Y: number, s: number, o: { lead
       fig.limbs.push({ d: `M${p(3.6, -20.9)}L${p(-6, -32)}`, w: 0.95 * s });
       fig.ink.push(`M${p(-8.3, -33.6)}L${p(-4.6, -31.5)}L${p(-5.8, -29.7)}L${p(-8.9, -31.6)}Z`);
       break;
+    case 'notes': {
+      // A surveyor taking a bearing: a pocket compass held out level in the far hand, the field
+      // book open in the near hand at his waist.
+      fig.farLimbs.push({ d: `M${p(-0.4, -26)}L${p(2.8, -22.6)}L${p(7.4, -23)}`, w: 1.5 * s });
+      fig.front.push({ d: disc(p, s, 9.2, -23.6, 1.6), w: 0.5 * s });
+      fig.rope.push({ d: `M${p(8.2, -24.2)}L${p(10.2, -23)}`, w: 0.35 * s });
+      fig.limbs.push({ d: `M${p(0.8, -26.2)}L${p(1.8, -21.4)}L${p(4.2, -19.4)}`, w: 1.7 * s });
+      fig.front.push({ d: `M${p(3.2, -21.4)}L${p(7.8, -22.2)}L${p(8.1, -18.6)}L${p(3.5, -17.8)}Z`, w: 0.5 * s });
+      fig.rope.push({ d: `M${p(5.6, -21.8)}L${p(5.8, -18.2)}M${p(4, -20.4)}L${p(5.1, -20.6)}M${p(4.1, -19.4)}L${p(5.1, -19.6)}M${p(6.3, -20.9)}L${p(7.4, -21.1)}M${p(6.4, -19.9)}L${p(7.5, -20.1)}`, w: 0.3 * s });
+      break;
+    }
     case 'haul':
       // Both arms out in front at the height of a halter rope.
       fig.limbs.push({ d: `M${p(0.8, -26.2)}L${p(4.8, -24.2)}L${p(8.8, -23.2)}`, w: 1.6 * s });
