@@ -76,7 +76,10 @@ src/engine/             the pure, deterministic engine
   score.ts              outcome and score
 src/ui/                 the Preact app
   App.tsx               screens, save and resume
-  MapView.tsx           the SVG survey plot: hachured ridges, pan, pinch, tap to select
+  MapView.tsx           the SVG survey plot: pan, pinch, tap to select, labels placed clear of each other
+  mapArt.ts             the map's engraving (pure, tested): haze over unknown country, brush, trees,
+                        heath and swamp along the ridges, cliff lines, water marks, the label placer
+  MapKey.tsx            the map key, drawn by the same code as the map
   geometry.ts           what the map may show under fog of war (pure, tested)
   draft.ts              the plan sheet's draft: standing orders, rest days, illness, caches (pure, tested)
   Outfit.tsx            choosing the party and stores; outfitting.ts packs the horses (pure, tested)
@@ -88,8 +91,12 @@ src/ui/                 the Preact app
   save.ts build.ts      saves stamped with the build, carried over between builds by replay
   PlanSheet.tsx CampSheet.tsx EventModal.tsx PlaceInfo.tsx Overlays.tsx EndScreen.tsx Title.tsx
   art/                  the engraved plates, drawn in code from a seed: kit.ts (ridges, hatching, cliffs,
-                        sky, water, gums), figures.ts (horses, men, dogs, the procession), scenes.tsx.
-                        `npm run dev` then ?gallery shows them all
+                        sky, water, gums), figures.ts (horses, men, dogs, kangaroos, wombats, the
+                        procession and the poses for the cards), compose.ts (building blocks),
+                        scenes.tsx (title, briefing, outfitting, end and milestone plates), cards.ts
+                        (a plate for each journal card), events.ts (a strip for each event card),
+                        cardArt.tsx (putting them on the cards). `npm run dev` then ?gallery shows
+                        them all; ?mapgallery shows the map of one expedition at several days
   copy.ts               briefing, help and card text
 sim/                    bots and the harness (Node CLI)
 test/                   Vitest suite
