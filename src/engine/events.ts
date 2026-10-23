@@ -15,6 +15,7 @@ import {
   slot,
   takeFlour,
   takeMeat,
+  withParty,
 } from './party';
 import { chance } from './rng';
 import { addFresh, cacheWeight } from './stores';
@@ -62,13 +63,21 @@ function options(s: GameState, ev: PendingEvent): Option[] {
       const h = s.horses.find((x) => x.id === ev.horse);
       const over = Math.max(0, Math.ceil(loadLb(s.stores) - capacity(s)));
       const tooMuch = loadLb(s.stores) > capacity(s, true);
-      const fed = node.water !== 'none' && node.water !== 'rockHole' && node.grass !== 'none';
+      // As the night will have it: rushy grass feeds a horse only with cut grass for every horse here.
+      const watered = node.water !== 'none' && node.water !== 'rockHole';
+      const cutLb = T.horses.night.grassLbPerHorse * s.horses.filter(withParty).length;
+      const grassOk = node.grass === 'good' || node.grass === 'tall' || (node.grass === 'rushy' && s.stores.grass >= cutLb - 1e-9);
+      const fed = watered && grassOk;
+      const name = h?.name ?? 'the horse';
+      const lack = !watered ? 'no water for horses' : node.grass === 'rushy' ? 'only rushy grass and not enough cut grass' : 'no grass';
       const rest: Option = {
         id: 'rest',
-        warn: !fed,
+        ...(fed ? {} : { warn: true }),
         effect: fed
-          ? `Nobody works tomorrow; ${h?.name ?? 'the horse'} eats and drinks here and recovers a little`
-          : `Nobody works tomorrow, but there is ${node.grass === 'none' ? 'no grass' : 'no water for horses'} here, so ${h?.name ?? 'the horse'} will not recover`,
+          ? node.grass === 'rushy'
+            ? `Nobody works tomorrow; ${name} eats the cut grass, drinks here and recovers a little`
+            : `Nobody works tomorrow; ${name} eats and drinks here and recovers a little`
+          : `Nobody works tomorrow, but there is ${lack} here, so ${name} will not recover`,
       };
       const spread: Option = {
         id: 'spread',

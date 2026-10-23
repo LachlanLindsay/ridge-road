@@ -88,6 +88,19 @@ function hazeBox(box: Bounds, sw: number): Bounds {
   };
 }
 
+/** The cover is built for a margin around the view, snapped to a grid, so pans reuse it and only what is near gets drawn. */
+function coverBox(box: Bounds, kCover: number): Bounds {
+  const cell = 256 / kCover;
+  const mx = (box.maxX - box.minX) * 0.5;
+  const my = (box.maxY - box.minY) * 0.5;
+  return {
+    minX: Math.floor((box.minX - mx) / cell) * cell,
+    maxX: Math.ceil((box.maxX + mx) / cell) * cell,
+    minY: Math.floor((box.minY - my) / cell) * cell,
+    maxY: Math.ceil((box.maxY + my) / cell) * cell,
+  };
+}
+
 export function MapView({ draw, campKey, selected, target, moveTo, onTap, onKey, size: mapSize, onSize }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const svg = useRef<SVGSVGElement>(null);
@@ -306,7 +319,9 @@ export function MapView({ draw, campKey, selected, target, moveTo, onTap, onKey,
   const kCover = 2 ** Math.round(Math.log2(kGlyph));
   // Hachures show the ridge falling away on either side; where brush stands, the brush does.
   const hatch = useMemo(() => (v && box ? hachurePath(draw.segs.filter((s) => s.deadEnd || !BRUSH.has(s.terrain)), v.k, box) : ''), [draw, v?.k, v?.cx, v?.cy, w, h]);
-  const coverArt = useMemo(() => (v ? cover(draw.segs, kCover, { minX: -Infinity, minY: -Infinity, maxX: Infinity, maxY: Infinity }) : null), [draw, kCover, !!v]);
+  const cb = box ? coverBox(box, kCover) : null;
+  const coverKey = cb ? `${kCover}:${cb.minX}:${cb.minY}:${cb.maxX}:${cb.maxY}` : '';
+  const coverArt = useMemo(() => (cb ? cover(draw.segs, kCover, cb) : null), [draw, coverKey]);
   const sw = v ? hazeStep(v.k) : 1;
   const hb = box ? hazeBox(box, sw) : null;
   const hazeKey = hb ? `${sw}:${hb.minX}:${hb.minY}:${hb.maxX}:${hb.maxY}` : '';
@@ -562,8 +577,8 @@ function Markers({ draw, k, target, moveTo }: { draw: MapDraw; k: number; target
 // ---------------------------------------------------------------- words on the map
 
 interface Text {
-  labels: { x: number; y: number; anchor: string; text: string; size: number }[];
-  hints: { x: number; y: number; text: string; size: number; wrong: boolean; strike?: [number, number, number] }[];
+  labels: { id: string; x: number; y: number; anchor: string; text: string; size: number }[];
+  hints: { id: string; x: number; y: number; text: string; size: number; wrong: boolean; strike?: [number, number, number] }[];
 }
 
 /**
@@ -587,7 +602,9 @@ function mapText(draw: MapDraw, k: number, kGlyph: number, box: Bounds, ui: numb
   }
   const cx = sx(draw.camp);
   const cy = sy(draw.camp);
-  obstacles.push({ x0: cx - 12 * g, y0: cy - 33 * g, x1: cx + 12 * g, y1: cy + 3 * g, owner: 'camp' });
+  // The tent and its smoke; the camp's own name may sit beside them.
+  const campId = draw.nodes.find((n) => n.p.x === draw.camp.x && n.p.y === draw.camp.y)?.id ?? 'camp';
+  obstacles.push({ x0: cx - 12 * g, y0: cy - 33 * g, x1: cx + 12 * g, y1: cy + 3 * g, owner: campId });
   // The controls laid over the map: north arrow, size buttons, scale, and the zoom column.
   obstacles.push({ x0: 0, y0: 0, x1: 44, y1: 64 }, { x0: W - 132, y0: 0, x1: W, y1: 70 }, { x0: 0, y0: H - 48, x1: 176, y1: H }, { x0: W - 64, y0: H - 266, x1: W, y1: H });
 
@@ -628,6 +645,7 @@ function mapText(draw: MapDraw, k: number, kGlyph: number, box: Bounds, ui: numb
   for (const p of placedHints) {
     const meta = hintMeta.get(p.id)!;
     hints.push({
+      id: p.id,
       x: box.minX + p.x / k,
       y: box.minY + p.y / k,
       text: p.text,
@@ -665,7 +683,7 @@ function mapText(draw: MapDraw, k: number, kGlyph: number, box: Bounds, ui: numb
   });
   const placed = placeLabels(items, obstacles, frame);
   return {
-    labels: placed.map((p) => ({ x: box.minX + p.x / k, y: box.minY + p.y / k, anchor: p.anchor, text: p.text, size: p.size / k })),
+    labels: placed.map((p) => ({ id: p.id, x: box.minX + p.x / k, y: box.minY + p.y / k, anchor: p.anchor, text: p.text, size: p.size / k })),
     hints,
   };
 }
@@ -674,7 +692,7 @@ function MapText({ text, k }: { text: Text; k: number }) {
   return (
     <g>
       {text.hints.map((h) => (
-        <g key={`${h.x}:${h.y}:${h.text}`} class={h.wrong ? 'map-hint map-hint-wrong' : 'map-hint'}>
+        <g key={h.id} class={h.wrong ? 'map-hint map-hint-wrong' : 'map-hint'}>
           <text x={f(h.x)} y={f(h.y)} font-size={f(h.size)} text-anchor="middle" stroke-width={f(3 / k)}>
             {h.text}
           </text>
@@ -682,7 +700,7 @@ function MapText({ text, k }: { text: Text; k: number }) {
         </g>
       ))}
       {text.labels.map((l) => (
-        <text key={`${l.text}:${l.x}`} x={f(l.x)} y={f(l.y)} class="map-label" font-size={f(l.size)} text-anchor={l.anchor} stroke-width={f(3.5 / k)}>
+        <text key={l.id} x={f(l.x)} y={f(l.y)} class="map-label" font-size={f(l.size)} text-anchor={l.anchor} stroke-width={f(3.5 / k)}>
           {l.text}
         </text>
       ))}

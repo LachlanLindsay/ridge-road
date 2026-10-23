@@ -82,4 +82,18 @@ describe('the spent-horse card', () => {
     s.map.nodes[s.camp]!.water = 'stream';
     expect(eventCard(s)!.choices.find((c) => c.id === 'rest')!.warn).toBeUndefined();
   });
+
+  it('counts rushy grass as feed only with cut grass for every horse', () => {
+    const s = lineGame('scrub', 2);
+    s.pending = [{ id: 'horseExhausted', horse: 1 }];
+    s.map.nodes[s.camp]!.water = 'swamp';
+    s.map.nodes[s.camp]!.grass = 'rushy';
+    s.stores.grass = 0;
+    const rest = () => eventCard(s)!.choices.find((c) => c.id === 'rest')!;
+    expect(rest().warn).toBe(true);
+    expect(rest().effect).toMatch(/rushy grass/);
+    s.stores.grass = 1000;
+    expect(rest().warn).toBeUndefined();
+    expect(rest().effect).toMatch(/cut grass/);
+  });
 });

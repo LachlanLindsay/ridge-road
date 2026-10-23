@@ -6,7 +6,8 @@ import { shortDate } from './format';
 /** Screen size, theme and browser: enough to reproduce a layout problem. */
 export function deviceLine(): string {
   try {
-    const theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    const forced = document.documentElement.dataset.theme;
+    const theme = forced ? `${forced} (chosen)` : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     return `${innerWidth}×${innerHeight}, ${theme}, ${navigator.userAgent}`;
   } catch {
     return 'unknown';

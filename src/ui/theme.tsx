@@ -15,10 +15,17 @@ export function readTheme(): Theme {
   }
 }
 
+const BAR = { light: '#e8ebe3', dark: '#1c2127' };
+
 export function applyTheme(t: Theme) {
   const root = document.documentElement;
   if (t === 'system') delete root.dataset.theme;
   else root.dataset.theme = t;
+  // The browser's bar follows the choice too: a forced theme sets both tints to its own colour.
+  document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((m) => {
+    const own = m.media.includes('dark') ? BAR.dark : BAR.light;
+    m.content = t === 'system' ? own : BAR[t];
+  });
 }
 
 function saveTheme(t: Theme) {
