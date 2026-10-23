@@ -43,6 +43,10 @@ export interface NodeDraw {
   horsesLeft: number;
   /** For cliff glyphs: unit vector of the ridge arriving here. */
   dir: P;
+  /** At the top of the pass, once it is found: the way down. */
+  passDir?: P;
+  /** The trench down the pass is dug. */
+  trench?: boolean;
   stepShifted?: boolean;
 }
 
@@ -153,6 +157,16 @@ export function mapDraw(s: GameState): MapDraw {
       draw.grass = n.grass;
     }
     if (n.feature === 'rockStep' && n.reached) draw.stepShifted = (n.stepHours ?? 0) >= T.obstacles.rockStepWorkerHours - EPS;
+    if (n.feature === 'pass' && n.reached) {
+      const pass = n.childSegs.map((id) => map.segments[id]!).find((g) => g.pass && g.found);
+      if (pass) {
+        const q = toSvg(map.nodes[pass.b]!);
+        const l = Math.max(Math.hypot(q.x - p.x, q.y - p.y), 1e-6);
+        draw.passDir = { x: (q.x - p.x) / l, y: (q.y - p.y) / l };
+        const need = s.stores.hoe > 0 ? T.obstacles.trenchWorkerHoursHoe : T.obstacles.trenchWorkerHoursNoHoe;
+        draw.trench = (pass.trenchHours ?? 0) >= need - EPS;
+      }
+    }
     nodes.push(draw);
     grow(p);
   }

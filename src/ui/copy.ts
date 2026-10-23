@@ -52,14 +52,14 @@ export const HELP: Card[] = [
   {
     title: 'Scout, cut, advance',
     paragraphs: [
-      'Scouts mark the ridge ahead. Cutters clear marked ground so the horses can follow. Horses move only on the cleared path, drawn in red; open forest, heath, meadow and swamp need no clearing once marked.',
+      'Scouts mark the ridge ahead. Cutters clear marked ground so the horses can follow. Horses move only on the cleared path, drawn in red. Brush, the dark green stipple along a ridge, and rock have to be cleared first; open forest, heath, meadow and swamp need no clearing once marked.',
       'Every mile between camp and the work front is walked out and back each half, so move camp forward along the red path often. Where the ground ahead is open, the whole party can push on with the horses.',
     ],
   },
   {
     title: 'Dead ends',
     paragraphs: [
-      'Most ridges end at cliffs. Lawson reads which way the ground falls when he scouts, and a lookout shows the ridges around it in clear weather. A cross marks a branch that leads nowhere.',
+      'Most ridges end at cliffs. Lawson pencils his guess beside each ridge nobody has walked yet: runs on, or falls away. A lookout shows the ridges around it in clear weather. A cliff line drawn across a ridge’s end marks a branch that leads nowhere, and country the party hasn’t seen lies under haze.',
     ],
   },
   {

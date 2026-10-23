@@ -23,6 +23,12 @@ function Boom(): null {
 
 function start(data: unknown) {
   const d = data as { save?: unknown; build?: unknown } | null;
+  if (import.meta.env.DEV && location.search.includes('mapgallery')) {
+    // The sim's bots read tuning overrides from the environment, which a browser lacks.
+    (globalThis as { process?: unknown }).process ??= { env: {} };
+    void import('./ui/MapGallery').then(({ MapGallery }) => render(<MapGallery />, root));
+    return;
+  }
   if (import.meta.env.DEV && location.search.includes('gallery')) {
     void import('./ui/art/Gallery').then(({ Gallery }) => render(<Gallery />, root));
     return;

@@ -11,6 +11,7 @@
   --road: #a3302a; /* surveyor's red, for the road */
   --water: #2b5c7d; /* Prussian blue */
   --grass: #56723a; /* sap green */
+  --brush: #4d6338; /* olive: scrub and trees on the map */
   --warn: #93590e;
   --haze-1: #b8c4cc;
   --haze-2: #95a6b2;
@@ -48,6 +49,7 @@
     --road: #e2765f;
     --water: #7cb3d6;
     --grass: #9dc173;
+    --brush: #86a066;
     --warn: #e2a54c;
     --haze-1: #2f3a45;
     --haze-2: #3e4c59;
@@ -77,6 +79,7 @@
   --road: #e2765f;
   --water: #7cb3d6;
   --grass: #9dc173;
+  --brush: #86a066;
   --warn: #e2a54c;
   --haze-1: #2f3a45;
   --haze-2: #3e4c59;
@@ -552,10 +555,60 @@ p {
   font-weight: 600;
 }
 
+/* The haze over country the party has not seen: ruled lines like an engraved sky. */
+.map-haze path {
+  fill: none;
+  stroke: var(--art-0);
+  stroke-linecap: butt;
+  opacity: 0.8;
+}
+.map-haze .map-haze-edge {
+  opacity: 0.4;
+}
 .map-hachure {
   fill: none;
   stroke: var(--ink-3);
-  opacity: 0.6;
+  opacity: 0.45;
+  stroke-linecap: round;
+}
+/* Cover along the ridges. Brush to be cut is stippled crowns, rows of round dots; the rest are small marks. */
+.cover path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.cover .cover-brush {
+  stroke: var(--brush);
+  stroke-linecap: round;
+  opacity: 0.62;
+}
+.cover .cover-brush-cut {
+  opacity: 0.5;
+}
+.cover .cover-rocks {
+  fill: var(--paper-2);
+  stroke: var(--ink-2);
+}
+.cover .cover-gum-wood {
+  stroke: var(--ink-2);
+}
+.cover .cover-gum-crown {
+  fill: var(--brush);
+  opacity: 0.8;
+}
+.cover .cover-heath {
+  stroke: var(--art-2);
+}
+.cover .cover-meadow {
+  stroke: var(--grass);
+}
+.cover .cover-marsh {
+  stroke: var(--water);
+  opacity: 0.7;
+}
+.seg-casing {
+  stroke: var(--paper);
+  opacity: 0.85;
   stroke-linecap: round;
 }
 .seg-seen {
@@ -577,11 +630,6 @@ p {
 .seg-dead {
   stroke: var(--ink-3);
   opacity: 0.7;
-  stroke-linecap: round;
-}
-.seg-cross {
-  fill: none;
-  stroke: var(--ink-2);
   stroke-linecap: round;
 }
 .seg-selected {
@@ -606,21 +654,40 @@ p {
 }
 .glyph-trig,
 .glyph-cliff,
+.glyph-cliff-face,
 .glyph-water-line {
   fill: none;
   stroke: var(--ink);
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+.glyph-cliff-face {
+  stroke: var(--ink-2);
+}
+.glyph-trench {
+  fill: none;
+  stroke: var(--road);
+  stroke-linecap: round;
+}
 .glyph-water-line {
   stroke: var(--water);
 }
-.glyph-water {
-  fill: var(--water);
+.glyph-pool {
+  fill: color-mix(in srgb, var(--water) 14%, var(--paper));
+  stroke: var(--water);
+}
+.glyph-rush {
+  fill: none;
+  stroke: var(--grass);
+  stroke-linecap: round;
+}
+.glyph-rock {
+  fill: var(--paper-2);
+  stroke: var(--ink-2);
+  stroke-linejoin: round;
 }
 .glyph-rockhole {
-  fill: none;
-  stroke: var(--water);
+  fill: var(--water);
 }
 .glyph-grass {
   fill: none;
@@ -663,44 +730,35 @@ p {
   paint-order: stroke;
   stroke-linejoin: round;
 }
-.hint circle {
-  fill: var(--paper);
+/* Lawson's readings, pencilled beside the ridge; a wrong one is struck through in red ink. */
+.map-hint text {
+  font-family: var(--font-display);
+  font-style: italic;
+  fill: var(--ink-2);
+  stroke: var(--paper);
+  paint-order: stroke;
+  stroke-linejoin: round;
 }
-.hint text {
-  font-family: var(--font-ui);
-  font-weight: 700;
+.map-hint-wrong text {
+  fill: var(--ink-3);
 }
-.hint-fallsAway circle {
-  stroke: var(--warn);
-}
-.hint-fallsAway text {
-  fill: var(--warn);
-}
-.hint-runsOn circle {
-  stroke: var(--grass);
-}
-.hint-runsOn text {
-  fill: var(--grass);
-}
-.hint-right circle {
-  stroke: var(--grass);
-}
-.hint-right text {
-  fill: var(--grass);
-}
-.hint-wrong circle {
+.map-hint-strike {
+  fill: none;
   stroke: var(--road);
-}
-.hint-wrong text {
-  fill: var(--road);
+  stroke-linecap: round;
 }
 .tent {
-  fill: var(--road);
+  fill: var(--ink);
   stroke: var(--ink);
   stroke-linejoin: round;
 }
 .tent-door {
-  stroke: var(--paper);
+  fill: var(--paper-2);
+}
+.tent-smoke {
+  fill: none;
+  stroke: var(--ink-3);
+  stroke-linecap: round;
 }
 .flag-pole {
   stroke: var(--ink);
@@ -1777,11 +1835,21 @@ p {
 .notice .btn {
   margin-top: 8px;
 }
-.map-river {
+.map-river path {
   fill: none;
-  stroke: var(--water);
-  opacity: 0.55;
   stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.map-river .map-river-bank {
+  stroke: var(--water);
+  opacity: 0.7;
+}
+.map-river .map-river-water {
+  stroke: var(--paper);
+}
+.map-river .map-river-line {
+  stroke: var(--water);
+  opacity: 0.5;
 }
 .map-river-label {
   font-family: var(--font-display);
@@ -2288,11 +2356,6 @@ p {
 .menu-setting .toggle {
   min-height: 0;
   padding: 0;
-}
-
-.hint-wrong .hint-slash {
-  stroke: var(--road);
-  stroke-linecap: round;
 }
 
 /* Wide, short screens (a laptop): the plate sits beside the words so the buttons are never below

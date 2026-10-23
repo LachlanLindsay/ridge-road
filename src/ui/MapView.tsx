@@ -1,8 +1,11 @@
-// The survey plot: known ridges in ink with hachures, the cleared road in red, fog over the rest.
-// Drag to pan, pinch or scroll to zoom, tap a point or a ridge to select it.
+// The survey plot, engraved: country the party has not seen lies under ruled haze; each known ridge
+// carries its cover (brush to cut, open forest, heath, swamp, rock); the cleared road is in red;
+// cliffs are drawn where the ridges break off. Drag to pan, pinch or scroll to zoom, tap a point or
+// a ridge to select it.
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { getUnits } from './format';
 import { distToSeg, hachurePath, lerp, targetPoint, type Bounds, type MapDraw, type NodeDraw, type P, type SegDraw } from './geometry';
+import { BRUSH, cliffLine, cover, grassMark, haze, hazeStep, mapLabel, NEPEAN, placeLabels, rockHoleMark, streamMark, swampMark, type LabelItem, type Rect } from './mapArt';
 import { SizeButtons, type MapSize } from './MapSize';
 
 interface View {
@@ -25,8 +28,6 @@ interface Props {
 }
 
 const K_MAX = 420;
-/** The Nepean runs north past the ford, the one stretch of country the party already knows. */
-const NEPEAN = 'M0.55 7.5 C0.35 6.2 0.05 5.4 0.2 4.3 S0.45 2.6 0.25 1.5 S0.02 0.4 0.14 -0.4 S0.4 -1.8 0.3 -3 S0.05 -4.6 0.2 -5.8 S0.5 -7 0.4 -8.5';
 const MIN_SPAN = 3;
 /** Glyphs, labels and line weights grow with the panel: a laptop map is not a phone map seen from further away. */
 function uiScale(w: number, h: number): number {
@@ -72,6 +73,19 @@ function frameCamp(draw: MapDraw, w: number, h: number): View {
   }
   const { kMin, kMax } = kLimits(draw, w, h);
   return fit(b, w, h, kMin, Math.min(kMax, Math.min(w, h) / (R * 1.2)));
+}
+
+/** The haze is drawn for a margin around the view, on a grid, so it is rebuilt only now and then while panning. */
+function hazeBox(box: Bounds, sw: number): Bounds {
+  const cell = 32 * sw;
+  const mx = (box.maxX - box.minX) * 0.25;
+  const my = (box.maxY - box.minY) * 0.25;
+  return {
+    minX: Math.floor((box.minX - mx) / cell) * cell,
+    maxX: Math.ceil((box.maxX + mx) / cell) * cell,
+    minY: Math.floor((box.minY - my) / cell) * cell,
+    maxY: Math.ceil((box.maxY + my) / cell) * cell,
+  };
 }
 
 export function MapView({ draw, campKey, selected, target, moveTo, onTap, onKey, size: mapSize, onSize }: Props) {
@@ -286,8 +300,18 @@ export function MapView({ draw, campKey, selected, target, moveTo, onTap, onKey,
   const v = view;
   const { w, h } = size;
   const box: Bounds | null = v ? { minX: v.cx - w / 2 / v.k, minY: v.cy - h / 2 / v.k, maxX: v.cx + w / 2 / v.k, maxY: v.cy + h / 2 / v.k } : null;
-  const kGlyph = v ? v.k / uiScale(w, h) : 1;
-  const hatch = useMemo(() => (v && box ? hachurePath(draw.segs, v.k, box) : ''), [draw, v?.k, v?.cx, v?.cy, w, h]);
+  const ui = uiScale(w, h);
+  const kGlyph = v ? v.k / ui : 1;
+  // Cover is drawn at a zoom level rounded to a power of two, so pans and small zooms reuse it.
+  const kCover = 2 ** Math.round(Math.log2(kGlyph));
+  // Hachures show the ridge falling away on either side; where brush stands, the brush does.
+  const hatch = useMemo(() => (v && box ? hachurePath(draw.segs.filter((s) => s.deadEnd || !BRUSH.has(s.terrain)), v.k, box) : ''), [draw, v?.k, v?.cx, v?.cy, w, h]);
+  const coverArt = useMemo(() => (v ? cover(draw.segs, kCover, { minX: -Infinity, minY: -Infinity, maxX: Infinity, maxY: Infinity }) : null), [draw, kCover, !!v]);
+  const sw = v ? hazeStep(v.k) : 1;
+  const hb = box ? hazeBox(box, sw) : null;
+  const hazeKey = hb ? `${sw}:${hb.minX}:${hb.minY}:${hb.maxX}:${hb.maxY}` : '';
+  const fog = useMemo(() => (hb ? haze(draw, 7 / sw, hb) : null), [draw, hazeKey]);
+  const text = useMemo(() => (v && box ? mapText(draw, v.k, kGlyph, box, ui) : null), [draw, v?.k, v?.cx, v?.cy, w, h]);
 
   return (
     <div class="map" ref={wrap}>
@@ -306,11 +330,15 @@ export function MapView({ draw, campKey, selected, target, moveTo, onTap, onKey,
       >
         {v && (
           <>
-            <path class="map-river" d={NEPEAN} stroke-width={2.4 / v.k} />
-            <text class="map-river-label" font-size={12 / v.k} transform={`translate(${f(0.36)} ${f(1.7)}) rotate(-84)`}>
-              Nepean River
-            </text>
-            <path class="map-hachure" d={hatch} stroke-width={1 / v.k} />
+            {fog && (
+              <g class="map-haze">
+                <path d={fog.far} stroke-width={0.75 / v.k} />
+                <path class="map-haze-edge" d={fog.edge} stroke-width={0.6 / v.k} />
+              </g>
+            )}
+            <River k={v.k} />
+            <path class="map-hachure" d={hatch} stroke-width={0.9 / v.k} />
+            {coverArt && <Cover art={coverArt} k={v.k} />}
             {draw.segs.map((s) => (
               <Seg key={s.id} s={s} k={kGlyph} selected={selected === s.id} />
             ))}
@@ -318,6 +346,7 @@ export function MapView({ draw, campKey, selected, target, moveTo, onTap, onKey,
               <Node key={n.id} n={n} k={kGlyph} selected={selected === n.id} />
             ))}
             <Markers draw={draw} k={kGlyph} target={target} moveTo={moveTo} />
+            {text && <MapText text={text} k={v.k} />}
           </>
         )}
       </svg>
@@ -349,6 +378,36 @@ export function MapView({ draw, campKey, selected, target, moveTo, onTap, onKey,
         </div>
       </div>
     </div>
+  );
+}
+
+/** The Nepean, water-lined the way an engraver draws a river: two banks and a line down the middle. */
+function River({ k }: { k: number }) {
+  return (
+    <g class="map-river">
+      <path class="map-river-bank" d={NEPEAN} stroke-width={7 / k} />
+      <path class="map-river-water" d={NEPEAN} stroke-width={4.4 / k} />
+      <path class="map-river-line" d={NEPEAN} stroke-width={0.7 / k} />
+      <text class="map-river-label" font-size={12 / k} transform={`translate(${f(0.52)} ${f(1.75)}) rotate(-84)`}>
+        Nepean River
+      </text>
+    </g>
+  );
+}
+
+export function Cover({ art, k }: { art: NonNullable<ReturnType<typeof cover>>; k: number }) {
+  return (
+    <g class="cover">
+      {art.brush.map((r) => (
+        <path key={`${r.standing}:${r.w}:${r.dash}`} class={r.standing ? 'cover-brush' : 'cover-brush cover-brush-cut'} d={r.d} stroke-width={r.w} stroke-dasharray={r.dash} />
+      ))}
+      <path class="cover-rocks" d={art.rocks} stroke-width={0.75 / k} />
+      <path class="cover-gum-wood" d={art.gumWood} stroke-width={0.9 / k} />
+      <path class="cover-gum-crown" d={art.gumCrowns} />
+      <path class="cover-heath" d={art.heath} stroke-width={0.8 / k} />
+      <path class="cover-meadow" d={art.meadow} stroke-width={0.9 / k} />
+      <path class="cover-marsh" d={art.marsh} stroke-width={0.8 / k} />
+    </g>
   );
 }
 
@@ -396,36 +455,13 @@ function Seg({ s, k, selected }: { s: SegDraw; k: number; selected: boolean }) {
   if (selected) out.push(line(s.a, s.b, 'seg-selected', 12));
   if (s.deadEnd) {
     out.push(line(s.a, s.b, 'seg-dead', 1.4, `${px(2)} ${px(3)}`));
-    if (s.deadRoot) {
-      const c = lerp(s.a, s.b, 0.4);
-      const d = px(5);
-      out.push(<path class="seg-cross" stroke-width={px(2)} d={`M${f(c.x - d)} ${f(c.y - d)}L${f(c.x + d)} ${f(c.y + d)}M${f(c.x - d)} ${f(c.y + d)}L${f(c.x + d)} ${f(c.y - d)}`} />);
-    }
   } else {
+    // A paper casing under the line keeps it readable where it runs through brush.
+    out.push(line(s.a, s.b, 'seg-casing', 3.2));
     out.push(line(s.a, s.b, 'seg-seen', 1.3, `${px(1.5)} ${px(3.5)}`));
     if (s.marked > 0.001) out.push(line(s.a, lerp(s.a, s.b, s.marked), 'seg-marked', 1.8, `${px(6)} ${px(4)}`));
     if (s.open > 0.001) out.push(line(s.a, lerp(s.a, s.b, s.open), s.crossed ? 'seg-crossed' : 'seg-open', s.crossed ? 2.6 : 3.4, s.crossed ? `${px(0.1)} ${px(5)}` : undefined));
     if (s.lead && !s.farKnown) out.push(<circle cx={f(s.b.x)} cy={f(s.b.y)} r={px(4)} class="lead-end" stroke-width={px(1.4)} />);
-  }
-  if (s.hint) {
-    const t = s.farKnown ? 0.5 : 0.62;
-    const c = lerp(s.a, s.b, t);
-    const dx = s.b.x - s.a.x;
-    const dy = s.b.y - s.a.y;
-    const l = Math.max(Math.hypot(dx, dy), 1e-6);
-    const o = { x: c.x - (dy / l) * px(11), y: c.y + (dx / l) * px(11) };
-    const cls = `hint hint-${s.hint}${s.hintMark ? ` hint-${s.hintMark}` : ''}`;
-    // The arrow is Lawson's reading. Once the branch is known the ring says whether he was right:
-    // green for right, red with a slash for wrong. (A cross is kept for dead ends only.)
-    out.push(
-      <g class={cls}>
-        <circle cx={f(o.x)} cy={f(o.y)} r={px(7)} stroke-width={px(1.2)} />
-        <text x={f(o.x)} y={f(o.y)} font-size={px(10)} text-anchor="middle" dominant-baseline="central">
-          {s.hint === 'fallsAway' ? '↓' : '→'}
-        </text>
-        {s.hintMark === 'wrong' && <path class="hint-slash" stroke-width={px(1.6)} d={`M${f(o.x - px(6))} ${f(o.y + px(6))}L${f(o.x + px(6))} ${f(o.y - px(6))}`} />}
-      </g>,
-    );
   }
   return <g>{out}</g>;
 }
@@ -433,18 +469,9 @@ function Seg({ s, k, selected }: { s: SegDraw; k: number; selected: boolean }) {
 function Node({ n, k, selected }: { n: NodeDraw; k: number; selected: boolean }) {
   const px = (v: number) => v / k;
   const at = (dx: number, dy: number) => `${f(n.p.x + px(dx))} ${f(n.p.y + px(dy))}`;
+  const pt = (dx: number, dy: number): P => ({ x: n.p.x + px(dx), y: n.p.y + px(dy) });
   const out = [];
   if (selected) out.push(<circle cx={f(n.p.x)} cy={f(n.p.y)} r={px(15)} class="node-selected" stroke-width={px(3)} />);
-  const perp = { x: -n.dir.y, y: n.dir.x };
-  const comb = (half: number) => {
-    const base = { x: n.p.x + n.dir.x * px(3), y: n.p.y + n.dir.y * px(3) };
-    let d = `M${f(base.x - perp.x * px(half))} ${f(base.y - perp.y * px(half))}L${f(base.x + perp.x * px(half))} ${f(base.y + perp.y * px(half))}`;
-    for (let i = -half; i <= half + 0.01; i += 3) {
-      const t = { x: base.x + perp.x * px(i), y: base.y + perp.y * px(i) };
-      d += `M${f(t.x)} ${f(t.y)}l${f(n.dir.x * px(4.5))} ${f(n.dir.y * px(4.5))}`;
-    }
-    return <path d={d} class="glyph-cliff" stroke-width={px(1.6)} />;
-  };
   switch (n.feature) {
     case 'ford':
       out.push(<path class="glyph-water-line" stroke-width={px(1.5)} d={`M${at(-12, 9)}q${f(px(3))} ${f(px(-3))} ${f(px(6))} 0t${f(px(6))} 0t${f(px(6))} 0t${f(px(6))} 0M${at(-12, 14)}q${f(px(3))} ${f(px(-3))} ${f(px(6))} 0t${f(px(6))} 0t${f(px(6))} 0t${f(px(6))} 0`} />);
@@ -453,11 +480,26 @@ function Node({ n, k, selected }: { n: NodeDraw; k: number; selected: boolean })
       out.push(<path class="glyph-trig" stroke-width={px(1.4)} d={`M${at(0, -10)}L${at(8.5, 5)}L${at(-8.5, 5)}Z`} />);
       break;
     case 'precipice':
-      out.push(comb(8));
+    case 'cliff': {
+      // A dead end gets a short cliff line across its tip. The top of the pass gets the long one
+      // across the range, broken where the way down is once it is found.
+      const long = n.feature === 'cliff';
+      const dir = long && n.passDir ? n.passDir : n.dir;
+      const cl = cliffLine(pt(dir.x * 4, dir.y * 4), dir, px(1), long ? 26 : 11, long && n.passDir ? 3.2 : 0, n.id.length * 7 + 1);
+      out.push(<path class="glyph-cliff-face" stroke-width={px(0.9)} d={cl.face} />, <path class="glyph-cliff" stroke-width={px(1.7)} d={cl.edge} />);
+      if (long && n.trench) {
+        const a = pt(dir.x * 2.5, dir.y * 2.5);
+        const nx = -dir.y;
+        const ny = dir.x;
+        const steps: string[] = [];
+        for (let i = 0; i < 3; i++) {
+          const c0 = { x: a.x + dir.x * px(2.6 * i), y: a.y + dir.y * px(2.6 * i) };
+          steps.push(`M${f(c0.x - nx * px(2.4))} ${f(c0.y - ny * px(2.4))}L${f(c0.x + nx * px(2.4))} ${f(c0.y + ny * px(2.4))}`);
+        }
+        out.push(<path class="glyph-trench" stroke-width={px(1.1)} d={steps.join('')} />);
+      }
       break;
-    case 'cliff':
-      out.push(comb(14));
-      break;
+    }
     case 'rockStep':
       out.push(<path class={n.stepShifted ? 'glyph-step glyph-step-done' : 'glyph-step'} stroke-width={px(1.2)} d={`M${at(0, -12)}l${f(px(4))} ${f(px(4))}l${f(px(-4))} ${f(px(4))}l${f(px(-4))} ${f(px(-4))}Z`} />);
       break;
@@ -468,20 +510,23 @@ function Node({ n, k, selected }: { n: NodeDraw; k: number; selected: boolean })
       out.push(<path class="glyph-goal" stroke-width={px(1.3)} d={`M${at(-13, 4)}Q${at(0, -18)} ${at(13, 4)}Z`} />);
       break;
   }
-  if (n.water === 'swamp' || n.water === 'stream' || n.water === 'lagoon') out.push(<circle cx={f(n.p.x + px(8))} cy={f(n.p.y - px(7))} r={px(2.8)} class="glyph-water" />);
-  else if (n.water === 'rockHole') out.push(<circle cx={f(n.p.x + px(8))} cy={f(n.p.y - px(7))} r={px(2.4)} class="glyph-rockhole" stroke-width={px(1.2)} />);
-  if (n.grass === 'good' || n.grass === 'tall')
-    out.push(<path class="glyph-grass" stroke-width={px(1.3)} d={`M${at(-12, 9)}l${f(px(-1.5))} ${f(px(-5))}M${at(-9.5, 9)}l0 ${f(px(-6))}M${at(-7, 9)}l${f(px(1.5))} ${f(px(-5))}`} />);
-  else if (n.grass === 'rushy') out.push(<path class="glyph-grass glyph-grass-rushy" stroke-width={px(1.1)} d={`M${at(-11, 9)}l${f(px(-1))} ${f(px(-4))}M${at(-8, 9)}l${f(px(1))} ${f(px(-4))}`} />);
-  if (n.cache) out.push(<rect x={f(n.p.x + px(6))} y={f(n.p.y + px(5))} width={f(px(6))} height={f(px(5))} class="glyph-cache" stroke-width={px(1.2)} />);
-  if (n.horsesLeft) out.push(<path class="glyph-horse" stroke-width={px(1.6)} d={`M${at(-10, -5)}a${f(px(3))} ${f(px(3))} 0 1 1 ${f(px(6))} 0`} />);
+  // Water above the point, grass to its left, a cache below: the label goes to the right.
+  if (n.feature !== 'ford') {
+    if (n.water === 'swamp' || n.water === 'lagoon') {
+      const m = swampMark(pt(0, -9.5), px(1), n.water === 'lagoon');
+      out.push(<path class="glyph-pool" stroke-width={px(1)} d={m.pool} />, <path class="glyph-water-line" stroke-width={px(0.7)} d={m.lines} />, <path class="glyph-rush" stroke-width={px(0.8)} d={m.rushes} />);
+    } else if (n.water === 'stream') {
+      out.push(<path class="glyph-water-line" stroke-width={px(1.1)} d={streamMark(pt(0, -10), px(1))} />);
+    } else if (n.water === 'rockHole') {
+      const m = rockHoleMark(pt(0, -10), px(1));
+      out.push(<path class="glyph-rock" stroke-width={px(0.9)} d={m.rock} />, <path class="glyph-rockhole" d={m.pool} />);
+    }
+  }
+  if (n.grass === 'good' || n.grass === 'tall') out.push(<path class="glyph-grass" stroke-width={px(1.2)} d={grassMark(pt(-10, 4), px(1), n.grass === 'tall')} />);
+  else if (n.grass === 'rushy') out.push(<path class="glyph-grass glyph-grass-rushy" stroke-width={px(1)} d={grassMark(pt(-9, 4), px(0.75), false)} />);
+  if (n.cache) out.push(<rect x={f(n.p.x - px(3))} y={f(n.p.y + px(6))} width={f(px(6))} height={f(px(5))} class="glyph-cache" stroke-width={px(1.2)} />);
+  if (n.horsesLeft) out.push(<path class="glyph-horse" stroke-width={px(1.6)} d={`M${at(-12, -5)}a${f(px(3))} ${f(px(3))} 0 1 1 ${f(px(6))} 0`} />);
   out.push(<circle cx={f(n.p.x)} cy={f(n.p.y)} r={px(n.reached ? 3 : 2.6)} class={n.reached ? 'node node-reached' : 'node'} stroke-width={px(1.2)} />);
-  if (n.label)
-    out.push(
-      <text x={f(n.p.x + px(11))} y={f(n.p.y + px(4))} class="map-label" font-size={px(13)} stroke-width={px(3.5)}>
-        {n.label}
-      </text>,
-    );
   return <g>{out}</g>;
 }
 
@@ -500,13 +545,146 @@ function Markers({ draw, k, target, moveTo }: { draw: MapDraw; k: number; target
       </g>,
     );
   }
+  // The camp: a tent in ink with the smoke of its fire drifting off.
   const c = draw.camp;
   const at = (dx: number, dy: number) => `${f(c.x + px(dx))} ${f(c.y + px(dy))}`;
   out.push(
     <g class="camp-tent">
-      <path d={`M${at(0, -17)}L${at(11, 1)}L${at(-11, 1)}Z`} class="tent" stroke-width={px(1.4)} />
-      <path d={`M${at(0, -17)}L${at(0, 1)}`} class="tent-door" stroke-width={px(1.2)} />
+      <path d={`M${at(1.5, -16)}c${f(px(-2.4))} ${f(px(-3))} ${f(px(2.6))} ${f(px(-4.6))} ${f(px(0.6))} ${f(px(-8))}s${f(px(3.4))} ${f(px(-4.2))} ${f(px(1.8))} ${f(px(-7.6))}`} class="tent-smoke" stroke-width={px(1.2)} />
+      <path d={`M${at(0, -15)}L${at(10.5, 1)}L${at(-10.5, 1)}Z`} class="tent" stroke-width={px(1.2)} />
+      <path d={`M${at(0, -15)}L${at(-2.6, 1)}L${at(2.6, 1)}Z`} class="tent-door" />
     </g>,
   );
   return <g>{out}</g>;
+}
+
+// ---------------------------------------------------------------- words on the map
+
+interface Text {
+  labels: { x: number; y: number; anchor: string; text: string; size: number }[];
+  hints: { x: number; y: number; text: string; size: number; wrong: boolean; strike?: [number, number, number] }[];
+}
+
+/**
+ * Place labels and Lawson's pencilled readings in screen space, clear of each other and of the
+ * marks, then hand back positions in map units.
+ */
+function mapText(draw: MapDraw, k: number, kGlyph: number, box: Bounds, ui: number): Text {
+  const sx = (p: P) => (p.x - box.minX) * k;
+  const sy = (p: P) => (p.y - box.minY) * k;
+  const g = k / kGlyph;
+  const W = (box.maxX - box.minX) * k;
+  const H = (box.maxY - box.minY) * k;
+  const inView = (x: number, y: number, m = 80) => x > -m && x < W + m && y > -m && y < H + m;
+  const obstacles: (Rect & { owner?: string })[] = [];
+  // The marks round each point, the camp and the flag.
+  for (const n of draw.nodes) {
+    const x = sx(n.p);
+    const y = sy(n.p);
+    if (!inView(x, y)) continue;
+    obstacles.push({ x0: x - 12 * g, y0: y - 14 * g, x1: x + 6 * g, y1: y + 9 * g, owner: n.id });
+  }
+  const cx = sx(draw.camp);
+  const cy = sy(draw.camp);
+  obstacles.push({ x0: cx - 12 * g, y0: cy - 33 * g, x1: cx + 12 * g, y1: cy + 3 * g, owner: 'camp' });
+  // The controls laid over the map: north arrow, size buttons, scale, and the zoom column.
+  obstacles.push({ x0: 0, y0: 0, x1: 44, y1: 64 }, { x0: W - 132, y0: 0, x1: W, y1: 70 }, { x0: 0, y0: H - 48, x1: 176, y1: H }, { x0: W - 64, y0: H - 266, x1: W, y1: H });
+
+  // Lawson's readings first: they belong beside their ridge, on whichever side is clear.
+  const hintItems: LabelItem[] = [];
+  const hintMeta = new Map<string, { wrong: boolean }>();
+  for (const s of draw.segs) {
+    if (!s.hint) continue;
+    // A reading matters while the ridge is unexplored. Once someone has walked it, only a wrong
+    // one stays, struck through: the dead end's cliff line already says when he was right.
+    if (s.hintMark !== 'wrong' && (!s.lead || s.hintMark === 'right')) continue;
+    const t = s.farKnown ? 0.5 : 0.6;
+    const c = lerp(s.a, s.b, t);
+    const x = sx(c);
+    const y = sy(c);
+    if (!inView(x, y, 40)) continue;
+    const dx = sx(s.b) - sx(s.a);
+    const dy = sy(s.b) - sy(s.a);
+    const l = Math.max(Math.hypot(dx, dy), 1e-6);
+    const nx = -dy / l;
+    const ny = dx / l;
+    const word = s.hint === 'fallsAway' ? 'falls away' : 'runs on';
+    const text = s.hintMark ? word : `${word}?`;
+    const size = 10.5 * g;
+    const tw = text.length * size * 0.44 + 2;
+    const off = 9 * g + Math.abs(nx) * tw * 0.5;
+    const opt = (side: number) => {
+      const ax = x + nx * off * side;
+      const ay = y + ny * off * side + size * 0.35;
+      return { x: ax, y: ay, anchor: 'middle' as const, box: { x0: ax - tw / 2, y0: ay - size * 0.8, x1: ax + tw / 2, y1: ay + size * 0.25 } };
+    };
+    hintItems.push({ id: s.id, text, size, options: [opt(ny <= 0 ? 1 : -1), opt(ny <= 0 ? -1 : 1)] });
+    hintMeta.set(s.id, { wrong: s.hintMark === 'wrong' });
+  }
+  const frame: Rect = { x0: 4, y0: 4, x1: W - 4, y1: H - 4 };
+  const placedHints = placeLabels(hintItems, obstacles, frame);
+  const hints: Text['hints'] = [];
+  for (const p of placedHints) {
+    const meta = hintMeta.get(p.id)!;
+    hints.push({
+      x: box.minX + p.x / k,
+      y: box.minY + p.y / k,
+      text: p.text,
+      size: p.size / k,
+      wrong: meta.wrong,
+      strike: meta.wrong ? [box.minX + p.box.x0 / k, box.minX + p.box.x1 / k, box.minY + (p.box.y0 + p.box.y1) / 2 / k] : undefined,
+    });
+    obstacles.push(p.box);
+  }
+
+  // Then the names: the camp's first, then the landmarks, then the rest nearest the camp first.
+  const named = draw.nodes
+    .map((n) => ({ n, text: mapLabel(n) }))
+    .filter((x): x is { n: NodeDraw; text: string } => !!x.text && inView(sx(x.n.p), sy(x.n.p), 120));
+  const rank = (n: NodeDraw) => (n.p.x === draw.camp.x && n.p.y === draw.camp.y ? 0 : n.feature ? 1 : 2);
+  named.sort((a, b) => rank(a.n) - rank(b.n) || Math.hypot(a.n.p.x - draw.camp.x, a.n.p.y - draw.camp.y) - Math.hypot(b.n.p.x - draw.camp.x, b.n.p.y - draw.camp.y));
+  const size = 13 * g;
+  const items: LabelItem[] = named.map(({ n, text }) => {
+    const x = sx(n.p);
+    const y = sy(n.p);
+    const tw = text.length * size * 0.45 + 3;
+    const h = size;
+    const mk = (ax: number, ay: number, anchor: 'start' | 'middle' | 'end') => {
+      const x0 = anchor === 'start' ? ax : anchor === 'end' ? ax - tw : ax - tw / 2;
+      return { x: ax, y: ay, anchor, box: { x0, y0: ay - h * 0.78, x1: x0 + tw, y1: ay + h * 0.25 } };
+    };
+    return {
+      id: n.id,
+      text,
+      size,
+      owner: n.id,
+      optional: rank(n) === 2,
+      options: [mk(x + 10 * g, y + 4.5 * g, 'start'), mk(x - 16 * g, y + 4.5 * g, 'end'), mk(x, y + 22 * g, 'middle'), mk(x, y - 18 * g, 'middle')],
+    };
+  });
+  const placed = placeLabels(items, obstacles, frame);
+  return {
+    labels: placed.map((p) => ({ x: box.minX + p.x / k, y: box.minY + p.y / k, anchor: p.anchor, text: p.text, size: p.size / k })),
+    hints,
+  };
+}
+
+function MapText({ text, k }: { text: Text; k: number }) {
+  return (
+    <g>
+      {text.hints.map((h) => (
+        <g key={`${h.x}:${h.y}:${h.text}`} class={h.wrong ? 'map-hint map-hint-wrong' : 'map-hint'}>
+          <text x={f(h.x)} y={f(h.y)} font-size={f(h.size)} text-anchor="middle" stroke-width={f(3 / k)}>
+            {h.text}
+          </text>
+          {h.strike && <path class="map-hint-strike" d={`M${f(h.strike[0])} ${f(h.strike[2])}L${f(h.strike[1])} ${f(h.strike[2] - 1.5 / k)}`} stroke-width={f(1.4 / k)} />}
+        </g>
+      ))}
+      {text.labels.map((l) => (
+        <text key={`${l.text}:${l.x}`} x={f(l.x)} y={f(l.y)} class="map-label" font-size={f(l.size)} text-anchor={l.anchor} stroke-width={f(3.5 / k)}>
+          {l.text}
+        </text>
+      ))}
+    </g>
+  );
 }
