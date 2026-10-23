@@ -775,13 +775,16 @@ p {
   paint-order: stroke;
   stroke-linejoin: round;
 }
+/* The struck words stay as dark as an open reading, so the strike reads as a correction to
+   them and not as a scrap of red road. */
 .map-hint-wrong text {
-  fill: var(--ink-3);
+  opacity: 0.8;
 }
 .map-hint-strike {
   fill: none;
   stroke: var(--road);
   stroke-linecap: round;
+  opacity: 0.85;
 }
 .tent {
   fill: var(--ink);

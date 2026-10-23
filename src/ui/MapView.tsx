@@ -678,7 +678,7 @@ function MapText({ text, k }: { text: Text; k: number }) {
           <text x={f(h.x)} y={f(h.y)} font-size={f(h.size)} text-anchor="middle" stroke-width={f(3 / k)}>
             {h.text}
           </text>
-          {h.strike && <path class="map-hint-strike" d={`M${f(h.strike[0])} ${f(h.strike[2])}L${f(h.strike[1])} ${f(h.strike[2] - 1.5 / k)}`} stroke-width={f(1.4 / k)} />}
+          {h.strike && <path class="map-hint-strike" d={`M${f(h.strike[0])} ${f(h.strike[2])}L${f(h.strike[1])} ${f(h.strike[2] - 1.5 / k)}`} stroke-width={f(1.1 / k)} />}
         </g>
       ))}
       {text.labels.map((l) => (
