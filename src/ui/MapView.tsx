@@ -343,7 +343,7 @@ export function MapView({ draw, campKey, selected, target, moveTo, onTap, onKey,
               <Seg key={s.id} s={s} k={kGlyph} selected={selected === s.id} />
             ))}
             {draw.nodes.map((n) => (
-              <Node key={n.id} n={n} k={kGlyph} selected={selected === n.id} />
+              <Node key={n.id} n={n} k={kGlyph} selected={selected === n.id} camp={n.p.x === draw.camp.x && n.p.y === draw.camp.y} />
             ))}
             <Markers draw={draw} k={kGlyph} target={target} moveTo={moveTo} />
             {text && <MapText text={text} k={v.k} />}
@@ -466,7 +466,7 @@ function Seg({ s, k, selected }: { s: SegDraw; k: number; selected: boolean }) {
   return <g>{out}</g>;
 }
 
-function Node({ n, k, selected }: { n: NodeDraw; k: number; selected: boolean }) {
+function Node({ n, k, selected, camp }: { n: NodeDraw; k: number; selected: boolean; camp: boolean }) {
   const px = (v: number) => v / k;
   const at = (dx: number, dy: number) => `${f(n.p.x + px(dx))} ${f(n.p.y + px(dy))}`;
   const pt = (dx: number, dy: number): P => ({ x: n.p.x + px(dx), y: n.p.y + px(dy) });
@@ -477,7 +477,8 @@ function Node({ n, k, selected }: { n: NodeDraw; k: number; selected: boolean })
       out.push(<path class="glyph-water-line" stroke-width={px(1.5)} d={`M${at(-12, 9)}q${f(px(3))} ${f(px(-3))} ${f(px(6))} 0t${f(px(6))} 0t${f(px(6))} 0t${f(px(6))} 0M${at(-12, 14)}q${f(px(3))} ${f(px(-3))} ${f(px(6))} 0t${f(px(6))} 0t${f(px(6))} 0t${f(px(6))} 0`} />);
       break;
     case 'lookout':
-      out.push(<path class="glyph-trig" stroke-width={px(1.4)} d={`M${at(0, -10)}L${at(8.5, 5)}L${at(-8.5, 5)}Z`} />);
+      // The tent stands on a lookout the party camps at; its name says what the place is.
+      if (!camp) out.push(<path class="glyph-trig" stroke-width={px(1.4)} d={`M${at(0, -10)}L${at(8.5, 5)}L${at(-8.5, 5)}Z`} />);
       break;
     case 'precipice':
     case 'cliff': {
