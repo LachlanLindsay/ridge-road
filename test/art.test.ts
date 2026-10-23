@@ -75,3 +75,15 @@ describe('the procession', () => {
     expect(h(slots)).toBe('2eb8841669cfe0cc');
   });
 });
+
+describe('journal thumbnails', () => {
+  it('write each mark with its colours, so the picture needs no stylesheet', async () => {
+    const { thumbSvg } = await import('../src/ui/art/thumbs');
+    const ink = new Map([['l1 o1', { fill: 'none', stroke: 'rgb(1, 2, 3)', opacity: '0.7' }]]);
+    const svg = thumbSvg({ w: 400, h: 200, marks: [{ d: 'M0 0L10 10', c: 'l1 o1', w: 0.5 }] }, [10, 20, 96, 54], 96, 54, ink);
+    expect(svg).toContain('viewBox="10 20 96 54"');
+    expect(svg).toContain('stroke="rgb(1, 2, 3)"');
+    expect(svg).toContain('opacity="0.7"');
+    expect(svg).toContain('stroke-width="0.5"');
+  });
+});

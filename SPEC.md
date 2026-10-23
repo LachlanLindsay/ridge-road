@@ -382,7 +382,7 @@ The game presents 1813 as the first recorded European crossing, not the first cr
 
 Rules:
 
-- Aboriginal people appear only as the presence the 1813 journals record: huts, the smoke of fires, a man cutting wood who moved off when the dogs came near, the remains of camps. Each is an info card, never an enemy, obstacle or resource, and never a collectable: the Signs of Country are counted apart from the cards found, the journal records them as "Signs of people", not "Found", and no camp is named after them.
+- Aboriginal people appear only as the presence the 1813 journals record: huts, the smoke of fires, a man cutting wood who moved off when the dogs came near, the remains of camps. Each is an info card, never an enemy, obstacle or resource, and never a collectable: the Signs of Country are counted apart from the cards found, the journal records them as "Signs of people", not "Found", and no camp takes a sign's card title as its name (a camp may say what was seen near it, as "Swamp by the woodcutter" does, but is not called "A man cutting wood").
 - The game's own voice never says "natives"; the word appears only inside the journal's quotation marks, attributed. Unwalked ground is unknown to the party, never to "nobody".
 - There is no combat. Firearms are for hunting only.
 - The party's night-time fear of being watched is shown as their assumption, not as fact.
