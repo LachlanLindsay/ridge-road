@@ -1,5 +1,4 @@
 // Full-height sheets over the game: the menu, journal, party and stores, how to play, map key.
-import type { ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
 import { CARDS, JOURNAL_1813, T, foodLb, freshLb, isSignOfCountry, type GameState } from '../engine';
 import { BUILD } from './build';

@@ -14,6 +14,8 @@ import { MapView } from './MapView';
 import { Outfit } from './Outfit';
 import { toOptions, type Outfit as OutfitT } from './outfitting';
 import { BriefingSheet, Help, Journal, MapKey, Menu, Party, type OverlayId } from './Overlays';
+import { SetOutArt } from './art/scenes';
+import { partyNow } from './art/cardArt';
 import { PlanSheet } from './PlanSheet';
 import { clearSave, readDraft, readFlag, readSave, writeDraft, writeFlag, writeSave } from './save';
 import { Briefing, Title } from './Title';
@@ -26,10 +28,14 @@ const coachKey = (seed: number) => `ridge-road.coach.v2.${seed}`;
 const dewKey = (seed: number) => `ridge-road.dew.v1.${seed}`;
 
 /** For a first expedition: what the screen is for, shown before anything else on the first morning. */
-function Coach({ onDone }: { onDone: () => void }) {
+function Coach({ state, onDone }: { state: GameState; onDone: () => void }) {
+  const party = partyNow(state);
   return (
     <div class="backdrop">
-      <div class="event-card coach" role="dialog" aria-modal="true" aria-labelledby="coach-title">
+      <div class="event-card coach has-art" role="dialog" aria-modal="true" aria-labelledby="coach-title">
+        <div class="coach-art">
+          <SetOutArt counts={party.counts} loads={party.loads} />
+        </div>
         <h2 id="coach-title" class="display event-title">
           Your first day
         </h2>
@@ -271,6 +277,7 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
       )}
       {showCoach ? (
         <Coach
+          state={game}
           onDone={() => {
             writeFlag(coachKey(game.seed));
             setTick(tick + 1);

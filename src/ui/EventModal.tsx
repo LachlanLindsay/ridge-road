@@ -35,7 +35,7 @@ export function EventModal({ state, onChoose, onRemember }: { state: GameState; 
               key={c.id}
               ref={i === firstEnabled ? first : undefined}
               type="button"
-              class="choice"
+              class={c.warn ? 'choice choice-warn' : 'choice'}
               disabled={!!c.disabled}
               onClick={() => {
                 if (remember && onRemember) onRemember(c.id);

@@ -50,7 +50,7 @@ export function vista(seed = 3): Scene {
 }
 
 /** May 1813: the party wading the Nepean, the wall of the range beyond. */
-export function ford(seed = 11, loads: Pack[] = loads1813()): Scene {
+export function ford(seed = 11, loads: Pack[] = loads1813(), counts: PartyCounts = COUNTS_1813): Scene {
   const W = 400;
   const H = 200;
   const m: Mark[] = [];
@@ -64,7 +64,7 @@ export function ford(seed = 11, loads: Pack[] = loads1813()): Scene {
   const bank = hills(m, bankGround, H, 3, { seed: seed + 32, depth: 2.5, gap: 0.9 }, 2.6);
   // The party, wading: drawn before the water, so the river hides their legs.
   const water = 141.5;
-  const { fig, scale } = procession(COUNTS_1813, curve(-4, W + 4, () => water + 6.5), { from: 86, to: 312, maxScale: 0.6, seed: seed + 3, loads });
+  const { fig, scale } = procession(counts, curve(-4, W + 4, () => water + 6.5), { from: 86, to: 312, maxScale: 0.6, seed: seed + 3, loads });
   m.push(...figureMarks(fig));
   m.push({ d: `M-4 ${water}H${W + 4}V${H + 2}H-4Z`, c: 'pp' });
   const wh = waterHatch({ seed: seed + 40, from: -4, to: W + 4, top: water, bottom: 184, gap: 1.5, bank, squash: 1 });
@@ -414,7 +414,9 @@ export function wayDown(counts: PartyCounts, seed = 321, loads?: Pack[]): Scene 
   const edge = 158;
   const plateau = curve(-4, edge, (x) => 64 + 0.8 * Math.sin(x / 11) + (x > edge - 16 ? ((x - edge + 16) / 16) ** 2 * 6 : 0));
   m.push({ d: `${linePath(plateau)}L${edge} ${yAt(slope, edge).toFixed(1)}L-4 ${yAt(slope, -4).toFixed(1)}Z`, c: 'pp' });
-  const cliff = cliffFace(plateau, { seed: seed + 40, height: 72, cover: 2, gap: 1.9, cap: 2 });
+  // Tall enough to meet the talus, no taller: strokes that ran on past it hung down into the
+  // slope's hatching like the arches of a bridge.
+  const cliff = cliffFace(plateau, { seed: seed + 40, height: 56, cover: 2, gap: 1.9, cap: 2 });
   m.push({ d: cliff.face, c: 'l3', w: 0.46 }, { d: cliff.beds, c: 'l3', w: 0.4 });
   const top = canopy(plateau, { seed: seed + 41, size: 2.4, to: edge - 14 });
   m.push({ d: bandPath(top, shift(plateau, 1.2), -4, edge - 14), c: 'f3' });
@@ -506,6 +508,15 @@ export function BriefingArt({ card }: { card: number }) {
   const scene = useMemo(() => art?.make() ?? null, [card]);
   if (!art || !scene) return null;
   return <Plate scene={scene} label={art.label} class="plate" dogs={art.hits ? COUNTS_1813.dogs : undefined} />;
+}
+
+/** The first morning: the party as outfitted, wading the Nepean, at the head of the first-day card. */
+export function SetOutArt({ counts, loads }: { counts: PartyCounts; loads: Pack[] }) {
+  const key = loadKey(loads);
+  const scene = useMemo(() => ford(11, loads, counts), [counts.servants, counts.horses, counts.dogs, key]);
+  const men = 3 + counts.servants;
+  // A strip from the range down to the near bank, so the card stays short on a phone.
+  return <Plate scene={scene} view={[0, 66, 400, 124]} label={`An engraving: your party of ${men} men, ${counts.horses} pack horses and ${counts.dogs} dogs wading the Nepean, the wall of the Blue Mountains beyond.`} class="plate" />;
 }
 
 export function TitleArt() {

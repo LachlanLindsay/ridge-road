@@ -2753,8 +2753,23 @@ p {
   margin-left: auto;
 }
 /* The event card is a lighter slip than the page: the strip's paper matches it. */
-.event-art .art .pp {
+.event-art .art .pp,
+.coach-art .art .pp {
   fill: var(--paper-3);
+}
+/* The first-day card opens on the party wading the Nepean, like an event card's strip. */
+.coach-art {
+  margin: 0 calc(-1 * var(--gutter-r)) -2px calc(-1 * var(--gutter-l));
+}
+.coach-art .art .lp {
+  stroke: var(--paper-3);
+}
+.coach-art .art .pk {
+  fill: var(--paper-3);
+}
+/* A choice whose effect is easy to miss and bad: the effect is set as a warning. */
+.choice-warn .choice-effect {
+  color: var(--warn);
 }
 .event-art .art .lp {
   stroke: var(--paper-3);
