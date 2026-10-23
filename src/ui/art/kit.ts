@@ -362,7 +362,7 @@ export interface Ellipse {
 }
 
 /** Where a horizontal line at height y is cut by a set of ellipses, as merged [from, to] gaps. */
-function gapsAt(y: number, shapes: Ellipse[]): [number, number][] {
+export function gapsAt(y: number, shapes: Ellipse[]): [number, number][] {
   const gaps: [number, number][] = [];
   for (const e of shapes) {
     const t = (y - e.y) / e.ry;
@@ -381,7 +381,7 @@ function gapsAt(y: number, shapes: Ellipse[]): [number, number][] {
 }
 
 /** Long dashes along y from `from` to `to`, skipping the gaps. */
-function dashes(r: Rng, y: number, from: number, to: number, gaps: [number, number][], dash: [number, number], gap: [number, number], wob = 0): string {
+export function dashes(r: Rng, y: number, from: number, to: number, gaps: [number, number][], dash: [number, number], gap: [number, number], wob = 0): string {
   const out: string[] = [];
   let x = from - r() * dash[1];
   while (x < to) {

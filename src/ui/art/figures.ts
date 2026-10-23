@@ -68,13 +68,13 @@ function turn(x: number, y: number, px: number, py: number, a: number): [number,
  * what it carries: the panniers fill and the pile on top grows with the load, and past an easy
  * load the horse hangs its head. Null draws it bare.
  */
-export function horse(fig: Figure, X: number, Y: number, s: number, step: number, lead: [number, number] | null = null, pack: Pack | null = PLAIN_PACK) {
+export function horse(fig: Figure, X: number, Y: number, s: number, step: number, lead: [number, number] | null = null, pack: Pack | null = PLAIN_PACK, o?: { droopDeg?: number }) {
   const p = at(X, Y, s);
   const a = Math.sin(step);
   const b = Math.sin(step + Math.PI);
   const total = pack?.total ?? 0;
-  // Past an easy load the head comes down, further the heavier it is.
-  const droop = total > EASY_LB ? ((12 + Math.min(1, (total - EASY_LB) / (MOST_LB - EASY_LB)) * 16) * Math.PI) / 180 : 0;
+  // Past an easy load the head comes down, further the heavier it is. A spent horse hangs it lower.
+  const droop = o?.droopDeg !== undefined ? (o.droopDeg * Math.PI) / 180 : total > EASY_LB ? ((12 + Math.min(1, (total - EASY_LB) / (MOST_LB - EASY_LB)) * 16) * Math.PI) / 180 : 0;
   const h: Pt = droop ? (x, y) => p(...turn(x, y, 12.5, -24.5, droop)) : p;
   fig.ink.push(
     `M${p(-15.5, -23.8)}C${p(-13, -25.6)} ${p(-9, -25.4)} ${p(-6, -24.9)}C${p(-2, -24.3)} ${p(2, -24.6)} ${p(5, -25.4)}C${p(7, -26)} ${p(8.5, -26.6)} ${p(10, -27.4)}` +
@@ -454,4 +454,273 @@ export function figureMarks(fig: Figure, tone = 'f4'): Mark[] {
   if (fig.topInk.length) out.push({ d: fig.topInk.join(''), c: tone });
   join(fig.rope, 'l4');
   return out;
+}
+
+// ---------------------------------------------------------------- still figures, for the cards
+
+/** Like `at`, but able to face left: x runs the other way when dir is -1. */
+const atD = (X: number, Y: number, s: number, dir: 1 | -1): Pt => (x, y) => `${f(X + dir * x * s)} ${f(Y + y * s)}`;
+
+/** A filled circle through a point mapper. */
+function disc(p: Pt, s: number, cx: number, cy: number, r: number): string {
+  const R = f(r * s);
+  return `M${p(cx - r, cy)}A${R} ${R} 0 1 0 ${p(cx + r, cy)}A${R} ${R} 0 1 0 ${p(cx - r, cy)}Z`;
+}
+
+/** Rotate about (px, py) by `a` radians, clockwise on screen when facing right. */
+function rot(px: number, py: number, a: number) {
+  return (x: number, y: number): [number, number] => turn(x, y, px, py, a);
+}
+
+/** Head, nose, neck, coat and hat of a man standing upright, as in `man`. */
+function upperBody(p: Pt, s: number, leader: boolean): { ink: string; brim: { d: string; w: number } } {
+  return {
+    ink:
+      disc(p, s, 0.4, -30.2, 2.55) +
+      `M${p(2.6, -31)}L${p(3.7, -29.6)}L${p(2.7, -29.3)}Z` +
+      `M${p(-0.9, -28.2)}L${p(1.3, -28.2)}L${p(1.4, -26.8)}L${p(-0.9, -26.8)}Z` +
+      (leader
+        ? `M${p(-3, -27.2)}C${p(-1, -27.9)} ${p(1.6, -27.9)} ${p(3.2, -27)}L${p(3.4, -21.5)}L${p(2.7, -17.6)}L${p(2.3, -16.3)}L${p(-0.6, -16.5)}L${p(-3.7, -11.4)}L${p(-4.7, -12)}L${p(-3.7, -18.2)}Z` +
+          `M${p(-2.4, -32.2)}L${p(-2.1, -37.9)}C${p(-0.3, -38.5)} ${p(1.7, -38.5)} ${p(3.3, -37.9)}L${p(3.3, -32.2)}Z`
+        : `M${p(-3, -27.2)}C${p(-1, -27.9)} ${p(1.6, -27.9)} ${p(3.1, -27)}L${p(3.3, -18.6)}L${p(2.7, -16)}L${p(-3, -16)}L${p(-3.5, -20)}Z` +
+          `M${p(-2.8, -32)}C${p(-2.7, -35.2)} ${p(2.8, -35.4)} ${p(3.1, -32)}Z`),
+    brim: { d: leader ? `M${p(-4.2, -32.3)}L${p(4.9, -32.3)}` : `M${p(-4.7, -32.1)}L${p(5.2, -32.1)}`, w: 1.15 * s },
+  };
+}
+
+export type Arms = 'down' | 'call' | 'kettle' | 'point' | 'folded' | 'stone' | 'gun' | 'gunRest' | 'axe' | 'haul';
+
+/**
+ * A man standing still, feet on y = 0, facing right (or left with dir -1): the figure `man` draws,
+ * legs planted, arms set for what he is doing. `lean` tips him forward from the hips (radians).
+ */
+export function standing(fig: Figure, X: number, Y: number, s: number, o: { leader: boolean; dir?: 1 | -1; arms?: Arms; lean?: number }) {
+  const p0 = atD(X, Y, s, o.dir ?? 1);
+  const r = rot(0.5, -16.6, o.lean ?? 0);
+  const p: Pt = o.lean ? (x, y) => p0(...r(x, y)) : p0;
+  const up = upperBody(p, s, o.leader);
+  fig.ink.push(up.ink);
+  fig.limbs.push(up.brim);
+  fig.limbs.push({ d: `M${p0(0.9, -16.6)}L${p0(1.2, -8.6)}L${p0(1.6, -1.1)}M${p0(0.9, -0.6)}L${p0(4.1, -0.5)}`, w: 2.2 * s });
+  fig.farLimbs.push({ d: `M${p0(-0.4, -16.6)}L${p0(-0.6, -8.6)}L${p0(-0.9, -1.1)}M${p0(-1.6, -0.6)}L${p0(1.6, -0.5)}`, w: 2.1 * s });
+  switch (o.arms ?? 'down') {
+    case 'down':
+      fig.limbs.push({ d: `M${p(0.8, -26.2)}L${p(1.3, -21.6)}L${p(1.7, -17.2)}`, w: 1.7 * s });
+      break;
+    case 'call':
+      // Both hands cupped at the mouth.
+      fig.limbs.push({ d: `M${p(0.8, -26.2)}L${p(4.4, -24.2)}L${p(4.3, -28.6)}`, w: 1.6 * s });
+      fig.farLimbs.push({ d: `M${p(-0.4, -26.2)}L${p(3.4, -24.8)}L${p(3.6, -28.8)}`, w: 1.5 * s });
+      break;
+    case 'kettle': {
+      fig.limbs.push({ d: `M${p(0.8, -26.2)}L${p(1.8, -21.8)}L${p(2.6, -17.6)}`, w: 1.7 * s });
+      fig.front.push({ d: `M${p(0.7, -14.6)}L${p(5.3, -14.6)}C${p(5.9, -13.4)} ${p(5.7, -11.4)} ${p(4.8, -11)}L${p(1.2, -11)}C${p(0.3, -11.4)} ${p(0.1, -13.4)} ${p(0.7, -14.6)}Z`, w: 0.55 * s });
+      fig.rope.push({ d: `M${p(0.9, -14.6)}Q${p(2.4, -18.6)} ${p(5.1, -14.6)}`, w: 0.5 * s });
+      break;
+    }
+    case 'point':
+      fig.limbs.push({ d: `M${p(0.8, -26.2)}L${p(5.4, -25.6)}L${p(10.2, -27)}`, w: 1.6 * s });
+      break;
+    case 'folded':
+      fig.limbs.push({ d: `M${p(0.8, -26.2)}L${p(3, -22.6)}L${p(-1.4, -21.6)}`, w: 1.8 * s });
+      break;
+    case 'stone':
+      fig.limbs.push({ d: `M${p(0.8, -26.2)}L${p(3.2, -22.2)}L${p(5.6, -19.8)}`, w: 1.7 * s });
+      fig.farLimbs.push({ d: `M${p(-0.4, -26)}L${p(2.4, -22)}L${p(4.8, -20.2)}`, w: 1.6 * s });
+      fig.front.push({ d: `M${p(3.2, -19.4)}C${p(3.4, -22)} ${p(8.4, -22.4)} ${p(9, -19.6)}C${p(9.4, -17.4)} ${p(3.4, -16.8)} ${p(3.2, -19.4)}Z`, w: 0.6 * s });
+      break;
+    case 'gun':
+      fig.limbs.push({ d: `M${p(0.8, -26.2)}L${p(2.6, -22.6)}L${p(3.4, -20.6)}`, w: 1.7 * s });
+      fig.limbs.push({ d: `M${p(4.2, -19.4)}L${p(2.4, -22.4)}`, w: 1.9 * s });
+      fig.limbs.push({ d: `M${p(2.6, -22)}L${p(-6.4, -39.6)}`, w: 0.85 * s });
+      break;
+    case 'gunRest':
+      // Musket upright, butt on the ground, held at the muzzle.
+      fig.limbs.push({ d: `M${p(0.8, -26.2)}L${p(3.2, -23.4)}L${p(5.2, -24.6)}`, w: 1.6 * s });
+      fig.limbs.push({ d: `M${p0(5.6, -0.4)}L${p0(5.5, -31)}`, w: 0.8 * s });
+      fig.limbs.push({ d: `M${p0(5.6, -0.6)}L${p0(5.6, -5.6)}`, w: 1.8 * s });
+      break;
+    case 'axe':
+      fig.limbs.push({ d: `M${p(0.8, -26.2)}L${p(2.4, -23)}L${p(3.2, -21.4)}`, w: 1.7 * s });
+      fig.limbs.push({ d: `M${p(3.6, -20.9)}L${p(-6, -32)}`, w: 0.95 * s });
+      fig.ink.push(`M${p(-8.3, -33.6)}L${p(-4.6, -31.5)}L${p(-5.8, -29.7)}L${p(-8.9, -31.6)}Z`);
+      break;
+    case 'haul':
+      // Both arms out in front at the height of a halter rope.
+      fig.limbs.push({ d: `M${p(0.8, -26.2)}L${p(4.8, -24.2)}L${p(8.8, -23.2)}`, w: 1.6 * s });
+      fig.farLimbs.push({ d: `M${p(-0.4, -26)}L${p(3.8, -23.6)}L${p(7.8, -22.8)}`, w: 1.5 * s });
+      break;
+  }
+}
+
+/**
+ * A man sitting on the ground with his knees up, facing right (or left with dir -1). `arms`: hugging
+ * his knees, holding his hands to a fire, folded on his knees, or his head in his hands. A blanket
+ * wraps him, hooded, leaving the face and feet out.
+ */
+export function sitting(fig: Figure, X: number, Y: number, s: number, o: { leader: boolean; dir?: 1 | -1; arms?: 'knees' | 'fire' | 'folded' | 'head'; blanket?: boolean; hunch?: number }) {
+  const p = atD(X, Y, s, o.dir ?? 1);
+  const hunch = o.hunch ?? 0.6;
+  const H = [0, -2.2] as const;
+  const S = [1.2 + 2.2 * hunch, -12.6 + 1.2 * hunch] as const;
+  const head = o.arms === 'head' ? ([S[0] + 2.6, S[1] - 2.4] as const) : ([S[0] + 1, S[1] - 3.7] as const);
+  const K = [6.8, -9.6] as const;
+  const A = [9.6, -1] as const;
+  // Legs: thigh up to the knee, shin down to the foot.
+  fig.farLimbs.push({ d: `M${p(H[0] + 0.2, H[1] - 0.4)}L${p(K[0] - 0.8, K[1] + 1)}L${p(A[0] + 0.3, A[1])}M${p(A[0] - 0.4, -0.6)}L${p(A[0] + 2.6, -0.5)}`, w: 2.3 * s });
+  fig.limbs.push({ d: `M${p(H[0] + 0.8, H[1] - 0.6)}L${p(K[0], K[1])}L${p(A[0], A[1])}M${p(A[0] - 0.6, -0.6)}L${p(A[0] + 2.8, -0.5)}`, w: 2.5 * s });
+  // Body: a coat from the shoulders down to the seat; a leader's tails lie on the ground behind.
+  const coat = o.leader
+    ? `M${p(S[0] - 3, S[1] - 0.4)}C${p(S[0] - 1, S[1] - 1.1)} ${p(S[0] + 1.6, S[1] - 1)} ${p(S[0] + 3.2, S[1] + 0.2)}L${p(H[0] + 3.4, H[1] - 0.6)}L${p(H[0] + 1, H[1] + 1.6)}L${p(H[0] - 6.2, -0.1)}L${p(H[0] - 6, -1.2)}L${p(H[0] - 3.4, H[1] - 0.6)}Z`
+    : `M${p(S[0] - 3, S[1] - 0.4)}C${p(S[0] - 1, S[1] - 1.1)} ${p(S[0] + 1.6, S[1] - 1)} ${p(S[0] + 3.1, S[1] + 0.2)}L${p(H[0] + 3.2, H[1] - 0.4)}L${p(H[0] + 2, H[1] + 1.8)}L${p(H[0] - 3, H[1] + 1.8)}L${p(H[0] - 3.6, H[1] - 0.6)}Z`;
+  const neck = `M${p(S[0] - 1.1, S[1] - 1)}L${p(head[0] - 0.6, head[1] + 2.2)}L${p(head[0] + 1, head[1] + 2.4)}L${p(S[0] + 1.3, S[1] - 0.8)}Z`;
+  const face = disc(p, s, head[0], head[1], 2.55) + `M${p(head[0] + 2.2, head[1] - 0.8)}L${p(head[0] + 3.3, head[1] + 0.6)}L${p(head[0] + 2.3, head[1] + 0.9)}Z`;
+  const hat = o.leader
+    ? `M${p(head[0] - 2.8, head[1] - 2)}L${p(head[0] - 2.5, head[1] - 7.7)}C${p(head[0] - 0.7, head[1] - 8.3)} ${p(head[0] + 1.3, head[1] - 8.3)} ${p(head[0] + 2.9, head[1] - 7.7)}L${p(head[0] + 2.9, head[1] - 2)}Z`
+    : `M${p(head[0] - 3.2, head[1] - 1.8)}C${p(head[0] - 3.1, head[1] - 5)} ${p(head[0] + 2.4, head[1] - 5.2)} ${p(head[0] + 2.7, head[1] - 1.8)}Z`;
+  const brim = o.leader ? `M${p(head[0] - 4.6, head[1] - 2.1)}L${p(head[0] + 4.5, head[1] - 2.1)}` : `M${p(head[0] - 5.1, head[1] - 1.9)}L${p(head[0] + 4.8, head[1] - 1.9)}`;
+  if (o.blanket) {
+    // The body under the blanket; the face shows at the front of the hood.
+    fig.ink.push(coat + neck);
+    fig.paper.push({
+      d:
+        `M${p(head[0] + 1.4, head[1] - 3.2)}C${p(head[0] - 1.6, head[1] - 4.2)} ${p(head[0] - 4.6, head[1] - 2.4)} ${p(head[0] - 4.2, head[1] + 1.6)}` +
+        `C${p(head[0] - 5.4, head[1] + 6)} ${p(H[0] - 6, -5)} ${p(H[0] - 6.4, 0)}L${p(K[0] + 2.2, 0)}C${p(K[0] + 2.6, -4)} ${p(K[0] + 2.4, K[1] - 0.4)} ${p(K[0] + 0.6, K[1] - 1.8)}` +
+        `C${p(K[0] - 1.6, K[1] - 2.6)} ${p(head[0] + 2.6, head[1] + 4.2)} ${p(head[0] + 1.2, head[1] + 2.6)}C${p(head[0] - 0.2, head[1] + 1.2)} ${p(head[0] - 0.2, head[1] - 1.6)} ${p(head[0] + 1.4, head[1] - 3.2)}Z`,
+      w: 0.6 * s,
+    });
+    fig.rope.push({ d: `M${p(head[0] - 2.6, head[1] + 3.6)}Q${p(H[0] - 2.6, -6)} ${p(H[0] - 3.4, -0.8)}M${p(head[0] + 0.6, head[1] + 5.4)}Q${p(2.6, -5)} ${p(2.4, -0.6)}M${p(K[0] - 1.6, K[1] + 0.2)}Q${p(K[0] + 0.6, -4)} ${p(K[0] - 0.4, -0.6)}`, w: 0.35 * s });
+    fig.topInk.push(face);
+    return;
+  }
+  fig.ink.push(coat + neck + face + hat);
+  fig.limbs.push({ d: brim, w: 1.1 * s });
+  const sh = [S[0] + 0.6, S[1] + 0.4] as const;
+  switch (o.arms ?? 'knees') {
+    case 'knees':
+      fig.limbs.push({ d: `M${p(...sh)}L${p(S[0] + 2.6, S[1] + 5.4)}L${p(K[0] - 0.2, K[1] - 0.2)}`, w: 1.7 * s });
+      break;
+    case 'fire':
+      fig.limbs.push({ d: `M${p(...sh)}L${p(S[0] + 4.2, S[1] + 3.2)}L${p(K[0] + 4.6, K[1] + 1.6)}`, w: 1.6 * s });
+      fig.farLimbs.push({ d: `M${p(sh[0] - 0.8, sh[1])}L${p(S[0] + 3.4, S[1] + 3.6)}L${p(K[0] + 3.8, K[1] + 2)}`, w: 1.5 * s });
+      break;
+    case 'folded':
+      fig.limbs.push({ d: `M${p(...sh)}L${p(S[0] + 1.8, S[1] + 4.8)}L${p(K[0] + 0.8, K[1] - 0.4)}`, w: 1.8 * s });
+      fig.limbs.push({ d: `M${p(K[0] - 2.6, K[1] - 0.6)}L${p(K[0] + 1.2, K[1] - 0.4)}`, w: 1.6 * s });
+      break;
+    case 'head':
+      // Elbows on the knees, chin in the hands.
+      fig.limbs.push({ d: `M${p(...sh)}L${p(K[0] - 0.2, K[1] - 0.8)}L${p(head[0] + 1.2, head[1] + 2.6)}`, w: 1.7 * s });
+      break;
+  }
+}
+
+/** A man lying on his back under a blanket, head on a rolled pack at x = 0, feet toward +x (or -x). */
+export function lying(fig: Figure, X: number, Y: number, s: number, o: { dir?: 1 | -1; leader?: boolean } = {}) {
+  const p = atD(X, Y, s, o.dir ?? 1);
+  // The pillow, the head on it, nose up.
+  fig.back.push({ d: `M${p(-4.4, -3.4)}L${p(2.4, -3.4)}Q${p(3.6, -1.7)} ${p(2.4, 0)}L${p(-4.4, 0)}Q${p(-5.6, -1.7)} ${p(-4.4, -3.4)}Z`, w: 0.5 * s });
+  fig.topInk.push(disc(p, s, 0.2, -5.6, 2.5) + `M${p(-0.6, -7.8)}L${p(0.4, -9.2)}L${p(1, -7.9)}Z`);
+  // Under the blanket: shoulders, chest, knees drawn up a little, feet.
+  fig.paper.push({
+    d: `M${p(2.4, -2.6)}C${p(3, -5.6)} ${p(4.6, -6.8)} ${p(7, -6.8)}C${p(11, -6.6)} ${p(15, -6)} ${p(18.4, -6.4)}C${p(21, -7.8)} ${p(23.4, -7.8)} ${p(25, -5.8)}C${p(26.6, -4.2)} ${p(28.2, -2.6)} ${p(29.4, 0)}L${p(2.2, 0)}Z`,
+    w: 0.6 * s,
+  });
+  fig.rope.push({ d: `M${p(9, -6.4)}Q${p(10.2, -3.4)} ${p(9.4, -0.4)}M${p(19.6, -6.8)}Q${p(18.6, -3.4)} ${p(19.6, -0.4)}M${p(5, -5.2)}Q${p(13, -3.6)} ${p(24, -4.6)}`, w: 0.35 * s });
+  // Boots out from under the end.
+  fig.topInk.push(`M${p(28.6, -3.2)}L${p(31, -4.4)}L${p(31.8, -2.6)}L${p(30.6, -0.2)}L${p(28.8, 0)}Z`);
+}
+
+/**
+ * A horse down on the track: fallen onto its knees and side, legs folded under, head up as it
+ * struggles. Facing right (or left with dir -1), on y = 0.
+ */
+export function horseDown(fig: Figure, X: number, Y: number, s: number, o: { dir?: 1 | -1 } = {}) {
+  const p0 = atD(X, Y, s, o.dir ?? 1);
+  // The standing horse's outline, tipped forward and lowered until the belly touches the ground.
+  const body = rot(0, -12, (7 * Math.PI) / 180);
+  const head = rot(12.5, -24.5, (-14 * Math.PI) / 180);
+  const P: Pt = (x, y) => {
+    const [bx, by] = body(x, y);
+    return p0(bx, by + 10.2);
+  };
+  const Hd: Pt = (x, y) => P(...head(x, y));
+  fig.ink.push(
+    `M${P(-15.5, -23.8)}C${P(-13, -25.6)} ${P(-9, -25.4)} ${P(-6, -24.9)}C${P(-2, -24.3)} ${P(2, -24.6)} ${P(5, -25.4)}C${P(7, -26)} ${P(8.5, -26.6)} ${P(10, -27.4)}` +
+      `C${Hd(13, -30)} ${Hd(16, -33.5)} ${Hd(18.6, -36)}L${Hd(18.5, -39.6)}L${Hd(19.9, -36.7)}C${Hd(20.7, -36.3)} ${Hd(21.4, -35.8)} ${Hd(22, -35)}` +
+      `C${Hd(24, -32)} ${Hd(26.4, -28.6)} ${Hd(27.8, -26.4)}C${Hd(28.4, -25.4)} ${Hd(27.9, -24.4)} ${Hd(26.6, -24.5)}C${Hd(25.2, -24.6)} ${Hd(24, -25.4)} ${Hd(23.2, -26.4)}` +
+      `C${Hd(22.2, -27.6)} ${Hd(21, -28.6)} ${Hd(20.2, -28.6)}C${Hd(18.8, -27.2)} ${Hd(16.6, -24.2)} ${P(15.4, -21.4)}C${P(14.8, -19.6)} ${P(14.4, -17)} ${P(13.4, -15.2)}` +
+      `C${P(12, -13.2)} ${P(9, -12.4)} ${P(6, -12.4)}C${P(1, -12)} ${P(-4, -12.2)} ${P(-7.5, -12.8)}C${P(-9.5, -13.2)} ${P(-11, -14.2)} ${P(-12.2, -15.6)}` +
+      `C${P(-14.6, -17.5)} ${P(-16.4, -20.4)} ${P(-15.5, -23.8)}Z` +
+      `M${P(-15.2, -23.4)}C${P(-18.6, -22.6)} ${P(-21, -20)} ${P(-23.4, -17.6)}C${P(-21.6, -19.4)} ${P(-19.6, -20.4)} ${P(-17.4, -20.8)}C${P(-16.6, -21.6)} ${P(-15.8, -22.2)} ${P(-15, -22)}Z`,
+  );
+  // Forelegs buckled at the knee, one reaching out to rise; hind legs folded under the belly.
+  fig.limbs.push({ d: `M${P(11.4, -14)}L${p0(15.6, -4.4)}L${p0(19.6, -0.6)}`, w: 2.3 * s });
+  fig.farLimbs.push({ d: `M${P(9.8, -14)}L${p0(9.6, -2.6)}L${p0(14.4, -0.5)}`, w: 2.1 * s });
+  fig.limbs.push({ d: `M${P(-10.4, -14.6)}L${p0(-4.6, -1.8)}L${p0(-11.6, -0.5)}`, w: 2.5 * s });
+  fig.farLimbs.push({ d: `M${P(-8.8, -14.6)}L${p0(-2.8, -1.4)}L${p0(-8.4, -0.4)}`, w: 2.3 * s });
+  fig.rope.push({ d: `M${Hd(20.6, -35)}L${Hd(24.6, -29.4)}M${Hd(23.2, -30.6)}L${Hd(26.9, -28.1)}`, w: 0.7 * s });
+}
+
+/** A kangaroo dog at full stretch, running right (or left): no foot on the ground. */
+export function dogRunning(fig: Figure, X: number, Y: number, s: number, o: { dir?: 1 | -1; phase?: number } = {}) {
+  const p = atD(X, Y, s, o.dir ?? 1);
+  const k = o.phase ?? 0;
+  fig.ink.push(
+    `M${p(-8.4, -11.4)}C${p(-4.6, -13.4)} ${p(0.6, -13.4)} ${p(4.6, -12.8)}C${p(7, -12.6)} ${p(9, -12.6)} ${p(10.8, -13.6)}` +
+      `L${p(12.6, -14.6)}L${p(17.2, -12.8)}L${p(16.8, -11.8)}L${p(12.4, -11.4)}C${p(10.6, -10.8)} ${p(8.8, -9.8)} ${p(7.4, -8.8)}` +
+      `C${p(6, -7.8)} ${p(3.8, -7.8)} ${p(1.8, -8.4)}C${p(-1.2, -9.4)} ${p(-4.4, -9.8)} ${p(-6.2, -9.8)}C${p(-7.8, -9.8)} ${p(-9, -10.4)} ${p(-8.4, -11.4)}Z` +
+      `M${p(11.4, -14.2)}L${p(9.4, -15.4)}L${p(12.2, -14.8)}Z`,
+  );
+  fig.limbs.push({ d: `M${p(-8.4, -11.2)}C${p(-11.6, -11.8)} ${p(-14.4, -12.2)} ${p(-17.4, -13.4)}`, w: 1.05 * s });
+  // Forelegs reaching out together, hind legs thrown back.
+  fig.limbs.push({ d: `M${p(6, -8.6)}L${p(9.6 + k, -5.6)}L${p(14 + k, -4.4)}`, w: 1.25 * s });
+  fig.farLimbs.push({ d: `M${p(5, -8.4)}L${p(8.4 + k, -4.8)}L${p(12 + k, -2.8)}`, w: 1.15 * s });
+  fig.limbs.push({ d: `M${p(-6, -9.8)}L${p(-9.2, -6.4)}L${p(-13.8 - k, -4.4)}`, w: 1.35 * s });
+  fig.farLimbs.push({ d: `M${p(-5, -9.6)}L${p(-7.6, -5.4)}L${p(-11.8 - k, -2.4)}`, w: 1.25 * s });
+}
+
+/**
+ * A kangaroo, facing right (or left), feet on y = 0. 'hop': in mid-bound, body tipped forward, the
+ * long feet thrown back and the tail out straight behind. 'stand': upright on its tail.
+ */
+export function kangaroo(fig: Figure, X: number, Y: number, s: number, o: { dir?: 1 | -1; pose?: 'hop' | 'stand' } = {}) {
+  const p = atD(X, Y, s, o.dir ?? 1);
+  if ((o.pose ?? 'hop') === 'hop') {
+    fig.ink.push(
+      // Body, rising from the rump to the shoulders, small head forward, ears up.
+      `M${p(-7, -10.6)}C${p(-7.4, -15.6)} ${p(-3, -20.6)} ${p(3, -22.6)}C${p(6, -23.6)} ${p(8.6, -24.6)} ${p(10.4, -26.4)}` +
+        `L${p(10.2, -30.4)}L${p(11.4, -27.2)}L${p(12.2, -30.6)}L${p(12.6, -27)}C${p(14, -26.6)} ${p(15.6, -26.2)} ${p(17, -25.4)}` +
+        `L${p(16.8, -24.4)}C${p(15, -24.2)} ${p(13, -23.8)} ${p(11.6, -23)}C${p(10.4, -21.4)} ${p(9, -19.6)} ${p(7, -18.4)}` +
+        `C${p(4.4, -16.8)} ${p(2.4, -14.2)} ${p(1.4, -12)}C${p(0.4, -10.6)} ${p(-1.4, -9.6)} ${p(-3.4, -9.4)}Z` +
+        // The great hind leg: thigh, the hock thrown back, the long foot.
+        `M${p(-6.6, -12.4)}C${p(-5.4, -15.4)} ${p(-1, -16)} ${p(1, -13)}C${p(1.8, -11.4)} ${p(0.6, -9.4)} ${p(-1.6, -8.4)}` +
+        `L${p(-8.4, -5)}L${p(-16.6, -1.6)}L${p(-17, -2.6)}L${p(-10, -6.6)}C${p(-8.2, -8)} ${p(-7.2, -9.8)} ${p(-6.6, -12.4)}Z` +
+        // The tail, thick at the root, out straight behind.
+        `M${p(-6.8, -11.8)}C${p(-11, -11.8)} ${p(-16, -12.8)} ${p(-24, -15.4)}C${p(-16, -12)} ${p(-11, -10.2)} ${p(-6.4, -9.8)}Z`,
+    );
+    fig.limbs.push({ d: `M${p(7.4, -19)}L${p(9.6, -16.4)}L${p(11.2, -16.8)}`, w: 0.9 * s });
+    return;
+  }
+  fig.ink.push(
+    `M${p(-3.4, -2)}C${p(-5, -8)} ${p(-4.6, -16)} ${p(-1.6, -22)}C${p(0, -25.4)} ${p(1.6, -27.6)} ${p(2.6, -29)}` +
+      `L${p(2.4, -33.4)}L${p(3.6, -30)}L${p(4.4, -33.6)}L${p(4.8, -29.8)}C${p(6.2, -29.4)} ${p(7.6, -28.8)} ${p(8.8, -28)}` +
+      `L${p(8.6, -27)}C${p(7, -26.8)} ${p(5.6, -26.2)} ${p(4.6, -25.2)}C${p(3.6, -22)} ${p(3, -18)} ${p(3.4, -13)}` +
+      `C${p(4.4, -9)} ${p(5, -5)} ${p(4.2, -2.4)}L${p(9.6, -0.8)}L${p(9.4, 0)}L${p(-1.6, 0)}Z` +
+      `M${p(-3, -3)}C${p(-8, -2.6)} ${p(-13, -1.6)} ${p(-17, -0.2)}L${p(-16.6, 0.2)}C${p(-11, -0.4)} ${p(-6, -0.6)} ${p(-2, -0.6)}Z`,
+  );
+  fig.limbs.push({ d: `M${p(3, -21)}L${p(5.6, -18.4)}L${p(6.8, -18.8)}`, w: 0.9 * s });
+}
+
+/** A wombat ambling right (or left): low, round and heavy, with short legs and small ears. */
+export function wombat(fig: Figure, X: number, Y: number, s: number, o: { dir?: 1 | -1; step?: number } = {}) {
+  const p = atD(X, Y, s, o.dir ?? 1);
+  const a = Math.sin(o.step ?? 0.8);
+  fig.ink.push(
+    `M${p(-9.6, -3.4)}C${p(-10.6, -8.6)} ${p(-6, -12.2)} ${p(0, -12)}C${p(4.6, -11.8)} ${p(7.6, -10.4)} ${p(9.4, -8.2)}` +
+      `C${p(10.8, -7.6)} ${p(12, -6.4)} ${p(12, -5)}C${p(11, -4.2)} ${p(9.6, -4)} ${p(8.4, -4.2)}C${p(5, -2.6)} ${p(-1, -2.4)} ${p(-6, -2.6)}C${p(-8, -2.6)} ${p(-9.2, -2.8)} ${p(-9.6, -3.4)}Z` +
+      `M${p(6.6, -10.8)}C${p(6.4, -12.6)} ${p(7.6, -13.4)} ${p(8.6, -12.4)}C${p(8.6, -11.4)} ${p(8, -10.8)} ${p(7.4, -10.4)}Z`,
+  );
+  fig.limbs.push({ d: `M${p(5.6, -4)}L${p(6 + 1.2 * a, -0.2)}M${p(-5.6, -3.4)}L${p(-6 - 1.2 * a, -0.2)}`, w: 2.2 * s });
+  fig.farLimbs.push({ d: `M${p(4.2, -4)}L${p(4.4 - 1.2 * a, -0.2)}M${p(-4.2, -3.4)}L${p(-4.4 + 1.2 * a, -0.2)}`, w: 2 * s });
 }
