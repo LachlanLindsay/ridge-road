@@ -2,13 +2,14 @@
 import { useState } from 'preact/hooks';
 import { CARDS, JOURNAL_1813, T, foodLb, freshLb, isSignOfCountry, type GameState } from '../engine';
 import { BUILD } from './build';
-import { CardThumb } from './art/cardArt';
+import { CardArt, CardThumb } from './art/cardArt';
 import { BriefingArt } from './art/scenes';
 import { BRIEFING, CARD_SOURCES, CARD_TEXT, HELP, PARTY_CARD } from './copy';
 import { isoShort, itemText, lb, localize, longDate, plural, type Units } from './format';
 import { DogsRow, Horses, ManRow, Toggle } from './parts';
 import { encodeReplay } from './replaycode';
 import { Sheet } from './Sheet';
+import { ThemeChoice } from './theme';
 import { readNotes, writeNote } from './save';
 
 export { Sheet };
@@ -86,6 +87,9 @@ export function Menu({
         <CopyCode state={state} />
         <div class="menu-item menu-setting">
           <Toggle id="units" checked={units === 'metric'} onChange={(v) => onUnits(v ? 'metric' : 'imperial')} label="Metric units" note="Kilograms and kilometres instead of the 1813 party's pounds, miles and chains." />
+        </div>
+        <div class="menu-item menu-setting">
+          <ThemeChoice id="theme-menu" />
         </div>
         <button type="button" class="menu-item" onClick={onTitle}>
           Title screen
@@ -229,25 +233,42 @@ export function Journal({ state, unread = [], onRead, onClose }: { state: GameSt
           </p>
           {cards.map((c) => {
             const isNew = unread.includes(c);
-            return (
-              <details key={c} class={isNew ? 'card-item is-new' : 'card-item'} onToggle={(e) => (e.currentTarget as HTMLDetailsElement).open && onRead?.(c)}>
-                <summary>
-                  <CardThumb id={c} state={state} />
-                  <span class="card-item-title">
-                    {CARDS[c]!.title}
-                    {isNew && <span class="tag-new">New</span>}
-                  </span>
-                </summary>
-                {(CARD_TEXT[c] ?? []).map((p) => (
-                  <p key={p}>{p}</p>
-                ))}
-                {CARD_SOURCES[c] && <p class="card-source">{CARD_SOURCES[c]}</p>}
-              </details>
-            );
+            return <JournalCardItem key={c} id={c} state={state} isNew={isNew} onRead={onRead} />;
           })}
         </section>
       )}
     </Sheet>
+  );
+}
+
+/**
+ * One card in the journal's list: a thumbnail beside the title while shut; opened, the plate at
+ * full width above the text, drawn only then.
+ */
+function JournalCardItem({ id, state, isNew, onRead }: { id: string; state: GameState; isNew: boolean; onRead?: (id: string) => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <details
+      class={isNew ? 'card-item is-new' : 'card-item'}
+      onToggle={(e) => {
+        const o = (e.currentTarget as HTMLDetailsElement).open;
+        setOpen(o);
+        if (o) onRead?.(id);
+      }}
+    >
+      <summary>
+        <CardThumb id={id} state={state} />
+        <span class="card-item-title">
+          {CARDS[id]!.title}
+          {isNew && <span class="tag-new">New</span>}
+        </span>
+      </summary>
+      {open && <CardArt id={id} state={state} />}
+      {(CARD_TEXT[id] ?? []).map((p) => (
+        <p key={p}>{p}</p>
+      ))}
+      {CARD_SOURCES[id] && <p class="card-source">{CARD_SOURCES[id]}</p>}
+    </details>
   );
 }
 

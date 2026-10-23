@@ -3,6 +3,7 @@ import { App } from './ui/App';
 import { BUILD } from './ui/build';
 import { Guard } from './ui/Crash';
 import { currentSave } from './ui/save';
+import { applyTheme, readTheme } from './ui/theme';
 import './ui/fonts.css';
 import './ui/styles.css';
 
@@ -15,6 +16,7 @@ interface Hot {
 }
 const hot = (window as unknown as { claude?: { hot?: Hot } }).claude?.hot;
 
+applyTheme(readTheme());
 const root = document.getElementById('app')!;
 /** Development only (?crash): a component that fails to render, to see the crash screen. */
 function Boom(): null {

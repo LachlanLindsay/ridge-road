@@ -8,6 +8,7 @@ import { MeetRow } from './Info';
 import type { Who } from './people';
 import { shortDate } from './format';
 import { decodeReplay } from './replaycode';
+import { ThemeChoice } from './theme';
 
 const MODES: { id: Mode; label: string; note: string }[] = [
   { id: 'easy', label: 'Easy', note: 'Fewer false ridges, faster cutting, steadier men' },
@@ -120,6 +121,7 @@ export function Title({ save, notice = null, onContinue, onStart, onLoad }: { sa
             <LoadCode onLoad={onLoad} />
           </>
         )}
+        <ThemeChoice id="theme-title" />
         <p class="fine acknowledgement">{ACKNOWLEDGEMENT}</p>
         <p class="fine">
           An original game built on the public-domain 1813 journals. Test build {BUILD}.{' '}
