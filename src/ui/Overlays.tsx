@@ -3,6 +3,7 @@ import type { ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
 import { CARDS, JOURNAL_1813, T, foodLb, freshLb, isSignOfCountry, type GameState } from '../engine';
 import { BUILD } from './build';
+import { CardThumb } from './art/cardArt';
 import { BriefingArt } from './art/scenes';
 import { BRIEFING, CARD_SOURCES, CARD_TEXT, HELP, PARTY_CARD } from './copy';
 import { isoShort, itemText, lb, localize, longDate, plural, type Units } from './format';
@@ -232,8 +233,11 @@ export function Journal({ state, unread = [], onRead, onClose }: { state: GameSt
             return (
               <details key={c} class={isNew ? 'card-item is-new' : 'card-item'} onToggle={(e) => (e.currentTarget as HTMLDetailsElement).open && onRead?.(c)}>
                 <summary>
-                  {CARDS[c]!.title}
-                  {isNew && <span class="tag-new">New</span>}
+                  <CardThumb id={c} state={state} />
+                  <span class="card-item-title">
+                    {CARDS[c]!.title}
+                    {isNew && <span class="tag-new">New</span>}
+                  </span>
                 </summary>
                 {(CARD_TEXT[c] ?? []).map((p) => (
                   <p key={p}>{p}</p>
