@@ -2630,3 +2630,135 @@ p {
   font-weight: 400;
   color: var(--ink-2);
 }
+
+/* ---------------------------------------------------------------- card art */
+
+/* An event card's strip: the figures stand near its foot, so it fades at the sides only. */
+.plate.plate-strip {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 96%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 96%, transparent);
+}
+/* A night sky's ruling: dark ink by day; on dark paper only just visible, so the night stays dark
+   and the figures, pale, stand in it. */
+.art .ln {
+  stroke: var(--art-3);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .art .ln {
+    stroke: #333d47;
+  }
+}
+:root[data-theme='dark'] .art .ln {
+  stroke: #333d47;
+}
+
+/* A journal card's plate: across the head of the card, edge to edge. */
+.card-art {
+  margin: -12px calc(-1 * var(--gutter-r)) 2px calc(-1 * var(--gutter-l));
+}
+.card-art-milestone {
+  margin-bottom: 6px;
+}
+.sheet-card .overlay-body {
+  padding-top: 12px;
+}
+
+/* An event card's strip, across the top of the card under its rounded corners. */
+.event-card.has-art {
+  padding-top: 0;
+}
+.event-art {
+  margin: 0 calc(-1 * var(--gutter-r)) -2px calc(-1 * var(--gutter-l));
+}
+
+/* The journal's cards: a thumbnail of each card's plate beside its title. */
+.card-item summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  list-style: none;
+}
+.card-item summary::-webkit-details-marker {
+  display: none;
+}
+.card-item summary::after {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-left: auto;
+  border-right: 1.5px solid var(--ink-2);
+  border-bottom: 1.5px solid var(--ink-2);
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 0.15s;
+}
+.card-item[open] summary::after {
+  transform: rotate(-135deg) translate(-2px, 0);
+}
+.card-item-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.card-thumb {
+  flex: none;
+  display: block;
+  width: 96px;
+  height: 54px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+}
+.card-thumb .art {
+  width: 100%;
+  height: 100%;
+}
+
+/* The small figure on a roster chip: a leader's tall hat and tailcoat, or a servant's low hat. */
+.chip {
+  position: relative;
+}
+.chip-name {
+  padding-right: 14px;
+}
+.art.man-mark {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  width: auto;
+  height: 30px;
+  pointer-events: none;
+}
+
+/* The figure in the head of a card for a man, a horse or the dogs. */
+.art.who-figure {
+  flex: none;
+  width: auto;
+  height: 40px;
+  margin-right: -2px;
+}
+.art.who-horse {
+  height: 34px;
+}
+.art.who-dog {
+  height: 22px;
+}
+.overlay-head:has(.who-figure) {
+  justify-content: flex-start;
+}
+.overlay-head:has(.who-figure) .icon-btn {
+  margin-left: auto;
+}
+/* The event card is a lighter slip than the page: the strip's paper matches it. */
+.event-art .art .pp {
+  fill: var(--paper-3);
+}
+.event-art .art .lp {
+  stroke: var(--paper-3);
+}
+.event-art .art .pk {
+  fill: var(--paper-3);
+}

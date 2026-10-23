@@ -4,6 +4,7 @@ import { T, capacity, horseCapacity, isAway, loadLb, withParty, type GameState, 
 import { CONDITION_LABEL, TASK_HINT, TASK_LABEL, lb, localize, shortName } from './format';
 import type { Draft } from './draft';
 import { available, taskChoices } from './draft';
+import { ManMark } from './art/cardArt';
 import { JournalGlyph } from './JournalSlip';
 import { InfoContext, cardInLine, useInfo } from './Info';
 import { infoFor } from './people';
@@ -74,6 +75,7 @@ export function RosterChip({ state, m, task, open, onOpen }: { state: GameState;
       aria-expanded={open}
       aria-label={`${m.name}${m.leader ? ', leader' : ''}, ${label}${m.condition ? `, ${CONDITION_LABEL[m.condition]}` : ''}. Stamina ${Math.round(m.stamina)}.${off ? '' : ' Tap to choose his task.'} Press and hold for his card.`}
     >
+      <ManMark leader={m.leader} />
       <span class="chip-name">{shortName(m.name)}</span>
       <span class="chip-task">{label}</span>
       <span class={m.condition ? 'chip-hint is-warn' : 'chip-hint'}>

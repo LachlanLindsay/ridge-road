@@ -3,6 +3,7 @@
 import { createContext, type ComponentChildren } from 'preact';
 import { useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { CARDS, type GameState, type Mode } from '../engine';
+import { CardArt, WhoFigure } from './art/cardArt';
 import { CARD_SOURCES, CARD_TEXT } from './copy';
 import { infoFor, type Info, type Who } from './people';
 import { Sheet } from './Sheet';
@@ -192,10 +193,11 @@ function Peek({ info, rect, click }: { info: Info; rect: DOMRect; click: boolean
  * Provides the card handlers to everything inside, and draws the quick card and the card sheet.
  * Without a game, cards describe the party being outfitted for the chosen mode.
  */
-/** A journal card in a sheet of its own, opened from the report line that found it. */
-function JournalCard({ id }: { id: string }) {
+/** A journal card in a sheet of its own, opened from the report line that found it: its plate, then the text. */
+function JournalCard({ id, state }: { id: string; state: GameState | null }) {
   return (
     <div class="info">
+      <CardArt id={id} state={state} />
       {(CARD_TEXT[id] ?? []).map((p) => (
         <p key={p} class="info-history">
           {p}
@@ -316,13 +318,13 @@ export function InfoLayer({
       {children}
       {peek && peekInfo && <Peek info={peekInfo} rect={peek.rect} click={peek.click} />}
       {openInfo && (
-        <Sheet title={openInfo.title} onClose={() => setOpen(null)} class="sheet-info">
+        <Sheet title={openInfo.title} onClose={() => setOpen(null)} class="sheet-info" icon={open && open.kind !== 'card' ? <WhoFigure who={open} /> : undefined}>
           <InfoBody info={openInfo} />
         </Sheet>
       )}
       {openCard && (
-        <Sheet title={CARDS[openCard]!.title} onClose={() => setOpen(null)} class="sheet-info">
-          <JournalCard id={openCard} />
+        <Sheet title={CARDS[openCard]!.title} onClose={() => setOpen(null)} class="sheet-info sheet-card">
+          <JournalCard id={openCard} state={state} />
         </Sheet>
       )}
     </InfoContext.Provider>

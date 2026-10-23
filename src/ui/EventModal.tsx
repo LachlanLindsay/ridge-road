@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { eventCard, type ChoiceId, type GameState } from '../engine';
+import { EventArt } from './art/cardArt';
 import { localize } from './format';
 
 /** The dew card comes round often; the words vary so it does not read as the same card twice. */
@@ -20,7 +21,8 @@ export function EventModal({ state, onChoose, onRemember }: { state: GameState; 
   const firstEnabled = card.choices.findIndex((c) => !c.disabled);
   return (
     <div class="backdrop">
-      <div class="event-card" role="dialog" aria-modal="true" aria-labelledby="event-title" aria-describedby="event-text">
+      <div class="event-card has-art" role="dialog" aria-modal="true" aria-labelledby="event-title" aria-describedby="event-text">
+        <EventArt id={card.id} />
         <h2 id="event-title" class="display event-title">
           {card.title}
         </h2>
