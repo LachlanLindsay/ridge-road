@@ -22,6 +22,21 @@ import { addFresh, cacheWeight } from './stores';
 import { addMorale, say, unlockCard, type Ctx } from './world';
 import type { ChoiceId, EventCard, GameState, Member, PendingEvent } from './types';
 
+/**
+ * Lighten the loads by about this many pounds. Going out, the goods wait here for the way home; on
+ * the way home nobody comes back for them, so they are abandoned rather than cached.
+ */
+function leaveWeight(s: GameState, lb: number, lines: string[], why: string) {
+  if (s.leg !== 'home') {
+    cacheWeight(s, lb, lines, `${why}, left here for the way home`);
+    return;
+  }
+  const before = { ...(s.caches[s.camp] ?? {}) };
+  cacheWeight(s, lb, lines, `${why}, abandoned`);
+  if (Object.keys(before).length) s.caches[s.camp] = before;
+  else delete s.caches[s.camp];
+}
+
 interface Option {
   id: ChoiceId;
   effect: string;
@@ -57,7 +72,13 @@ function options(s: GameState, ev: PendingEvent): Option[] {
     case 'horseFall':
       return [
         { id: 'reload', effect: 'Carry on with the same loads; another horse may fall today' },
-        { id: 'lighten', effect: `Leave ${T.horses.fall.lightenLb} lb here for the way home; no more falls today` },
+        {
+          id: 'lighten',
+          effect:
+            s.leg === 'home'
+              ? `Abandon ${T.horses.fall.lightenLb} lb here, spare goods first; no more falls today`
+              : `Leave ${T.horses.fall.lightenLb} lb here for the way home; no more falls today`,
+        },
       ];
     case 'horseExhausted': {
       const h = s.horses.find((x) => x.id === ev.horse);
@@ -84,7 +105,8 @@ function options(s: GameState, ev: PendingEvent): Option[] {
         effect: over > 0 ? `The others carry its load: ${over} lb over their easy limit, so more falls` : 'The others carry its load',
         ...(tooMuch ? { disabled: 'More than the others can carry' } : {}),
       };
-      const cache: Option = { id: 'cache', effect: over > 0 ? `Leave ${over} lb here for the way home: cut grass and spare food first, never the blankets` : 'Nothing needs leaving' };
+      const leave = s.leg === 'home' ? `Abandon ${over} lb here` : `Leave ${over} lb here for the way home`;
+      const cache: Option = { id: 'cache', effect: over > 0 ? `${leave}: cut grass and spare food first, never the blankets` : 'Nothing needs leaving' };
       // The usual choice first: a rest where the horse can recover, otherwise sharing the load.
       return fed ? [rest, spread, cache] : [spread, cache, rest];
     }
@@ -203,14 +225,14 @@ function apply(ctx: Ctx, ev: PendingEvent, choice: ChoiceId) {
       return;
     case 'horseFall':
       if (choice === 'lighten') {
-        cacheWeight(s, T.horses.fall.lightenLb, ctx.lines, 'Loads lightened after the fall, left here for the way home');
+        leaveWeight(s, T.horses.fall.lightenLb, ctx.lines, 'Loads lightened after the fall');
         s.today.noFall = true;
       }
       return;
     case 'horseExhausted':
       if (choice === 'cache') {
         const over = loadLb(s.stores) - capacity(s);
-        if (over > 0) cacheWeight(s, over, ctx.lines, 'Load of the spent horse left here for the way home');
+        if (over > 0) leaveWeight(s, over, ctx.lines, 'Load of the spent horse');
       } else if (choice === 'rest') scheduleRest(s);
       return;
     case 'dryCamp':

@@ -1,4 +1,5 @@
 // The plan sheet: one half-day at a time. Pick a target on the map, move camp, set each man's task, Go.
+import { useState } from 'preact/hooks';
 import {
   T,
   canAdvance,
@@ -16,9 +17,9 @@ import {
   type Member,
   type Task,
 } from '../engine';
-import { excessCache, overload, setTask, taskCounts, toPlan, type Draft } from './draft';
+import { excessCache, grassOffer, huntOffer, overload, setTask, taskCounts, toPlan, withTarget, type Draft, type Offer } from './draft';
 import { compass, hrs, itemText, lb, localize, mi, shortName } from './format';
-import { Horses, Report, Roster, Toggle } from './parts';
+import { Horses, Report, Roster, RunwayLines, Toggle } from './parts';
 import { PlaceInfo } from './PlaceInfo';
 
 interface Props {
@@ -28,12 +29,6 @@ interface Props {
   selected: string | null;
   setSelected: (id: string | null) => void;
   onGo: () => void;
-}
-
-function nodeName(state: GameState, id: string): string {
-  const n = state.map.nodes[id]!;
-  if (id === state.camp) return 'camp';
-  return n.label ?? 'an unnamed point';
 }
 
 export function describeTarget(state: GameState, id: string | null): string {
@@ -57,7 +52,7 @@ export function describeTarget(state: GameState, id: string | null): string {
 function campNote(n: GameState['map']['nodes'][string]): string {
   const water =
     n.water === 'none' ? (n.gullyFt ? 'no water up here, a gully for the men' : 'no water') : n.water === 'rockHole' ? 'rock-hole water for the men only' : 'water for men and horses';
-  const grass = n.grass === 'none' ? 'no grass' : n.grass === 'rushy' ? 'rushy grass, half feed' : `${n.grass} grass`;
+  const grass = n.grass === 'none' ? 'no feed for horses' : n.grass === 'rushy' ? 'half feed (rushy grass)' : `full feed (${n.grass} grass)`;
   return `${n.label ?? 'an unnamed camp'} · ${water} · ${grass}`;
 }
 
@@ -93,6 +88,23 @@ export function PlanSheet({ state, draft, setDraft, selected, setSelected, onGo 
   const sugNote = sugNode ? campNote(sugNode) : '';
   const cuttersIdle = !home && !resting && advanceOk && !draft.advance && (counts.cut ?? 0) > 0 && ahead < 0.3;
 
+  const [dismissed, setDismissed] = useState<string[]>([]);
+  const offers = [grassOffer(state, draft), huntOffer(state, draft)].filter((o): o is Offer => !!o && !dismissed.includes(`${draft.key}:${o.id}`));
+
+  const offerList = offers.map((o) => (
+    <div class="offer" key={o.id}>
+      <p>{o.text}</p>
+      <div class="offer-actions">
+        <button type="button" class="btn btn-small" onClick={() => setDraft(o.apply(draft))}>
+          {o.action}
+        </button>
+        <button type="button" class="link-btn" onClick={() => setDismissed([...dismissed, `${draft.key}:${o.id}`])}>
+          Not now
+        </button>
+      </div>
+    </div>
+  ));
+
   const summary = Object.entries(counts)
     .map(([t, n]) => `${n} ${t === 'scout' ? 'scouting' : t === 'cut' ? 'cutting' : t === 'camp' ? 'minding camp' : t === 'water' ? 'fetching water' : t === 'hunt' ? 'hunting' : t === 'grass' ? 'cutting grass' : 'resting'}`)
     .join(', ');
@@ -109,7 +121,7 @@ export function PlanSheet({ state, draft, setDraft, selected, setSelected, onGo 
           moveTo={draft.moveTo}
           hoursLeft={hours}
           onTarget={(id) => {
-            set({ target: id, advance: canAdvance(state, draft.moveTo ?? state.camp, id) });
+            setDraft(withTarget(state, draft, id));
             setSelected(null);
           }}
           onMove={(id) => set({ moveTo: id, advance: draft.target ? canAdvance(state, id ?? state.camp, draft.target) : false })}
@@ -129,6 +141,8 @@ export function PlanSheet({ state, draft, setDraft, selected, setSelected, onGo 
         {home ? (
           <>
             <p class="plan-line">The party follows its own trail back toward the Nepean. Blazed ground goes at the horses' pace; ground crossed without blazing is slow.</p>
+            <RunwayLines state={state} night={state.camp} />
+            {offerList}
             <Toggle id="halt" checked={draft.halt} onChange={(v) => set({ halt: v })} label="Halt here this half" note="Stay at this camp to rest, hunt, cut grass or fetch water." />
             {draft.halt && <Roster state={state} draft={draft} onSet={give} />}
           </>
@@ -172,7 +186,7 @@ export function PlanSheet({ state, draft, setDraft, selected, setSelected, onGo 
               <span class="plan-val">
                 {draft.moveTo ? (
                   <>
-                    Moves to {nodeName(state, draft.moveTo)}, {hrs(moveH)} with the horses.{' '}
+                    Moves {moveSteps ? `${mi(pathMiles(state.map, moveSteps))} ` : ''}to {campNote(state.map.nodes[draft.moveTo]!)}, {hrs(moveH)} with the horses.{' '}
                     <button type="button" class="link-btn" onClick={() => set({ moveTo: null, advance: draft.target ? canAdvance(state, state.camp, draft.target) : false })}>
                       Stay instead
                     </button>
@@ -208,6 +222,8 @@ export function PlanSheet({ state, draft, setDraft, selected, setSelected, onGo 
             {advanceOk && draft.advance && (
               <Toggle id="blaze" checked={draft.blaze} onChange={(v) => set({ blaze: v })} label="Blaze the trail as you go" note="Unblazed ground is quicker now and slow on the way home." />
             )}
+            <RunwayLines state={state} night={draft.moveTo ?? state.camp} />
+            {offerList}
             <Roster state={state} draft={draft} onSet={give} />
             {summary && <p class="plan-line">{summary}.</p>}
             {grassCutters.length > 0 && (campNode.grass === 'good' || campNode.grass === 'tall') && (

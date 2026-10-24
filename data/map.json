@@ -41,7 +41,7 @@
 
     { "region": 4, "miles": 1.5,  "terrain": "scrub",      "bearing": 286, "to": { "id": "r4-1",         "water": "swamp", "grass": "rushy" } },
     { "region": 4, "miles": 1.0,  "terrain": "heath",      "bearing": 296, "to": { "id": "heath-top",    "water": "none",     "grass": "rushy", "feature": "lookout", "label": "High heath", "card": "highHeath" } },
-    { "region": 4, "miles": 1.5,  "terrain": "scrub",      "bearing": 290, "to": { "id": "stream",       "water": "stream",   "grass": "good",  "label": "A fine stream" } },
+    { "region": 4, "miles": 1.5,  "terrain": "scrub",      "bearing": 290, "to": { "id": "stream",       "water": "stream",   "grass": "rushy", "label": "A fine stream" } },
     { "region": 4, "miles": 1.0,  "terrain": "heath",      "bearing": 282, "to": { "id": "turn-north",   "water": "swamp", "grass": "rushy", "label": "The turn north" } },
 
     { "region": 5, "miles": 1.5,  "terrain": "scrub",      "bearing": 345, "to": { "id": "r5-1",         "water": "swamp",    "grass": "rushy", "label": "Swamp past the turn" } },

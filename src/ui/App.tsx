@@ -45,7 +45,7 @@ function Coach({ state, onDone }: { state: GameState; onDone: () => void }) {
             <span class="when-beside">beside the map</span> is ready. Press <strong>Go</strong> to work the morning, then the afternoon; then make camp for the night.
           </li>
           <li>Tap a man to choose his job; press and hold him, or hover with a mouse, to read about him. Tap a ridge on the map to work there instead.</li>
-          <li>The horses need water and grass every night. The camp suggestion looks for both.</li>
+          <li>The horses need water and grass every night. On the map a camp’s point is solid green for full feed, half green for half, empty for none; <strong>Key</strong> shows the rest.</li>
           <li>
             <strong>Menu → How to play</strong> explains the rest.
           </li>

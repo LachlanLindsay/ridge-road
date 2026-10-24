@@ -618,6 +618,87 @@ p {
   font-weight: 600;
 }
 
+/* The plan sheet's runway and its offers: food against the way home, the horses against tonight. */
+.runway {
+  margin: 4px 0 8px;
+}
+.offer {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--grass);
+  border-radius: var(--radius);
+  background: var(--paper-3);
+  font-size: 0.9rem;
+}
+.offer p {
+  margin: 0 0 6px;
+}
+.offer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+}
+
+.map-btn.is-on {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+/* The key docked on the map: what is in view, a line each, beside the marks it explains. */
+.map-legend {
+  position: absolute;
+  top: 46px;
+  left: max(8px, env(safe-area-inset-left, 0px));
+  width: min(190px, 50%);
+  max-height: min(calc(100% - 92px), 60%);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  padding: 2px 8px 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--paper-3) 92%, transparent);
+  pointer-events: auto;
+  touch-action: pan-y;
+}
+.map-legend-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--ink-2);
+}
+.map-legend-head .icon-btn {
+  width: 32px;
+  height: 32px;
+  margin-right: -6px;
+  font-size: 1.3rem;
+}
+.map-legend-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 3px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.map-legend-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  line-height: 1.15;
+  color: var(--ink);
+}
+.map-legend-list svg {
+  flex: none;
+}
+.map-legend-all {
+  padding: 6px 0 8px;
+  font-size: 0.75rem;
+}
+
 /* The haze over country the party has not seen: ruled lines like an engraved sky. */
 .map-haze path {
   fill: none;
@@ -701,8 +782,10 @@ p {
   stroke-linecap: round;
 }
 .lead-end {
-  fill: var(--paper);
+  fill: none;
   stroke: var(--ink-2);
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .node {
   fill: var(--paper);
@@ -710,6 +793,19 @@ p {
 }
 .node-reached {
   fill: var(--ink);
+}
+/* Feed in the point: solid green full, half green half (rushy), empty none. */
+.node-full {
+  fill: var(--grass);
+}
+.node-half {
+  fill: var(--grass);
+}
+.node-ring {
+  fill: none;
+}
+.node-unseen {
+  stroke: var(--ink-3);
 }
 .node-selected {
   fill: none;

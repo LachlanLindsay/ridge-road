@@ -53,7 +53,7 @@ export const HELP: Card[] = [
     title: 'Scout, cut, advance',
     paragraphs: [
       'Scouts mark the ridge ahead. Cutters clear marked ground so the horses can follow. Horses move only on the cleared path, drawn in red. Brush, the dark green stipple along a ridge, and rock have to be cleared first; open forest, heath, meadow and swamp need no clearing once marked.',
-      'Every mile between camp and the work front is walked out and back each half, so move camp forward along the red path often. Where the ground ahead is open, the whole party can push on with the horses.',
+      'Every mile between camp and the work front is walked out and back each half, so the plan moves camp forward along the red path with the work; tap Stay instead to keep it where it is. Where the ground ahead is open, the whole party can push on with the horses.',
     ],
   },
   {
@@ -65,7 +65,7 @@ export const HELP: Card[] = [
   {
     title: 'Keeping the party going',
     paragraphs: [
-      'Leave at least one man minding camp, or horses stray. Horses need water and grass every night; swamp heads have both, and grass cut at a good camp can be carried for dry ones. Men need food, water, rest and, when spirits sag, tea.',
+      'Leave at least one man minding camp, or horses stray. Horses need water and grass every night. Each camp’s point on the map shows its feed: solid green is full feed, half green half feed (the horses still weaken), empty none. Grass cut at a full-feed camp can be carried for the bare ones, and the plan offers it before bare ground. Men need food, water, rest and, when spirits sag, tea.',
       'Reach the sugarloaf hill beyond the range, then turn for home and bring everyone back across the Nepean.',
     ],
   },
