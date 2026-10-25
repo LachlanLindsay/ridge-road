@@ -68,7 +68,7 @@ function turn(x: number, y: number, px: number, py: number, a: number): [number,
  * what it carries: the panniers fill and the pile on top grows with the load, and past an easy
  * load the horse hangs its head. Null draws it bare.
  */
-export function horse(fig: Figure, X: number, Y: number, s: number, step: number, lead: [number, number] | null = null, pack: Pack | null = PLAIN_PACK, o?: { droopDeg?: number }) {
+export function horse(fig: Figure, X: number, Y: number, s: number, step: number, lead: [number, number] | null = null, pack: Pack | null = PLAIN_PACK, o?: { droopDeg?: number; spent?: boolean }) {
   const p = at(X, Y, s);
   const a = Math.sin(step);
   const b = Math.sin(step + Math.PI);
@@ -86,11 +86,20 @@ export function horse(fig: Figure, X: number, Y: number, s: number, step: number
       // Tail
       `M${p(-15.2, -23.4)}C${p(-18.6, -22.6)} ${p(-19.8, -19)} ${p(-19.4, -15.5)}C${p(-19.2, -13)} ${p(-18.6, -11.2)} ${p(-17.7, -9.8)}C${p(-17.4, -12.6)} ${p(-17.5, -15.5)} ${p(-17.2, -18)}C${p(-17, -20.2)} ${p(-16.4, -21.6)} ${p(-15, -22)}Z`,
   );
+  if (o?.spent) {
+    // Spent: the forelegs braced out in front, the hind legs propped out behind, the knees not quite
+    // straight, the way a horse stands when it can barely stay on its feet.
+    fig.limbs.push({ d: leg(p, [11.4, -14], [13.4, -7.4], [16.4, -0.4]), w: 2.3 * s });
+    fig.limbs.push({ d: leg(p, [-10.4, -14.6], [-14.6, -7.8], [-16.4, -0.4]), w: 2.5 * s });
+    fig.farLimbs.push({ d: leg(p, [9.8, -14], [12.4, -7.6], [14.2, -0.4]), w: 2.1 * s });
+    fig.farLimbs.push({ d: leg(p, [-8.8, -14.6], [-12.4, -7.4], [-13.2, -0.4]), w: 2.3 * s });
+  } else {
   // Near legs in ink, far legs a shade lighter, so the walk reads.
   fig.limbs.push({ d: leg(p, [11.4, -14], [11.8 + 2.2 * a, -7.2], [12.2 + 4 * a, -0.4]), w: 2.3 * s });
   fig.limbs.push({ d: leg(p, [-10.4, -14.6], [-12.8 + 1.2 * b, -7.4], [-11 + 3.8 * b, -0.4]), w: 2.5 * s });
   fig.farLimbs.push({ d: leg(p, [9.8, -14], [10.2 + 2.2 * b, -7.2], [10.6 + 4 * b, -0.4]), w: 2.1 * s });
   fig.farLimbs.push({ d: leg(p, [-8.8, -14.6], [-11.2 + 1.2 * a, -7.4], [-9.4 + 3.8 * a, -0.4]), w: 2.3 * s });
+  }
   // Halter.
   fig.rope.push({ d: `M${h(20.6, -35)}L${h(24.6, -29.4)}M${h(23.2, -30.6)}L${h(26.9, -28.1)}`, w: 0.7 * s });
   if (pack && total >= 3) packOn(fig, p, s, pack);
