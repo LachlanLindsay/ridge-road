@@ -163,6 +163,24 @@ export function canopy(g: Curve, o: { seed: number; size: number; sparse?: numbe
   return { ...base, y };
 }
 
+/**
+ * Bring a band's top down to its base over `span` at each end that falls inside the plate, so brush
+ * or forest thins out into the ground instead of stopping on a ruled vertical. Ends at or beyond the
+ * plate's edges are left alone.
+ */
+export function taperEnds(top: Curve, base: Curve, from: number, to: number, span: number, w = 400): Curve {
+  const y = top.y.map((ty, i) => {
+    const x = top.x0 + i * top.dx;
+    const dl = from > 2 ? (x - from) / span : Infinity;
+    const dr = to < w - 2 ? (to - x) / span : Infinity;
+    const t = Math.max(0, Math.min(1, dl, dr));
+    const s = t * t * (3 - 2 * t);
+    const by = yAt(base, x);
+    return by + (ty - by) * s;
+  });
+  return { ...top, y };
+}
+
 export function linePath(c: Curve, from = c.x0, to = xEnd(c), step = c.dx): string {
   const out: string[] = [];
   for (let x = from; x <= to + 1e-6; x += step) out.push(`${out.length ? 'L' : 'M'}${f(x)} ${f(yAt(c, x))}`);

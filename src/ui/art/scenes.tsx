@@ -6,7 +6,7 @@ import { useMemo } from 'preact/hooks';
 import { useInfo } from '../Info';
 import { outfit1813, packHorses } from '../outfitting';
 import type { Who } from '../people';
-import { farGum, gum, hills, ledge, sky, smokePlume, type Scene } from './compose';
+import { brinkFace, fallAway, farGum, gum, hills, ledge, sky, smokePlume, type Scene } from './compose';
 import { emptyFigure, figureMarks, procession, standing, type Mark, type Pack, type PartyCounts, type Slot } from './figures';
 import { bandPath, canopy, cliffFace, cloudBank, contourHatch, curve, grassTree, gumTree, linePath, ridgeLine, rng, shift, smoke, smooth, tufts, waterHatch, yAt, type Curve } from './kit';
 
@@ -37,13 +37,11 @@ export function vista(seed = 3): Scene {
   hills(m, front, H, 3, { seed: seed + 42, depth: 36, gap: 1.15, growth: 0.1, bias: 0.25 }, 2.1);
   // The lookout: a sandstone ledge in the left foreground, ending in a drop.
   const edgeX = 166;
-  const top = curve(-4, edgeX, (x) => 184 - (x / edgeX) * 6 + 1.2 * Math.sin(x / 9) + (x > edgeX - 16 ? ((x - edgeX + 16) / 16) ** 2 * 5 : 0));
+  const top = curve(-4, edgeX + 10, (x) => 184 - (x / edgeX) * 6 + 1.2 * Math.sin(x / 9) + fallAway(x, edgeX, 1, 22, 26));
   ledge(m, top, H + 2, seed + 50);
-  const face: string[] = [];
-  for (let x = edgeX - 6; x <= edgeX + 0.01; x += 1.2) face.push(`M${x.toFixed(1)} ${(yAt(top, x) + 1).toFixed(1)}V${H}`);
-  m.push({ d: face.join(''), c: 'l4', w: 0.55 }, { d: `M${edgeX} ${yAt(top, edgeX).toFixed(1)}V${H}`, c: 'l4', w: 1 });
+  brinkFace(m, { seed: seed + 52, top, edgeX: edgeX + 4, side: 1, depth: 30, bottom: H });
   m.push({ d: tufts(top, { seed: seed + 51, from: 4, to: edgeX - 8, every: 10, h: 7 }), c: 'l4', w: 0.5 });
-  gum(m, { seed: seed + 61, x: 128, y: yAt(top, 128) + 1, h: 52, lean: 0.06, spread: 0.9 }, 3);
+  gum(m, { seed: seed + 61, x: 128, y: yAt(top, 128) + 1, h: 46, lean: 0.06, spread: 0.9 });
   // Tall, but short of the plate's top fade, so the whole crown shows.
   gum(m, { seed: seed + 60, x: 46, y: yAt(top, 46) + 2, h: 156, lean: 0.16, spread: 1.15 });
   return { w: W, h: H, marks: m };

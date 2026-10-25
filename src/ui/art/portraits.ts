@@ -7,9 +7,9 @@
 // to draw, and the figures stay silhouettes, as everywhere else in the game. Pure: each returns a
 // Scene of marks (see compose.ts).
 import type { MemberId } from '../../engine';
-import { bedroll, campfire, cask, farGum, gum, gunOnGround, hills, kettle, ledge, sack, sky, type Scene } from './compose';
+import { bedroll, brinkFace, campfire, cask, fallAway, farGum, gum, gunOnGround, hills, kettle, ledge, sack, sky, type Scene } from './compose';
 import { dog, emptyFigure, figureMarks, horse, horseDown, kangaroo, man, sitting, standing, type Figure, type Mark, type Pack } from './figures';
-import { areaPath, bandPath, canopy, cliffFace, cloudBank, curve, f, grassTree, linePath, ridgeLine, rng, shift, tufts, waterHatch, yAt, type Curve } from './kit';
+import { areaPath, bandPath, canopy, cliffFace, cloudBank, curve, f, grassTree, linePath, ridgeLine, rng, shift, taperEnds, tufts, waterHatch, yAt, type Curve } from './kit';
 
 const W = 400;
 const H = 140;
@@ -39,7 +39,7 @@ function ground(m: Mark[], g: Curve, seed: number, grass: { every: number; h: nu
  * high above the ground before its crowns begin.
  */
 function brush(m: Mark[], g: Curve, o: { seed: number; size: number; from: number; to: number; lift?: number; tone?: number }) {
-  const top = canopy(shift(g, -(o.lift ?? 0)), { seed: o.seed, size: o.size, from: o.from, to: o.to, tall: 0.1 });
+  const top = taperEnds(canopy(shift(g, -(o.lift ?? 0)), { seed: o.seed, size: o.size, from: o.from, to: o.to, tall: 0.1 }), g, o.from, o.to, o.size * 1.6);
   m.push({ d: bandPath(top, shift(g, 0.4), o.from, o.to), c: `f${o.tone ?? 3}` });
 }
 
@@ -97,13 +97,11 @@ function lawson(seed = 411): Scene {
   hills(m, near, H, 2, { seed: seed + 31, depth: 20, gap: 1.3, growth: 0.15, bias: 0.1 }, 1.3);
   // The ledge, ending in a drop on the right.
   const edgeX = 196;
-  const top = curve(-4, edgeX, (x) => 124 - (x / edgeX) * 4 + 1 * Math.sin(x / 9) + (x > edgeX - 14 ? ((x - edgeX + 14) / 14) ** 2 * 4 : 0));
+  const top = curve(-4, edgeX + 12, (x) => 124 - (x / edgeX) * 4 + 1 * Math.sin(x / 9) + fallAway(x, edgeX, 1, 20, 24));
   ledge(m, top, H + 2, seed + 40);
-  const face: string[] = [];
-  for (let x = edgeX - 6; x <= edgeX + 0.01; x += 1.2) face.push(`M${x.toFixed(1)} ${(yAt(top, x) + 1).toFixed(1)}V${H}`);
-  m.push({ d: face.join(''), c: 'l4', w: 0.55 }, { d: `M${edgeX} ${yAt(top, edgeX).toFixed(1)}V${H}`, c: 'l4', w: 1 });
+  brinkFace(m, { seed: seed + 42, top, edgeX: edgeX + 4, side: 1, depth: 26, bottom: H });
   m.push({ d: tufts(top, { seed: seed + 41, from: 4, to: edgeX - 10, every: 11, h: 6 }), c: 'l4', w: 0.5 });
-  gum(m, { seed: seed + 50, x: 28, y: yAt(top, 28) + 1, h: 112, lean: 0.1, spread: 0.95, density: 0.45, depth: 3 });
+  gum(m, { seed: seed + 50, x: 28, y: yAt(top, 28) + 1, h: 112, lean: 0.1, spread: 0.95, density: 0.3, depth: 3 });
   const fig = emptyFigure();
   standing(fig, 132, yAt(top, 132), 2.3, { leader: true, arms: 'notes' });
   m.push(...figureMarks(fig));
@@ -126,11 +124,9 @@ function wentworth(seed = 421): Scene {
   hills(m, cliff.foot, H, 2, { seed: seed + 13, depth: 40, gap: 1.15, growth: 0.12, bias: 0.3 }, 1.1);
   // Our ridge: the end of the track, the stumps and the cut brushwood behind him.
   const edgeX = 258;
-  const ridge = curve(-4, edgeX, (x) => 118 + (x / edgeX) * 4 + 1.1 * Math.sin(x / 10) + (x > edgeX - 18 ? ((x - edgeX + 18) / 18) ** 2 * 5 : 0));
+  const ridge = curve(-4, edgeX + 12, (x) => 118 + (x / edgeX) * 4 + 1.1 * Math.sin(x / 10) + fallAway(x, edgeX, 1, 22, 26));
   ledge(m, ridge, H + 2, seed + 20);
-  const drop: string[] = [];
-  for (let x = edgeX - 8; x <= edgeX + 0.01; x += 1.1) drop.push(`M${x.toFixed(1)} ${(yAt(ridge, x) + 1).toFixed(1)}V${H}`);
-  m.push({ d: drop.join(''), c: 'l4', w: 0.55 }, { d: `M${edgeX} ${yAt(ridge, edgeX).toFixed(1)}V${H}`, c: 'l4', w: 1 });
+  brinkFace(m, { seed: seed + 22, top: ridge, edgeX: edgeX + 4, side: 1, depth: 26, bottom: H });
   // Stumps and cut brushwood in the gap.
   const stumps: string[] = [];
   for (const x of [70, 79, 86]) {
@@ -237,13 +233,13 @@ function waterCarrier(seed = 461): Scene {
   hills(m, fc.foot, H, 2, { seed: seed + 13, depth: 40, gap: 1.3, growth: 0.12, bias: 0.25 }, 1);
   // The water hole at the bottom.
   const wh = waterHatch({ seed: seed + 14, from: 238, to: W + 4, top: 114, bottom: 128, gap: 1.6 });
-  m.push({ d: `M238 113.4H${W + 4}V${H + 2}H238Z`, c: 'pp' }, { d: wh.light, c: 'lw', w: 0.45 }, { d: wh.dark, c: 'lw', w: 0.5 });
-  // Our side: the camp's ground on the left, then the steep face down to the water.
-  const top = curve(-4, 252, (x) => (x < 208 ? 100 + 0.8 * Math.sin(x / 11) : 100 + Math.min(1, (x - 208) / 40) ** 0.7 * 22));
+  m.push({ d: `M226 113.4H${W + 4}V${H + 2}H226Z`, c: 'pp' }, { d: wh.light, c: 'lw', w: 0.45 }, { d: wh.dark, c: 'lw', w: 0.5 });
+  // Our side: the camp's ground on the left, then the steep face down into the water.
+  const top = curve(-4, 270, (x) => (x < 208 ? 100 + 0.8 * Math.sin(x / 11) : 100 + Math.min(1, (x - 208) / 40) ** 0.7 * 22) + fallAway(x, 262, 1, 14, 30));
   hills(m, top, H + 2, 3, { seed: seed + 20, depth: 40, gap: 1.25, growth: 0.1, bias: 0.25 }, 1.2);
   const r = rng(seed + 21);
   const rock: string[] = [];
-  for (let x = 210; x < 252; x += 1 + r() * 0.9) {
+  for (let x = 210; x < 262; x += 1 + r() * 0.9) {
     const y0 = yAt(top, x) + 1.5;
     for (let y = y0; y < H + 2; y += 3 + r() * 6) rock.push(`M${f(x)} ${f(y)}V${f(Math.min(H + 2, y + 2 + r() * 5))}`);
   }

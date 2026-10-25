@@ -17,6 +17,7 @@ import {
   shift,
   skyHatch,
   smoke,
+  yAt,
   type Curve,
   type Ellipse,
   type HatchOpts,
@@ -73,6 +74,50 @@ export function smokePlume(m: Mark[], o: { seed: number; x: number; y: number; h
 export function gum(m: Mark[], o: Parameters<typeof gumTree>[0], tone = 4) {
   const g = gumTree(o);
   m.push({ d: g.wood, c: `f${tone}` }, { d: g.leaves, c: `f${tone}` });
+}
+
+/**
+ * How far a ledge's top falls away near the edge it ends at, for a skyline that runs to `edgeX` and
+ * a little past: nothing until `width` short of the edge, then the lip rounding over into a drop of
+ * `height`. `side` 1 when the drop is on the ledge's right. Added to the skyline, it ends a ledge
+ * in a shoulder of rock instead of a ruled vertical.
+ */
+export function fallAway(x: number, edgeX: number, side: 1 | -1, width: number, height: number): number {
+  const t = side > 0 ? (x - (edgeX - width)) / width : (edgeX + width - x) / width;
+  return t <= 0 ? 0 : Math.min(t, 1.6) ** 2.6 * height;
+}
+
+/**
+ * The face under a ledge's rounded lip: broken, bedded sandstone falling away and leaning back under
+ * the lip, darkest at the top and fading into the haze below. Draw after the ledge.
+ */
+export function brinkFace(m: Mark[], o: { seed: number; top: Curve; edgeX: number; side: 1 | -1; depth: number; bottom: number }) {
+  const r = rng(o.seed);
+  const { top, edgeX, side } = o;
+  const strokes: string[][] = [[], [], []];
+  const beds: string[] = [];
+  // Vertical strokes along the shoulder, where the ground has turned steep, broken where beds run.
+  for (let k = 0; k < 26; k++) {
+    const x = edgeX - side * (k * 0.75 + r() * 0.4);
+    const y0 = yAt(top, x) + 0.8;
+    if (y0 > o.bottom - 2) continue;
+    let y = y0;
+    while (y < Math.min(o.bottom, y0 + o.depth)) {
+      const len = 2 + r() * 5;
+      const band = Math.min(2, Math.floor(((y - y0) / o.depth) * 3));
+      if (r() > 0.18 + band * 0.18) strokes[band]!.push(`M${f(x)} ${f(y)}V${f(y + len)}`);
+      y += len + 0.6 + r() * 1.6;
+    }
+  }
+  // Bedding: short level ledges stepping back under the lip.
+  for (let k = 0; k < 6; k++) {
+    const y = yAt(top, edgeX - side * 8) + 3 + k * (o.depth / 7) + r() * 2;
+    const x0 = edgeX - side * (14 + r() * 6);
+    const x1 = edgeX - side * (1 + k * 0.6 + r() * 2);
+    beds.push(`M${f(x0)} ${f(y)}L${f(x1)} ${f(y + 0.4)}`);
+  }
+  strokes.forEach((s, i) => s.length && m.push({ d: s.join(''), c: `l${4 - i} o${i}`, w: 0.5 - i * 0.06 }));
+  m.push({ d: beds.join(''), c: 'l4 o1', w: 0.45 });
 }
 
 /** A rock ledge in the foreground: dark, hatched across, with grass along its lip. */

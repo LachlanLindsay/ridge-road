@@ -5,7 +5,7 @@
 import type { EventId } from '../../engine';
 import { axeOnGround, bedroll, campfire, cask, farGum, gum, gunOnGround, hills, kettle, nightSky, sack, sky, type Scene } from './compose';
 import { dogRunning, emptyFigure, figureMarks, horse, horseDown, kangaroo, lying, man, sitting, standing, type Figure, type Mark } from './figures';
-import { areaPath, bandPath, canopy, cliffFace, cloudBank, curve, f, linePath, ridgeLine, rng, shift, tufts, yAt, type Curve } from './kit';
+import { areaPath, bandPath, canopy, cliffFace, cloudBank, curve, f, linePath, ridgeLine, rng, shift, taperEnds, tufts, yAt, type Curve } from './kit';
 
 const W = 400;
 const H = 92;
@@ -18,7 +18,7 @@ function ink(m: Mark[], fig: Figure) {
 
 /** Low scrub along a ground line: a dark scalloped band, the crowns small and close. */
 function scrub(m: Mark[], g: Curve, o: { seed: number; size: number; from: number; to: number; tone?: number; drops?: boolean }) {
-  const top = canopy(g, { seed: o.seed, size: o.size, from: o.from, to: o.to, tall: 0.2 });
+  const top = taperEnds(canopy(g, { seed: o.seed, size: o.size, from: o.from, to: o.to, tall: 0.2 }), g, o.from, o.to, o.size * 2.4);
   m.push({ d: areaPath(top, H + 4, o.from, o.to), c: 'pp' });
   m.push({ d: bandPath(top, shift(g, 0.4), o.from, o.to), c: `f${o.tone ?? 3}` });
   if (o.drops) {
@@ -228,7 +228,7 @@ function dogsRaceOff(seed = 171): Scene {
   m.push({ d: linePath(g), c: 'l4', w: 0.8 });
   // Scrub on the right, black against the night.
   const sg = shift(g, 0.4);
-  const top = canopy(sg, { seed: seed + 10, size: 12, from: 272, to: W + 4, tall: 0.25 });
+  const top = taperEnds(canopy(sg, { seed: seed + 10, size: 12, from: 272, to: W + 4, tall: 0.25 }), sg, 272, W + 4, 26);
   m.push({ d: bandPath(top, sg, 272, W + 4), c: 'f4' });
   campfire(m, { seed: seed + 20, x: fireX, y: yAt(g, fireX), s: 1.35, night: true, smoke: 30, drift: 0.2 });
   const fig = emptyFigure();
