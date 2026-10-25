@@ -740,13 +740,13 @@ function signsHuts(seed = 331): Scene {
   }
   // A few unmarked trees off the line.
   for (const [i, x] of [40, 252, 292, 384].entries()) farGum(m, { seed: seed + 50 + i, x, y: yAt(g, x) - 2, h: 22 + (i % 2) * 8, tone: 1 });
-  // The party halted at the first blaze: a leader pointing on along the line, Lawson with his
-  // field book, the horses and a servant behind.
+  // The party halted at the first blaze: Blaxland pointing on along the line, Lawson with his field
+  // book, and the rest coming up behind them at the same size, the file running off the left edge.
   const fig = emptyFigure();
   standing(fig, 150, yAt(g, 150), 1.05, { leader: true, arms: 'point' });
   standing(fig, 92, yAt(g, 92), 1.05, { leader: true, arms: 'notes' });
   m.push(...figureMarks(fig));
-  const { fig: party } = procession({ servants: 1, horses: 1, dogs: 1 }, g, { from: 4, to: 72, maxScale: 0.85, seed: seed + 60, phase: 0 });
+  const { fig: party } = procession({ servants: 1, horses: 1, dogs: 1 }, g, { from: -36, to: 80, maxScale: 1.05, seed: seed + 60, phase: 0, omit: ['blaxland', 'lawson'] });
   m.push(...figureMarks(party));
   return { w: W, h: H, marks: m };
 }
@@ -852,7 +852,8 @@ function signsCamps(seed = 351): Scene {
     m.push({ d: `M${f(x - 7 * s)} ${f(y - 0.4 * s)}L${f(x + 1 * s)} ${f(y - 0.9 * s)}M${f(x + 0.6 * s)} ${f(y + 0.6 * s)}L${f(x + 7.5 * s)} ${f(y - 0.2 * s)}M${f(x - 2.4 * s)} ${f(y - 1.2 * s)}L${f(x + 2.6 * s)} ${f(y + 0.9 * s)}`, c: 'l4', w: 0.65 * s });
   }
   gum(m, { seed: seed + 60, x: 372, y: yAt(g, 372) + 1, h: 120, lean: -0.05, spread: 0.95, density: 0.45, depth: 3 });
-  const { fig: party } = procession({ servants: 1, horses: 2, dogs: 0 }, g, { from: 20, to: 170, maxScale: 0.85, seed: seed + 70, phase: 0 });
+  // The file coming up behind; Blaxland and Wentworth are the two standing at the ashes.
+  const { fig: party } = procession({ servants: 1, horses: 2, dogs: 0 }, g, { from: 20, to: 170, maxScale: 0.85, seed: seed + 70, phase: 0, omit: ['blaxland', 'wentworth'] });
   m.push(...figureMarks(party));
   const fig = emptyFigure();
   standing(fig, 232, 123, 1.35, { leader: true, arms: 'down', lean: 0.22 });
