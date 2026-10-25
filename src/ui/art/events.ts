@@ -38,6 +38,51 @@ function scrub(m: Mark[], g: Curve, o: { seed: number; size: number; from: numbe
   }
 }
 
+/**
+ * A wall of wet brush, as high as a man's shoulders: a dark mass rising out of the ground at its
+ * near end, its top ragged with stiff leaf sprays, and the wet on it as glints of bare paper: short
+ * curved strokes along the lit tops of the leaf clumps, a few runs of water down the face.
+ */
+function wetBrush(m: Mark[], g: Curve, o: { seed: number; from: number; to: number; height: number }) {
+  const r = rng(o.seed);
+  const crest = curve(o.from, o.to, (x) => yAt(g, x) - o.height * (0.86 + 0.14 * Math.sin(x / 23 + 1)), 1);
+  const top = taperEnds(canopy(crest, { seed: o.seed + 1, size: o.height * 0.22, tall: 0.35 }), g, o.from, o.to, 34);
+  m.push({ d: areaPath(top, H + 4, o.from, o.to), c: 'pp' });
+  m.push({ d: bandPath(top, shift(g, 0.4), o.from, o.to), c: 'f3' });
+  // Stiff leaf sprays standing out of the top.
+  const sprays: string[] = [];
+  for (let x = o.from + 2; x < o.to; x += 1.2 + r() * 1.6) {
+    const yt = yAt(top, x);
+    if (yAt(g, x) - yt < 4) continue;
+    const a = -Math.PI / 2 + (r() - 0.5) * 1.6;
+    const len = 1.8 + r() * 3;
+    sprays.push(`M${f(x)} ${f(yt + 1)}l${f(Math.cos(a) * len)} ${f(Math.sin(a) * len)}`);
+  }
+  m.push({ d: sprays.join(''), c: 'l3', w: 0.55 });
+  // The wet: curved glints along the upper side of each clump, thinning down the face, and a few
+  // runs of water.
+  const glints: string[] = [];
+  const runs: string[] = [];
+  for (let x = o.from + 6; x < o.to - 1; x += 1.6 + r() * 2.2) {
+    const yt = yAt(top, x);
+    const yb = yAt(g, x);
+    const depth = yb - yt;
+    if (depth < 6) continue;
+    for (let k = 0; k < 4; k++) {
+      const t = (k + r() * 0.8) / 5;
+      if (r() < t * 1.1) continue;
+      const y = yt + 1.6 + t * depth * 0.85;
+      const len = 1.4 + r() * 1.6;
+      glints.push(`M${f(x)} ${f(y)}q${f(len / 2)} ${f(-0.9)} ${f(len)} ${f(0.2)}`);
+    }
+    if (r() < 0.12) {
+      const y = yt + 4 + r() * depth * 0.4;
+      runs.push(`M${f(x + 0.6)} ${f(y)}v${f(2 + r() * 4)}`);
+    }
+  }
+  m.push({ d: glints.join(''), c: 'lp', w: 0.55 }, { d: runs.join(''), c: 'lp', w: 0.4 });
+}
+
 /** The ground the figures stand on: paper, a little contour hatching, a firm line, tufts. */
 function ground(m: Mark[], g: Curve, seed: number, o: { tufts?: boolean; from?: number; to?: number } = {}) {
   hills(m, g, H + 4, 3, { seed, depth: 7, gap: 1.4, growth: 0.3, bias: 0.05 });
@@ -65,7 +110,7 @@ function dew(seed = 101): Scene {
   m.push({ d: mist.join(''), c: 'lp', w: 1 });
   const g = flat(GY, seed);
   ground(m, g, seed + 20, { to: 188 });
-  scrub(m, shift(g, 0.5), { seed: seed + 30, size: 13, from: 192, to: W + 4, drops: true });
+  wetBrush(m, shift(g, 0.5), { seed: seed + 30, from: 196, to: W + 4, height: 40 });
   campfire(m, { seed: seed + 40, x: 104, y: yAt(g, 104), s: 1.35, smoke: 40, drift: 0.06 });
   const fig = emptyFigure();
   sitting(fig, 52, yAt(g, 52), 1.45, { leader: false, arms: 'fire' });
