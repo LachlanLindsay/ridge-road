@@ -386,15 +386,17 @@ export function viewBack(counts: PartyCounts, seed = 301, loads?: Pack[]): Scene
     wl.push(`M${x.toFixed(1)} ${y.toFixed(1)}h${(1.4 + r() * 2.4).toFixed(1)}`);
   }
   m.push({ d: wl.join(''), c: 'lw', w: 0.4 }, { d: linePath(top), c: 'l2', w: 0.4 }, { d: linePath(bot), c: 'lw', w: 0.5 });
-  // The settlements: houses along the river, smoke from most chimneys.
+  // The settlements: houses along the river, smoke from most chimneys. Miles off, every one is
+  // smaller than a horse on the ledge, the nearer ones (below the river) a little larger; the smoke
+  // stands tall so the farms still read.
   const houses: [number, number, number, number, boolean][] = [
-    [66, 9, 1.5, 14, false],
-    [118, -6, 1.1, 10, true],
-    [132, -5, 1, 0, false],
-    [212, 6, 1.4, 12, false],
-    [228, 7, 1.2, 0, true],
-    [318, -7, 1, 9, false],
-    [352, 4, 1.2, 0, true],
+    [66, 9, 0.8, 21, false],
+    [118, -6, 0.68, 15, true],
+    [130, -5, 0.66, 0, false],
+    [212, 6, 0.78, 18, false],
+    [225, 7, 0.76, 0, true],
+    [318, -7, 0.66, 13.5, false],
+    [352, 4, 0.74, 0, true],
   ];
   for (const [i, [hx, dy, hs, sm, flip]] of houses.entries()) cottage(m, hx, riverY(hx) + dy, hs, seed + 20 + i, sm, flip);
   // The foothills falling away below the party, wooded, to the edge of the plain.
