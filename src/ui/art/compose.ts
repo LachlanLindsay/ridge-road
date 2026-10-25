@@ -61,12 +61,15 @@ export function hills(m: Mark[], ground: Curve, bottom: number, tone: number, h:
   return ground;
 }
 
-/** Smoke rising from a fire in the trees: a white plume over the hatching, a dark smudge at its foot. */
+/**
+ * Smoke rising from a fire in the trees: a billowing plume over the hatching, pale in both themes
+ * (`ps`), a few broken strokes on its shaded side, a dark smudge at its foot.
+ */
 export function smokePlume(m: Mark[], o: { seed: number; x: number; y: number; h: number; drift?: number; tone?: number }) {
   const p = plume({ seed: o.seed, x: o.x, y: o.y, h: o.h, drift: o.drift });
   const tone = o.tone ?? 2;
-  m.push({ d: p.body, c: 'pp' });
-  m.push({ d: p.edge, c: `l${tone}`, w: 0.45 }, { d: p.curls, c: `l${Math.max(1, tone - 1)}`, w: 0.35 });
+  p.body.forEach((d, i) => d && m.push({ d, c: i ? `ps o${i}` : 'ps' }));
+  m.push({ d: p.edge, c: `l${tone}`, w: 0.42 });
   const s = o.h * 0.05;
   m.push({ d: `M${f(o.x - s * 1.4)} ${f(o.y + s * 0.3)}Q${f(o.x)} ${f(o.y - s * 1.1)} ${f(o.x + s * 1.4)} ${f(o.y + s * 0.3)}Z`, c: `f${Math.min(4, tone + 1)}` });
 }

@@ -148,8 +148,8 @@ export function country(seed = 21, o: { watchers?: boolean } = {}): Scene {
   m.push({ d: cliff.face, c: 'l1', w: 0.42 }, { d: cliff.beds, c: 'l1', w: 0.36 });
   hills(m, cliff.foot, H, 3, { seed: seed + 15, depth: 54, gap: 1.05, growth: 0.1, bias: 0.4 }, 1.2);
   // The valley floor, all forest: low rolling treelines one behind another, the crowns small and
-  // close far off, larger near. Smoke rises from fires among the far ones, white plumes leaning with
-  // the wind up over the far wall, the nearer trees standing in front of their feet.
+  // close far off, larger near. Smoke rises from fires among the far ones, pale billowing plumes
+  // leaning with the wind up over the far wall and thinning away, the nearer trees in front of their feet.
   const treelines = [
     { y: 140, crown: 2.6, tone: 2 },
     { y: 151, crown: 3.4, tone: 3 },
@@ -159,10 +159,10 @@ export function country(seed = 21, o: { watchers?: boolean } = {}): Scene {
   treelines.forEach((t, i) => {
     if (i === 1) {
       for (const [k, sm] of [
-        { x: 166, y: 150, h: 70, drift: 0.34 },
-        { x: 248, y: 149, h: 58, drift: 0.36 },
-        { x: 314, y: 151, h: 46, drift: 0.38 },
-        { x: 206, y: 145, h: 28, drift: 0.4 },
+        { x: 160, y: 150, h: 70, drift: 0.5 },
+        { x: 244, y: 149, h: 58, drift: 0.52 },
+        { x: 310, y: 151, h: 46, drift: 0.55 },
+        { x: 204, y: 145, h: 28, drift: 0.58 },
       ].entries()) {
         smokePlume(m, { seed: seed + 20 + k, x: sm.x, y: sm.y, h: sm.h, drift: sm.drift, tone: k === 3 ? 1 : 2 });
       }
