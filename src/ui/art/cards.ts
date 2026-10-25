@@ -111,64 +111,114 @@ function ridgeMethod(seed = 201): Scene {
   return { w: W, h: H, marks: m };
 }
 
-/** Distance by the clock: a watch on the rock, its chain run out, the ridges below. */
+/**
+ * Distance by the clock: a still life on the rock at the end of a day. A pocket watch lying open
+ * on the ledge, its chain run out, and Lawson's field book beside it, the day's hours and miles
+ * pencilled in a column; the ridges small and far below, beyond the ledge's edge.
+ */
 function distanceByClock(seed = 211): Scene {
   const m: Mark[] = [];
-  sky(m, { seed, w: W, horizon: 80, clouds: [cloudBank(seed + 1, 310, 30, 160, 22, 7)], reach: 0.72 });
-  const far = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 78, amp: 3, scale: 100, plateau: 0.7, gullies: 4 });
-  hills(m, far, H, 0, { seed: seed + 11, depth: 8, gap: 1.5, growth: 0.25 });
-  const mid = ridgeLine({ seed: seed + 20, x0: -4, x1: W + 4, base: 94, amp: 5, scale: 70, plateau: 0.4 });
-  hills(m, mid, H, 1, { seed: seed + 21, depth: 12, gap: 1.4, growth: 0.2 }, 0.9);
-  const top = curve(-4, W + 4, (x) => 118 - 4 * Math.sin(x / 90) + 1.1 * Math.sin(x / 9));
-  ledge(m, top, H + 2, seed + 30);
-  // The watch, standing against a stone: case, bezel, dial, the hours, two hands at two o'clock.
-  const cx = 150;
-  const R = 27;
-  const cy = yAt(top, cx) - R - 0.5;
-  const circle = (r: number) => `M${f(cx - r)} ${f(cy)}A${f(r)} ${f(r)} 0 1 0 ${f(cx + r)} ${f(cy)}A${f(r)} ${f(r)} 0 1 0 ${f(cx - r)} ${f(cy)}Z`;
-  m.push({ d: `M${f(cx + 16)} ${f(yAt(top, cx + 22))}C${f(cx + 18)} ${f(cy + 6)} ${f(cx + 34)} ${f(cy + 4)} ${f(cx + 38)} ${f(yAt(top, cx + 38))}Z`, c: 'pk', w: 0.6 });
-  m.push({ d: circle(R), c: 'pk', w: 1.1 });
-  m.push({ d: circle(R - 3.4), c: 'l4', w: 0.6 });
-  // The case shaded on its lower right.
-  const shade: string[] = [];
-  for (let a = 0.05; a < 1.55; a += 0.07) {
-    const c = Math.cos(a);
-    const s = Math.sin(a);
-    shade.push(`M${f(cx + c * (R - 3))} ${f(cy + s * (R - 3))}L${f(cx + c * (R - 0.6))} ${f(cy + s * (R - 0.6))}`);
+  sky(m, { seed, w: W, horizon: 58, clouds: [cloudBank(seed + 1, 310, 24, 160, 18, 7)], reach: 0.72 });
+  const far = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 58, amp: 2.5, scale: 100, plateau: 0.7, gullies: 4 });
+  hills(m, far, H, 0, { seed: seed + 11, depth: 7, gap: 1.6, growth: 0.25 });
+  const mid = ridgeLine({ seed: seed + 20, x0: -4, x1: W + 4, base: 68, amp: 3.5, scale: 70, plateau: 0.4 });
+  hills(m, mid, H, 1, { seed: seed + 21, depth: 9, gap: 1.5, growth: 0.2 }, 0.8);
+  const low = ridgeLine({ seed: seed + 22, x0: -4, x1: W + 4, base: 78, amp: 4, scale: 56, plateau: 0.3 });
+  hills(m, low, H, 2, { seed: seed + 23, depth: 9, gap: 1.4, growth: 0.2 }, 1.1);
+  // The ledge, close: its far edge across the plate, the top seen from above, grained and cracked.
+  const edge = curve(-4, W + 4, (x) => 88 - 2 * Math.sin(x / 70 + 0.6) + 0.7 * Math.sin(x / 7));
+  m.push({ d: areaPath(edge, H + 2), c: 'pp' }, { d: linePath(edge), c: 'l4', w: 1 });
+  const r = rng(seed + 30);
+  const grain: string[][] = [[], [], []];
+  for (let y0 = 1.4, i = 0; y0 < 60; y0 += 1.3 + y0 * 0.06, i++) {
+    let x = -4 + r() * 10;
+    while (x < W + 4) {
+      const len = 6 + r() * 30 * (0.5 + y0 / 50);
+      if (r() < 0.62) grain[Math.min(2, Math.floor(y0 / 14))]!.push(`M${f(x)} ${f(yAt(edge, x) + y0)}Q${f(x + len / 2)} ${f(yAt(edge, x + len / 2) + y0 + (r() - 0.5) * 1.4)} ${f(x + len)} ${f(yAt(edge, x + len) + y0 + (r() - 0.5))}`);
+      x += len + 2 + r() * 8;
+    }
   }
-  m.push({ d: shade.join(''), c: 'l3', w: 0.4 });
-  const ticks: string[] = [];
-  const minutes: string[] = [];
-  for (let i = 0; i < 60; i++) {
-    const a = (i / 60) * Math.PI * 2;
-    const big = i % 5 === 0;
-    const r0 = R - (big ? 9 : 5.6);
-    const r1 = R - 4.6;
-    (big ? ticks : minutes).push(`M${f(cx + Math.sin(a) * r0)} ${f(cy - Math.cos(a) * r0)}L${f(cx + Math.sin(a) * r1)} ${f(cy - Math.cos(a) * r1)}`);
-  }
-  m.push({ d: ticks.join(''), c: 'l4', w: 1 }, { d: minutes.join(''), c: 'l4', w: 0.35 });
-  const hand = (a: number, len: number, w: number) => {
-    const sx = Math.sin(a);
-    const cy2 = -Math.cos(a);
-    const nx = -cy2 * w;
-    const ny = sx * w;
-    return `M${f(cx - sx * 3 + nx)} ${f(cy - cy2 * 3 + ny)}L${f(cx + sx * len)} ${f(cy + cy2 * len)}L${f(cx - sx * 3 - nx)} ${f(cy - cy2 * 3 - ny)}Z`;
+  grain.forEach((g, i) => m.push({ d: g.join(''), c: `l${3 - i} o${i}`, w: 0.42 }));
+  m.push({ d: `M18 ${f(yAt(edge, 18) + 2)}Q30 104 26 118L34 136M352 ${f(yAt(edge, 352) + 1)}Q346 100 360 112Q372 122 366 138`, c: 'l4', w: 0.6 });
+  // The field book, open: two pages in perspective, the spine between, a column of figures pencilled
+  // on each, and the pencil laid across.
+  const P = (u: number, v: number) => {
+    // u across the book (0..1), v from the near edge (0) to the far edge (1).
+    const xn0 = 70;
+    const xn1 = 196;
+    const xf0 = 84;
+    const xf1 = 188;
+    const yn = 124;
+    const yf = 97;
+    const x = (xn0 + (xn1 - xn0) * u) * (1 - v) + (xf0 + (xf1 - xf0) * u) * v;
+    return [x, yn + (yf - yn) * v] as const;
   };
-  m.push({ d: hand((2 / 12) * Math.PI * 2, R - 13, 1.3) + hand(0, R - 8, 0.9), c: 'f4' });
-  m.push({ d: circle(1.6), c: 'f4' });
-  // Pendant and bow at the top, and the chain run out along the rock.
-  m.push({ d: `M${f(cx - 2.4)} ${f(cy - R + 0.4)}L${f(cx - 2.4)} ${f(cy - R - 3.2)}L${f(cx + 2.4)} ${f(cy - R - 3.2)}L${f(cx + 2.4)} ${f(cy - R + 0.4)}Z`, c: 'pk', w: 0.7 });
-  m.push({ d: `M${f(cx - 4.4)} ${f(cy - R - 5)}A4.4 4.4 0 1 1 ${f(cx + 4.4)} ${f(cy - R - 5)}`, c: 'l4', w: 1 });
-  const links: string[] = [];
-  const pts: [number, number][] = [];
-  for (let t = 0; t <= 1; t += 0.035) {
-    const x = cx + 4.4 + t * 118;
-    const sag = Math.sin(t * Math.PI) * 6;
-    const y = t < 0.35 ? cy - R - 5 + (yAt(top, x) - (cy - R - 5)) * (t / 0.35) ** 1.6 : yAt(top, x) - 1.2 - sag * 0.15;
-    pts.push([x, y]);
+  const pp = ([x, y]: readonly [number, number]) => `${f(x)} ${f(y)}`;
+  const page = (u0: number, u1: number, sag: number) => `M${pp(P(u0, 0))}Q${pp([(P(u0, 0)[0] + P(u1, 0)[0]) / 2, P(u0, 0)[1] - sag])} ${pp(P(u1, 0))}L${pp(P(u1, 1))}Q${pp([(P(u0, 1)[0] + P(u1, 1)[0]) / 2, P(u0, 1)[1] - sag * 0.6])} ${pp(P(u0, 1))}Z`;
+  m.push({ d: `M${pp(P(-0.01, -0.06))}L${pp(P(1.01, -0.06))}L${pp(P(1.01, 1.02))}L${pp(P(-0.01, 1.02))}Z`, c: 'f4' });
+  m.push({ d: page(0, 0.5, 1.6) + page(0.5, 1, 1.6), c: 'pk', w: 0.5 });
+  const lines: string[] = [];
+  const figs: string[] = [];
+  for (const [u0, u1] of [
+    [0.05, 0.45],
+    [0.55, 0.95],
+  ] as const) {
+    for (let v = 0.12; v < 0.92; v += 0.11) {
+      lines.push(`M${pp(P(u0, v))}L${pp(P(u1, v))}`);
+      // Figures: a short date, then hours and miles in a column.
+      const a0 = P(u0 + 0.02, v + 0.03);
+      figs.push(`M${f(a0[0])} ${f(a0[1])}h${f(3 + r() * 4)}`);
+      const a1 = P(u0 + (u1 - u0) * 0.55, v + 0.03);
+      figs.push(`M${f(a1[0])} ${f(a1[1])}h${f(2 + r() * 2.5)}`);
+      const a2 = P(u0 + (u1 - u0) * 0.78, v + 0.03);
+      figs.push(`M${f(a2[0])} ${f(a2[1])}h${f(2 + r() * 2.5)}`);
+    }
   }
-  for (const [i, [x, y]] of pts.entries()) links.push(i % 2 ? `M${f(x - 1.3)} ${f(y)}h2.6` : `M${f(x)} ${f(y - 0.9)}a1.3 0.9 0 1 0 0.01 0Z`);
-  m.push({ d: links.join(''), c: 'l4', w: 0.55 });
+  m.push({ d: lines.join(''), c: 'l2', w: 0.3 }, { d: figs.join(''), c: 'l4', w: 0.55 });
+  m.push({ d: `M${pp(P(0.5, -0.02))}L${pp(P(0.5, 1))}`, c: 'l4', w: 0.6 });
+  m.push({ d: `M${pp(P(0.62, -0.18))}L${pp(P(1.12, 0.5))}`, c: 'l4', w: 1.6 }, { d: `M${pp(P(1.12, 0.5))}L${pp(P(1.16, 0.56))}`, c: 'l2', w: 1.1 });
+  // The watch, lying open on the rock: the case's edge, the bezel, the dial with its hours, the
+  // hands at two o'clock; the bow toward the far side, the chain run out from it across the rock.
+  const cx = 276;
+  const cy = 110;
+  const rx = 24;
+  const ry = 11;
+  const ell = (x: number, y: number, a: number, b: number) => `M${f(x - a)} ${f(y)}A${f(a)} ${f(b)} 0 1 0 ${f(x + a)} ${f(y)}A${f(a)} ${f(b)} 0 1 0 ${f(x - a)} ${f(y)}Z`;
+  m.push({ d: ell(cx + 1.2, cy + 3.4, rx + 1.4, ry + 1.2), c: 'f3' });
+  m.push({ d: ell(cx, cy + 2.4, rx, ry), c: 'f4' });
+  m.push({ d: ell(cx, cy, rx, ry), c: 'pk', w: 0.9 });
+  m.push({ d: ell(cx, cy, rx - 2.6, ry - 1.2), c: 'l4', w: 0.5 });
+  const ticks: string[] = [];
+  const mins: string[] = [];
+  for (let i = 0; i < 60; i++) {
+    const t = (i / 60) * Math.PI * 2;
+    const big = i % 5 === 0;
+    const r0 = big ? 0.72 : 0.82;
+    const r1 = 0.88;
+    const q = (rr: number) => `${f(cx + Math.sin(t) * (rx - 2.6) * rr)} ${f(cy - Math.cos(t) * (ry - 1.2) * rr)}`;
+    (big ? ticks : mins).push(`M${q(r0)}L${q(r1)}`);
+  }
+  m.push({ d: ticks.join(''), c: 'l4', w: 0.9 }, { d: mins.join(''), c: 'l4', w: 0.3 });
+  const hand = (t: number, len: number, w: number) => {
+    const ex = cx + Math.sin(t) * (rx - 2.6) * len;
+    const ey = cy - Math.cos(t) * (ry - 1.2) * len;
+    const nx = -Math.cos(t) * w;
+    const ny = -Math.sin(t) * w * 0.5;
+    return `M${f(cx + nx)} ${f(cy + ny)}L${f(ex)} ${f(ey)}L${f(cx - nx)} ${f(cy - ny)}Z`;
+  };
+  m.push({ d: hand((2 / 12) * Math.PI * 2, 0.5, 1.1) + hand(0.08, 0.74, 0.8) + ell(cx, cy, 1.3, 0.8), c: 'f4' });
+  // Pendant and bow, then the chain.
+  const by = cy - ry;
+  m.push({ d: `M${f(cx - 1.8)} ${f(by + 0.4)}L${f(cx - 1.6)} ${f(by - 2.2)}L${f(cx + 1.6)} ${f(by - 2.2)}L${f(cx + 1.8)} ${f(by + 0.4)}Z`, c: 'pk', w: 0.6 });
+  m.push({ d: ell(cx, by - 4, 3.6, 2), c: 'l4', w: 0.9 });
+  const links: string[] = [];
+  let i = 0;
+  for (let t = 0; t <= 1; t += 0.022, i++) {
+    const x = cx + 3 + t * 96;
+    const y = by - 4 + Math.sin(t * Math.PI * 1.3) * 10 + t * 14;
+    links.push(i % 2 ? `M${f(x - 1.1)} ${f(y)}h2.2` : `M${f(x - 1.1)} ${f(y)}a1.1 0.7 0 1 0 2.2 0a1.1 0.7 0 1 0 -2.2 0Z`);
+  }
+  m.push({ d: links.join(''), c: 'l4', w: 0.5 });
   return { w: W, h: H, marks: m };
 }
 
@@ -793,7 +843,7 @@ export const CARD_PLATES: Record<string, () => Scene> = {
 
 export const CARD_PLATE_LABEL: Record<string, string> = {
   ridgeMethod: 'An engraving: one ridge running away to the horizon between two misty valleys, its flanks falling to the forest on both sides; at its near end a man blazes a gum as the party follows.',
-  distanceByClock: 'An engraving: a pocket watch standing on a rock at two o’clock, its chain run out, the ridges beyond.',
+  distanceByClock: 'An engraving: a pocket watch lying open on a rock ledge at two o’clock, its chain run out, beside an open field book with a column of figures and a pencil; the ridges small and far below.',
   cairn: 'An engraving: a pyramid-shaped heap of flat stones on the crest of a ridge that falls away on both sides, a leader pointing it out to a man resting on his gun.',
   wombats: 'An engraving: a wombat ambling across the sand to its burrow in a bank, its paired tracks behind it, prickly brush all round.',
   rockWall: 'An engraving: a wall of rock across a narrow ridge above a precipice, a man shifting stones in its one gap, the party waiting.',
@@ -810,7 +860,7 @@ export const CARD_PLATE_LABEL: Record<string, string> = {
 /** Where each plate's subject is, for its thumbnail: x, y, width, height in the plate's units. */
 export const CARD_FOCUS: Record<string, readonly [number, number, number, number]> = {
   ridgeMethod: [96, 44, 230, 96],
-  distanceByClock: [70, 24, 200, 100],
+  distanceByClock: [64, 40, 250, 96],
   cairn: [96, 52, 200, 86],
   wombats: [180, 76, 200, 64],
   rockWall: [140, 40, 240, 96],
