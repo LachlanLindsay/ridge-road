@@ -87,3 +87,37 @@ describe('journal thumbnails', () => {
     expect(svg).toContain('stroke-width="0.5"');
   });
 });
+
+describe('party portraits', () => {
+  const men = ['blaxland', 'lawson', 'wentworth', 'burne', 'fairs', 'servant3', 'servant4', 'servant5', 'servant6'] as const;
+
+  it('gives every man, each horse and the dogs a portrait with a label', async () => {
+    const { MAN_PORTRAIT_LABEL, manPortrait, horsePortrait, dogsPortrait } = await import('../src/ui/art/portraits');
+    for (const id of men) {
+      expect(manPortrait(id).marks.length, id).toBeGreaterThan(5);
+      expect(MAN_PORTRAIT_LABEL[id], id).toMatch(/^An engraving/);
+    }
+    ['Bay', 'Grey', 'Chestnut', 'Black', 'Dun', 'Roan'].forEach((n, i) => {
+      const h = horsePortrait(i + 1, n, { pack: { total: 120, items: { flour: 60, saltMeat: 50 } } });
+      expect(h.label, n).toContain(n);
+      expect(h.scene.marks.length, n).toBeGreaterThan(5);
+    });
+    expect(horsePortrait(1, 'Bay', { pack: null, down: true }).label).toMatch(/left behind/);
+    expect(dogsPortrait(5).label).toMatch(/5 kangaroo dogs/);
+    expect(dogsPortrait(0).label).toMatch(/no dogs/);
+  });
+
+  it('draws each portrait the same way every time, light enough for a phone', async () => {
+    const { manPortrait, horsePortrait, dogsPortrait } = await import('../src/ui/art/portraits');
+    const all = [
+      ...men.map((id) => () => manPortrait(id)),
+      ...[1, 2, 3, 4, 5, 6].map((i) => () => horsePortrait(i, 'Roan', { pack: { total: 150, items: { flour: 70, saltMeat: 60, axes: 1 } }, condition: 30 }).scene),
+      () => dogsPortrait(8).scene,
+    ];
+    for (const make of all) {
+      const a = make();
+      expect(JSON.stringify(make())).toBe(JSON.stringify(a));
+      expect(kb(a.marks)).toBeLessThan(200);
+    }
+  });
+});

@@ -2,13 +2,14 @@
 // with the party as it is now), a thumbnail of it in the journal, a strip at the top of each event
 // card, and the small figures that mark leaders and servants on the roster and on their cards.
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { freshLb, withParty, type EventId, type GameState, type Item, type MemberId } from '../../engine';
+import { freshLb, HORSE_NAMES, withParty, type EventId, type GameState, type Item, type MemberId } from '../../engine';
 import { packHorses } from '../outfitting';
 import type { Who } from '../people';
 import { CARD_FOCUS, CARD_PLATE_LABEL, CARD_PLATES, isCountryCard, isMilestone } from './cards';
 import type { Scene } from './compose';
 import { EVENT_ART, EVENT_ART_LABEL } from './events';
-import { dog, emptyFigure, figureMarks, horse, man, type Mark, type Pack, type PartyCounts } from './figures';
+import { dog, emptyFigure, figureMarks, horse, man, PLAIN_PACK, type Mark, type Pack, type PartyCounts } from './figures';
+import { dogsPortrait, horsePortrait, MAN_PORTRAIT_LABEL, manPortrait, type HorseNow } from './portraits';
 import { COUNTS_1813, country, loads1813, milestone, MILESTONE_LABEL, Plate } from './scenes';
 import { themeKey, thumbPicture } from './thumbs';
 
@@ -218,6 +219,40 @@ export function ManMark({ leader }: { leader: boolean }) {
 }
 
 /** The figure in the head of a card for a man, a horse or the dogs. */
+/** A horse as it is now: its load as packed, its condition, or down where it was left. */
+function horseNow(who: Extract<Who, { kind: 'horse' }>, s: GameState | null): { name: string; now: HorseNow } {
+  const h = s?.horses.find((x) => x.id === who.id);
+  const name = h?.name ?? HORSE_NAMES[who.id - 1] ?? `Horse ${who.id}`;
+  if (!s || !h) return { name, now: { pack: who.load ?? loads1813()[who.id - 1] ?? PLAIN_PACK } };
+  if (!withParty(h)) return { name, now: { pack: null, down: true } };
+  const i = s.horses.filter(withParty).findIndex((x) => x.id === h.id);
+  return { name, now: { pack: partyNow(s).loads[i] ?? null, condition: h.condition } };
+}
+
+/**
+ * The portrait at the head of a party card: the man, the horse with its load and condition, or the
+ * dogs the party has. Redrawn only when what it shows has changed.
+ */
+export function WhoArt({ who, state }: { who: Who; state: GameState | null }) {
+  const horse = who.kind === 'horse' ? horseNow(who, state) : null;
+  const key =
+    who.kind === 'man'
+      ? who.id
+      : who.kind === 'dogs'
+        ? `dogs:${who.count}`
+        : `${who.id}:${horse!.now.down ? 'down' : ''}:${Math.round((horse!.now.condition ?? 100) / 5)}:${horse!.now.pack ? Math.round(horse!.now.pack.total / 5) : 0}`;
+  const art = useMemo(() => {
+    if (who.kind === 'man') return { scene: manPortrait(who.id), label: MAN_PORTRAIT_LABEL[who.id] };
+    if (who.kind === 'dogs') return dogsPortrait(who.count);
+    return horsePortrait(who.id, horse!.name, horse!.now);
+  }, [key]);
+  return (
+    <div class="card-art">
+      <Plate scene={art.scene} label={art.label} class="plate" />
+    </div>
+  );
+}
+
 export function WhoFigure({ who }: { who: Who }) {
   if (who.kind === 'man') {
     const leader = LEADERS.includes(who.id);
