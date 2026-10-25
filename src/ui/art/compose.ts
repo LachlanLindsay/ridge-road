@@ -62,6 +62,18 @@ export function hills(m: Mark[], ground: Curve, bottom: number, tone: number, h:
 }
 
 /**
+ * The slope under a far cliff band, from its foot down: paper to hide what lies behind, and contour
+ * hatching that follows the foot down into the depths. No treetops along it and no crest line, so
+ * the cliff above reads as one wall with its foot in shadow, not a second range of hills (or a sea
+ * swell) in front of it. Give the cliff a `cover` high enough that it never runs out along the rim.
+ */
+export function underCliff(m: Mark[], foot: Curve, bottom: number, tone: number, h: HatchOpts) {
+  const w = TONE_W[tone]!;
+  m.push({ d: areaPath(foot, bottom), c: 'pp' });
+  contourHatch(foot, h).forEach((d, i) => d && m.push({ d, c: `l${tone} o${i}`, w: w * (1 - i * 0.15) }));
+}
+
+/**
  * Smoke rising from a fire in the trees: a billowing plume over the hatching, pale in both themes
  * (`ps`), a few broken strokes on its shaded side, a dark smudge at its foot.
  */

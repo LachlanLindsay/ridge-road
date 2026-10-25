@@ -313,6 +313,10 @@ export interface CliffOpts {
   gap?: number;
   /** Wooded ground left on top before the cliff begins. */
   cap?: number;
+  /** How much the band's height wanders along its length: from `height` down to (1 - 2 × grain) of it. */
+  grain?: number;
+  /** How long those wanderings are: short ones read as a rippled foot, long ones as bays and buttresses. */
+  grainScale?: number;
   from?: number;
   to?: number;
 }
@@ -329,7 +333,8 @@ export function cliffFace(top: Curve, o: CliffOpts): { face: string; beds: strin
   const cap = o.cap ?? 1.5;
   const hAt = (x: number) => {
     const v = body(x / 70) + (o.cover ?? 0.15);
-    return v <= 0 ? 0 : o.height * Math.min(1, v * 2.4) * (0.78 + 0.22 * grain(x / 8));
+    const wander = o.grain === undefined ? 0.78 + 0.22 * grain(x / (o.grainScale ?? 8)) : 1 - o.grain + o.grain * grain(x / (o.grainScale ?? 8));
+    return v <= 0 ? 0 : o.height * Math.min(1, v * 2.4) * wander;
   };
   const foot = curve(top.x0, xEnd(top), (x) => yAt(top, x) + cap + hAt(x), top.dx);
   const from = o.from ?? top.x0;
