@@ -494,6 +494,8 @@ export interface PlacedLabel extends LabelOption {
   id: string;
   text: string;
   size: number;
+  /** Which of its places it took, so the next frame can keep it there. */
+  option: number;
 }
 
 const overlap = (a: Rect, b: Rect) => Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0)) * Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
@@ -502,29 +504,44 @@ const overlap = (a: Rect, b: Rect) => Math.max(0, Math.min(a.x1, b.x1) - Math.ma
  * Place labels so they do not sit on each other or on the marks: each takes the first of its
  * places that is clear, or the least crowded one. An optional label that finds no clear place is
  * left off.
+ *
+ * `last` holds the place each label took on the previous frame: a label stays there while that
+ * place is still clear, so panning does not flip labels from side to side.
  */
-export function placeLabels(items: LabelItem[], obstacles: (Rect & { owner?: string })[], bounds?: Rect): PlacedLabel[] {
+export function placeLabels(items: LabelItem[], obstacles: (Rect & { owner?: string })[], bounds?: Rect, last?: Map<string, number>): PlacedLabel[] {
   const placed: (Rect & { owner?: string })[] = [...obstacles];
   const out: PlacedLabel[] = [];
   for (const it of items) {
-    let best = it.options[0];
-    if (!best) continue;
-    let bestScore = Infinity;
-    for (const o of it.options) {
+    if (!it.options[0]) continue;
+    const scoreOf = (o: LabelOption) => {
       let score = 0;
       for (const r of placed) if (!(it.owner && r.owner === it.owner)) score += overlap(o.box, r);
       // Text off the edge of the map is worse than text over another mark.
       if (bounds) score += 4 * ((o.box.x1 - o.box.x0) * (o.box.y1 - o.box.y0) - overlap(o.box, bounds));
-      if (score < bestScore - 1e-6) {
-        best = o;
-        bestScore = score;
+      return score;
+    };
+    let bestI = 0;
+    let bestScore = Infinity;
+    const prev = last?.get(it.id);
+    if (prev !== undefined && it.options[prev] && scoreOf(it.options[prev]) === 0) {
+      bestI = prev;
+      bestScore = 0;
+    } else {
+      for (let i = 0; i < it.options.length; i++) {
+        const score = scoreOf(it.options[i]!);
+        if (score < bestScore - 1e-6) {
+          bestI = i;
+          bestScore = score;
+        }
+        if (score === 0) break;
       }
-      if (score === 0) break;
     }
+    const best = it.options[bestI]!;
     const area = (best.box.x1 - best.box.x0) * (best.box.y1 - best.box.y0);
     if (it.optional && bestScore > area * 0.12) continue;
     placed.push(best.box);
-    out.push({ ...best, id: it.id, text: it.text, size: it.size });
+    out.push({ ...best, id: it.id, text: it.text, size: it.size, option: bestI });
+    last?.set(it.id, bestI);
   }
   return out;
 }

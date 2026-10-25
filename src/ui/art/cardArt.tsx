@@ -10,6 +10,11 @@ import type { Scene } from './compose';
 import { EVENT_ART, EVENT_ART_LABEL } from './events';
 import { dog, emptyFigure, figureMarks, horse, man, type Mark, type Pack, type PartyCounts } from './figures';
 import { COUNTS_1813, country, loads1813, milestone, MILESTONE_LABEL, Plate } from './scenes';
+import { themeKey, thumbPicture } from './thumbs';
+
+/** The journal thumbnail's size in CSS pixels; see .card-thumb. */
+const THUMB_W = 96;
+const THUMB_H = 54;
 
 const LEADERS: MemberId[] = ['blaxland', 'lawson', 'wentworth'];
 
@@ -113,10 +118,23 @@ export function CardThumb({ id, state }: { id: string; state: GameState | null }
 }
 
 function ThumbPlate({ id, state }: { id: string; state: GameState | null }) {
-  const { scene, label } = useCardScene(id, state);
-  if (!scene) return null;
-  const view = MILESTONE_FOCUS[id] ?? (isCountryCard(id) ? COUNTRY_FOCUS : CARD_FOCUS[id]);
-  return <Plate scene={scene} label={label} view={view} />;
+  const party = isMilestone(id) ? partyNow(state) : null;
+  const theme = themeKey();
+  const key = `${isCountryCard(id) ? 'country' : id}|${party ? partyKey(party) : ''}|${theme}`;
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    const view = MILESTONE_FOCUS[id] ?? (isCountryCard(id) ? COUNTRY_FOCUS : CARD_FOCUS[id]);
+    const p = thumbPicture(key, () => {
+      const scene = party ? milestone(id, party.counts, party.loads) : fixedScene(id);
+      return scene ? { scene, view } : null;
+    }, THUMB_W, THUMB_H, theme);
+    void p?.then((u) => live && setUrl(u));
+    return () => {
+      live = false;
+    };
+  }, [key]);
+  return url ? <img class="card-thumb-img" src={url} alt="" width={THUMB_W} height={THUMB_H} decoding="async" /> : null;
 }
 
 const eventCache = new Map<EventId, Scene>();
