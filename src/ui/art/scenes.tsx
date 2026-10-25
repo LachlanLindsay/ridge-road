@@ -6,9 +6,9 @@ import { useMemo } from 'preact/hooks';
 import { useInfo } from '../Info';
 import { outfit1813, packHorses } from '../outfitting';
 import type { Who } from '../people';
-import { brinkFace, fallAway, farGum, gum, hills, ledge, sky, smokePlume, type Scene } from './compose';
+import { brinkFace, fallAway, farGum, gum, hills, ledge, sky, smokePlume, stones, type Scene } from './compose';
 import { emptyFigure, figureMarks, procession, standing, type Mark, type Pack, type PartyCounts, type Slot } from './figures';
-import { areaPath, bandPath, canopy, cliffFace, cloudBank, contourHatch, curve, grassTree, gumTree, linePath, ridgeLine, rng, shift, smoke, smooth, tufts, waterHatch, yAt, type Curve } from './kit';
+import { areaPath, bandPath, canopy, cliffFace, cloudBank, contourHatch, curve, grassTree, gumTree, linePath, ridgeLine, rng, shift, smoke, smooth, taperEnds, tufts, waterHatch, yAt, type Curve } from './kit';
 
 export type { Scene };
 
@@ -357,54 +357,60 @@ export function highHeath(counts: PartyCounts, seed = 311, loads?: Pack[]): Scen
   const W = 400;
   const H = 180;
   const m: Mark[] = [];
-  sky(m, { seed, w: W, horizon: 104, clouds: [cloudBank(seed + 1, 150, 36, 230, 26, 9), cloudBank(seed + 2, 340, 22, 110, 12, 5)], reach: 0.8 });
+  sky(m, { seed, w: W, horizon: 92, clouds: [cloudBank(seed + 1, 150, 30, 230, 24, 9), cloudBank(seed + 2, 340, 18, 110, 12, 5)], reach: 0.8 });
   // Across the gorge: plateau after plateau, each with its band of cliff.
-  const far = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 92, amp: 2.5, scale: 120, plateau: 0.9, gullies: 4, gullyDepth: 4, gullyWidth: 9 });
+  const far = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 80, amp: 2.5, scale: 120, plateau: 0.9, gullies: 4, gullyDepth: 4, gullyWidth: 9 });
   hills(m, far, H, 0, { seed: seed + 11, depth: 3, gap: 1.4 });
   const fc = cliffFace(far, { seed: seed + 12, height: 12, cover: 0.7, gap: 2.4, cap: 1 });
   m.push({ d: fc.face, c: 'l0', w: 0.38 });
   hills(m, fc.foot, H, 1, { seed: seed + 13, depth: 14, gap: 1.5, growth: 0.25 });
-  const left = ridgeLine({ seed: seed + 24, x0: -4, x1: 120, base: 116, amp: 2, scale: 60, plateau: 0.9, tilt: 0.04 });
+  // The spurs either side of the gorge, rounding over at their ends rather than stopping square.
+  const leftTop = ridgeLine({ seed: seed + 24, x0: -4, x1: 140, base: 100, amp: 2, scale: 60, plateau: 0.9, tilt: 0.04 });
+  const left = curve(-4, 140, (x) => yAt(leftTop, x) + fallAway(x, 122, 1, 16, 26));
   hills(m, left, H, 1, { seed: seed + 25, depth: 3, gap: 1.2 }, 0.8);
   const lc = cliffFace(left, { seed: seed + 26, height: 18, cover: 0.9, gap: 1.8, cap: 1.2 });
   m.push({ d: lc.face, c: 'l2', w: 0.42 }, { d: lc.beds, c: 'l2', w: 0.36 });
   hills(m, lc.foot, H, 2, { seed: seed + 27, depth: 24, gap: 1.4, growth: 0.15, bias: 0.15 });
-  const mid = ridgeLine({ seed: seed + 20, x0: 230, x1: W + 4, base: 112, amp: 2, scale: 90, plateau: 0.9, tilt: -0.02 });
+  const midTop = ridgeLine({ seed: seed + 20, x0: 210, x1: W + 4, base: 98, amp: 2, scale: 90, plateau: 0.9, tilt: -0.02 });
+  const mid = curve(210, W + 4, (x) => yAt(midTop, x) + fallAway(x, 228, -1, 16, 26));
   hills(m, mid, H, 1, { seed: seed + 21, depth: 3, gap: 1.2 }, 0.8);
   const mc = cliffFace(mid, { seed: seed + 22, height: 22, cover: 0.9, gap: 1.8, cap: 1.2 });
   m.push({ d: mc.face, c: 'l2', w: 0.42 }, { d: mc.beds, c: 'l2', w: 0.36 });
   hills(m, mc.foot, H, 2, { seed: seed + 23, depth: 30, gap: 1.3, growth: 0.12, bias: 0.2 }, 1.1);
-  // The heath: broad and open, low scrub in patches, grass trees; it ends in a drop at each side.
-  const x0 = 22;
-  const x1 = 318;
-  const heath = curve(x0, x1, (x) => 140 - ((x - x0) / (x1 - x0)) * 4 + 1.1 * Math.sin(x / 13) + 0.5 * Math.sin(x / 4) + Math.max(0, 1 - (x - x0) / 8) ** 2 * 4 + Math.max(0, 1 - (x1 - x) / 8) ** 2 * 4);
-  m.push({ d: `${linePath(heath)}L${x1} ${H + 2}L${x0} ${H + 2}Z`, c: 'pp' });
-  contourHatch(heath, { seed: seed + 30, depth: 46, gap: 1.3, growth: 0.06, bias: 0.3, light: 0.6 }).forEach((d, i) => d && m.push({ d, c: `l3 o${i}`, w: 0.5 }));
-  const drops: string[] = [];
-  for (const [ex, dir] of [
-    [x0, 1],
-    [x1, -1],
-  ] as const) {
-    for (let k = 0; k <= 7; k++) {
-      const x = ex + dir * k * 1.1;
-      drops.push(`M${x.toFixed(1)} ${(yAt(heath, x) + 1).toFixed(1)}V${H + 2}`);
-    }
-  }
-  m.push({ d: drops.join(''), c: 'l4', w: 0.55 });
-  m.push({ d: `M${x0} ${H + 2}V${yAt(heath, x0).toFixed(1)}${linePath(heath).replace('M', 'L')}L${x1} ${H + 2}`, c: 'l4', w: 1 });
+  // The heath: broad and open, short coarse grass and loose stones, a few grass trees; it runs out
+  // of the plate to the east and on the west rounds over at the cliff edge, the gorge beyond.
+  const edge = 304;
+  const heath = curve(-4, edge + 26, (x) => 114 + 2.2 * Math.sin(x / 61 + 0.4) + 0.5 * Math.sin(x / 9) + (x / edge) * 3 + fallAway(x, edge, 1, 20, 40));
+  m.push({ d: areaPath(heath, H + 2), c: 'pp' });
+  contourHatch(heath, { seed: seed + 30, depth: 70, gap: 1.6, growth: 0.07, bias: -0.05, light: 0.9, breaks: 0.1 }).forEach((d, i) => d && m.push({ d, c: `l3 o${i}`, w: 0.46 }));
+  m.push({ d: linePath(heath), c: 'l4', w: 0.8 });
+  brinkFace(m, { seed: seed + 34, top: heath, edgeX: edge + 6, side: 1, depth: 40, bottom: H });
+  // Low scrub in a few patches far off along the skyline.
   const r = rng(seed + 31);
-  for (let x = x0 + 10; x < x1 - 14; x += 18 + r() * 30) {
-    const w = 8 + r() * 14;
+  for (let x = 30 + r() * 20; x < edge - 30; x += 50 + r() * 60) {
+    const w = 6 + r() * 10;
     const g = curve(x, x + w, (xx) => yAt(heath, xx) + 0.4, 0.5);
-    const top = canopy(g, { seed: seed + 32 + Math.round(x), size: 2.6 + r() * 1.4, tall: 0.1 });
+    const top = taperEnds(canopy(g, { seed: seed + 32 + Math.round(x), size: 1.6 + r() * 0.8, tall: 0.1 }), g, x, x + w, w * 0.4);
     m.push({ d: bandPath(top, g), c: 'f3' });
   }
-  m.push({ d: tufts(heath, { seed: seed + 33, from: x0 + 4, to: x1 - 6, every: 8, h: 5 }), c: 'l3', w: 0.45 });
-  for (const [i, x] of [46, 250, 282].entries()) {
-    const gt = grassTree({ seed: seed + 40 + i, x, y: yAt(heath, x) + 1, h: 30 + i * 4 });
-    m.push({ d: gt.trunk, c: 'f4' }, { d: gt.leaves, c: 'l4', w: 0.4 }, { d: gt.spike, c: 'l4', w: 1 });
+  // Short coarse grass, in tufts small far off and larger near, and the loose stones among it.
+  for (const [i, d] of [3, 10, 21, 35, 52].entries()) {
+    const g = shift(heath, d);
+    m.push({ d: tufts(g, { seed: seed + 50 + i, from: 0, to: edge - 8 - d * 0.2, every: 10 + i * 3, h: 2.2 + i * 1.1, blades: 3 }), c: `l${i < 2 ? 3 : 4}`, w: 0.36 + i * 0.04 });
   }
-  const { fig, slots } = procession(counts, heath, { from: 66, to: 238, maxScale: 0.58, seed: seed + 3, loads });
+  stones(m, { seed: seed + 36, ground: heath, from: 0, to: edge - 6, bottom: H - 8, count: 170, size: 2.3 });
+  // Grass trees, the flower spikes standing a little above the leaves.
+  for (const [i, [x, d, h]] of ([
+    [30, 34, 32],
+    [214, 8, 18],
+    [262, 20, 24],
+  ] as const).entries()) {
+    const gt = grassTree({ seed: seed + 40 + i, x, y: yAt(heath, x) + d, h, spikeLen: 0.5 });
+    m.push({ d: gt.trunk, c: 'f4' }, { d: gt.leaves, c: 'l4', w: 0.4 }, { d: gt.spike, c: 'l4', w: 0.6 }, { d: gt.flower, c: 'l4', w: 1.5 });
+  }
+  // The party crossing it, on the heath rather than its skyline.
+  const walk = shift(heath, (x) => 20 + (x / edge) * 4);
+  const { fig, slots } = procession(counts, walk, { from: 70, to: 250, maxScale: 0.6, seed: seed + 3, loads });
   m.push(...figureMarks(fig));
   return { w: W, h: H, marks: m, slots };
 }

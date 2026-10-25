@@ -120,6 +120,38 @@ export function brinkFace(m: Mark[], o: { seed: number; top: Curve; edgeX: numbe
   m.push({ d: beds.join(''), c: 'l4 o1', w: 0.45 });
 }
 
+/**
+ * Loose stones lying on open ground, from just under its skyline `ground` down to `bottom`: small
+ * and close far off, larger near. Each is bare paper with a fine outline and a heavier stroke along
+ * its shaded underside, so it sits on the hatching.
+ */
+export function stones(m: Mark[], o: { seed: number; ground: Curve; from: number; to: number; bottom: number; count: number; size: number }) {
+  const r = rng(o.seed);
+  const fill: string[] = [];
+  const shade: string[] = [];
+  for (let i = 0; i < o.count; i++) {
+    const x = o.from + r() * (o.to - o.from);
+    const t = r() ** 1.5;
+    const g = yAt(o.ground, x) + 2.5;
+    if (g > o.bottom - 2) continue;
+    const y = g + t * (o.bottom - g);
+    const s = (0.45 + t * 1.2) * o.size * (0.6 + r() * 0.8);
+    const flat = 0.42 + r() * 0.22;
+    const n = 6;
+    const pts: [number, number][] = [];
+    for (let k = 0; k < n; k++) {
+      const a = Math.PI + (k / (n - 1)) * Math.PI;
+      const rr = s * (0.75 + r() * 0.4);
+      pts.push([x + Math.cos(a) * rr, y + Math.sin(a) * rr * flat]);
+    }
+    // The flat underside the stone rests on.
+    const base = `${f(pts[n - 1]![0])} ${f(y + s * 0.12)}L${f(pts[0]![0])} ${f(y + s * 0.12)}`;
+    fill.push(`M${pts.map(([px, py]) => `${f(px)} ${f(py)}`).join('L')}L${base}Z`);
+    shade.push(`M${f(pts[0]![0] + s * 0.1)} ${f(y + s * 0.14)}L${f(pts[n - 1]![0] + s * 0.1)} ${f(y + s * 0.14)}L${f(pts[n - 2]![0])} ${f(pts[n - 2]![1])}`);
+  }
+  m.push({ d: fill.join(''), c: 'pk', w: 0.35 }, { d: shade.join(''), c: 'l4', w: 0.6 });
+}
+
 /** A rock ledge in the foreground: dark, hatched across, with grass along its lip. */
 export function ledge(m: Mark[], top: Curve, bottom: number, seed: number) {
   m.push({ d: areaPath(top, bottom), c: 'pp' });

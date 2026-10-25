@@ -671,8 +671,12 @@ export function plume(o: { seed: number; x: number; y: number; h: number; w0?: n
   return { body, edge: edge.join(''), curls: curls.join('') };
 }
 
-/** A grass tree: a short black trunk, a fountain of fine leaves, and a tall flower spike. */
-export function grassTree(o: { seed: number; x: number; y: number; h: number; spike?: boolean }): { trunk: string; leaves: string; spike: string } {
+/**
+ * A grass tree: a short black trunk, a fountain of fine leaves, and a tall flower spike. With
+ * `spikeLen` (a share of `h`) the spike is drawn as a stalk carrying a thicker flowering head
+ * (`flower`, stroked wider by the caller) instead of one thin line.
+ */
+export function grassTree(o: { seed: number; x: number; y: number; h: number; spike?: boolean; spikeLen?: number }): { trunk: string; leaves: string; spike: string; flower: string } {
   const r = rng(o.seed);
   const th = o.h * 0.38;
   const tw = o.h * 0.07;
@@ -690,6 +694,18 @@ export function grassTree(o: { seed: number; x: number; y: number; h: number; sp
     const cy = top + Math.sin(a) * len * 0.8 - len * 0.18;
     leaves.push(`M${f(o.x + (r() - 0.5) * tw)} ${f(top + 0.5)}Q${f(cx)} ${f(cy)} ${f(ex)} ${f(ey + len * 0.22)}`);
   }
+  if (o.spikeLen !== undefined && o.spike !== false) {
+    const y0 = top - o.h * 0.1;
+    const y1 = y0 - o.h * o.spikeLen;
+    const lean = o.h * 0.02;
+    const ym = y0 + (y1 - y0) * 0.4;
+    return {
+      trunk,
+      leaves: leaves.join(''),
+      spike: `M${f(o.x)} ${f(y0)}L${f(o.x + lean * 0.4)} ${f(ym)}`,
+      flower: `M${f(o.x + lean * 0.4)} ${f(ym)}L${f(o.x + lean)} ${f(y1)}`,
+    };
+  }
   const spike = o.spike === false ? '' : `M${f(o.x)} ${f(top - o.h * 0.1)}L${f(o.x + o.h * 0.03)} ${f(top - o.h * 0.95)}`;
-  return { trunk, leaves: leaves.join(''), spike };
+  return { trunk, leaves: leaves.join(''), spike, flower: '' };
 }
