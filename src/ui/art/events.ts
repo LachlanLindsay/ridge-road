@@ -3,7 +3,7 @@
 // night. Close-ups: the figures fill the strip, the sky is a band above them. Pure: each returns a
 // Scene of marks (see compose.ts).
 import type { EventId } from '../../engine';
-import { axeOnGround, bedroll, campfire, cask, farGum, gum, gunOnGround, hills, kettle, nightSky, sack, sky, underCliff, type Scene } from './compose';
+import { axeOnGround, bedroll, brinkFace, campfire, cask, fallAway, farGum, gum, gunOnGround, hills, kettle, nightSky, sack, sky, underCliff, type Scene } from './compose';
 import { dogRunning, emptyFigure, figureMarks, horse, horseDown, kangaroo, lying, man, sitting, standing, type Figure, type Mark } from './figures';
 import { areaPath, bandPath, canopy, cliffFace, cloudBank, curve, f, linePath, ridgeLine, rng, shift, taperEnds, tufts, yAt, type Curve } from './kit';
 
@@ -128,30 +128,23 @@ function dryCamp(seed = 131): Scene {
   const cl = cliffFace(wall, { seed: seed + 12, height: 14, cover: 2, gap: 3.4, cap: 1.5, grain: 0.2, grainScale: 30 });
   m.push({ d: cl.face, c: 'l0', w: 0.4 }, { d: cl.beds, c: 'l0', w: 0.34 });
   underCliff(m, cl.foot, H, 1, { seed: seed + 13, depth: 22, gap: 1.6, growth: 0.15, bias: 0.1 });
-  // Our ridge, ending at the brink; below it, the face the men go down.
+  // Our ridge, rounding over at the brink into a face that drops sheer, past the foot of the strip
+  // within a few paces: the water is "six hundred feet" down.
   const edgeX = 246;
-  const top = curve(-4, edgeX, (x) => 58 + 0.8 * Math.sin(x / 13) + (x > edgeX - 8 ? ((x - edgeX + 8) / 8) ** 2 * 2 : 0));
-  m.push({ d: areaPath(top, H + 4), c: 'pp' });
+  const top = curve(-4, edgeX + 16, (x) => 58 + 0.8 * Math.sin(x / 13) + fallAway(x, edgeX + 6, 1, 12, 40));
+  hills(m, top, H + 4, 3, { seed: seed + 23, depth: 22, gap: 1.3, growth: 0.12, bias: 0.1, to: edgeX + 2 });
+  brinkFace(m, { seed: seed + 22, top, edgeX: edgeX + 8, side: 1, depth: 40, bottom: H + 4 });
   m.push({ d: linePath(top), c: 'l4', w: 0.9 });
   m.push({ d: tufts(top, { seed: seed + 21, from: 4, to: edgeX - 6, every: 13, h: 4.5 }), c: 'l3', w: 0.45 });
-  // The face: dark rock falling away, split by the ledges the men climb on.
-  const face = curve(edgeX, 290, (x) => yAt(top, edgeX) + ((x - edgeX) / 44) ** 0.55 * 40);
-  m.push({ d: `${linePath(face)}L290 ${H + 4}L${edgeX - 1} ${H + 4}Z`, c: 'pp' });
-  const r = rng(seed + 22);
-  const strokes: string[] = [];
-  for (let x = edgeX - 0.5; x < 290; x += 1 + r() * 0.7) {
-    const y0 = yAt(face, x) + 0.6;
-    for (let y = y0; y < H + 4; y += 3 + r() * 5) strokes.push(`M${f(x)} ${f(y)}V${f(Math.min(H + 4, y + 2 + r() * 4))}`);
-  }
-  m.push({ d: strokes.join(''), c: 'l4', w: 0.5 }, { d: linePath(face), c: 'l4', w: 0.9 });
   // The camp behind them: a fire and the packs, a man resting.
   campfire(m, { seed: seed + 30, x: 104, y: yAt(top, 104), s: 1.2, smoke: 30, drift: 0.4 });
   bedroll(m, 140, yAt(top, 140), 1.2);
   const fig = emptyFigure();
   sitting(fig, 60, yAt(top, 60), 1.35, { leader: true, arms: 'knees' });
   standing(fig, 226, yAt(top, 226), 1.35, { leader: false, arms: 'kettle' });
-  // The second man already over the edge, climbing down facing the rock.
-  standing(fig, 270, yAt(face, 270) + 1, 1.25, { leader: false, arms: 'kettle', dir: -1, lean: 0.12 });
+  // The second man already over the edge, climbing down facing the rock: only his head and
+  // shoulders and the kettle still above the foot of the strip.
+  standing(fig, 255, H + 10, 1.25, { leader: false, arms: 'kettle', dir: -1, lean: 0.12 });
   ink(m, fig);
   return { w: W, h: H, marks: m };
 }
