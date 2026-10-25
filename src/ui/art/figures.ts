@@ -735,15 +735,28 @@ export function kangaroo(fig: Figure, X: number, Y: number, s: number, o: { dir?
   fig.limbs.push({ d: `M${p(3, -21)}L${p(5.6, -18.4)}L${p(6.8, -18.8)}`, w: 0.9 * s });
 }
 
-/** A wombat ambling right (or left): low, round and heavy, with short legs and small ears. */
+/**
+ * A wombat walking right, feet on y = 0, about 26 long and 12 high: a low barrel of a body, round
+ * rump with no tail to speak of, a broad flat head with a blunt square snout, small rounded ears,
+ * and short thick legs.
+ */
 export function wombat(fig: Figure, X: number, Y: number, s: number, o: { dir?: 1 | -1; step?: number } = {}) {
   const p = atD(X, Y, s, o.dir ?? 1);
   const a = Math.sin(o.step ?? 0.8);
   fig.ink.push(
-    `M${p(-9.6, -3.4)}C${p(-10.6, -8.6)} ${p(-6, -12.2)} ${p(0, -12)}C${p(4.6, -11.8)} ${p(7.6, -10.4)} ${p(9.4, -8.2)}` +
-      `C${p(10.8, -7.6)} ${p(12, -6.4)} ${p(12, -5)}C${p(11, -4.2)} ${p(9.6, -4)} ${p(8.4, -4.2)}C${p(5, -2.6)} ${p(-1, -2.4)} ${p(-6, -2.6)}C${p(-8, -2.6)} ${p(-9.2, -2.8)} ${p(-9.6, -3.4)}Z` +
-      `M${p(6.6, -10.8)}C${p(6.4, -12.6)} ${p(7.6, -13.4)} ${p(8.6, -12.4)}C${p(8.6, -11.4)} ${p(8, -10.8)} ${p(7.4, -10.4)}Z`,
+    // Round rump down almost to the ground, the back highest over the hips, sloping to a short
+    // neck; a big flat-topped head, deep in the jaw, ending in a broad square snout; a low belly.
+    `M${p(-12, -2.2)}C${p(-13.4, -5.6)} ${p(-12, -10.6)} ${p(-7, -12.2)}C${p(-2, -13.4)} ${p(3.6, -12.2)} ${p(6.6, -10.4)}` +
+      `C${p(7.8, -10.2)} ${p(9.4, -10.4)} ${p(11, -10.2)}C${p(13, -10)} ${p(14.8, -9.2)} ${p(15.8, -7.8)}` +
+      `C${p(16.6, -6.8)} ${p(16.6, -5.2)} ${p(16, -4.4)}C${p(15.2, -3.6)} ${p(13.4, -3.4)} ${p(11.6, -3.6)}` +
+      `C${p(10, -3.8)} ${p(8.8, -2.6)} ${p(7.6, -2.2)}C${p(3, -1.6)} ${p(-4, -1.6)} ${p(-8, -1.8)}C${p(-10.4, -1.8)} ${p(-11.6, -1.8)} ${p(-12, -2.2)}Z` +
+      // Small ears, pricked, at the back of the head.
+      `M${p(9.6, -10.2)}L${p(9.8, -12.8)}L${p(11.4, -10.4)}Z` +
+      `M${p(11.2, -10.2)}L${p(12, -12.4)}L${p(12.8, -10)}Z`,
   );
-  fig.limbs.push({ d: `M${p(5.6, -4)}L${p(6 + 1.2 * a, -0.2)}M${p(-5.6, -3.4)}L${p(-6 - 1.2 * a, -0.2)}`, w: 2.2 * s });
-  fig.farLimbs.push({ d: `M${p(4.2, -4)}L${p(4.4 - 1.2 * a, -0.2)}M${p(-4.2, -3.4)}L${p(-4.4 + 1.2 * a, -0.2)}`, w: 2 * s });
+  // The eye, a glint of paper.
+  fig.paper.push({ d: `M${p(12, -7.8)}a${f(0.45 * s)} ${f(0.45 * s)} 0 1 0 ${f(0.9 * s)} 0a${f(0.45 * s)} ${f(0.45 * s)} 0 1 0 ${f(-0.9 * s)} 0Z`, w: 0.1 * s });
+  // Legs so short they barely show below the belly, broad feet turned in.
+  fig.limbs.push({ d: `M${p(8.6, -3)}L${p(8.9 + 0.6 * a, -0.5)}M${p(7.9 + 0.6 * a, -0.5)}L${p(10.8 + 0.6 * a, -0.5)}M${p(-7.6, -2.6)}L${p(-7.9 - 0.6 * a, -0.5)}M${p(-8.8 - 0.6 * a, -0.5)}L${p(-6 - 0.6 * a, -0.5)}`, w: 2.8 * s });
+  fig.farLimbs.push({ d: `M${p(6.6, -2.8)}L${p(6.8 - 0.6 * a, -0.5)}M${p(6 - 0.6 * a, -0.5)}L${p(8.4 - 0.6 * a, -0.5)}M${p(-5.4, -2.4)}L${p(-5.6 + 0.6 * a, -0.5)}M${p(-6.4 + 0.6 * a, -0.5)}L${p(-4 + 0.6 * a, -0.5)}`, w: 2.6 * s });
 }

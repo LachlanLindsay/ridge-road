@@ -192,37 +192,133 @@ function cairn(seed = 221): Scene {
   return { w: W, h: H, marks: m };
 }
 
-/** Wombat tracks: the track across the sand to a burrow under the prickly brush. */
+/**
+ * Prickly brush: a shrub of stiff, needle-leaved twigs, drawn as short straight strokes fanning up
+ * and out from a dark heart, so it reads spiky rather than leafy.
+ */
+function prickly(m: Mark[], o: { seed: number; x: number; y: number; w: number; h: number; tone?: number }) {
+  const r = rng(o.seed);
+  const out: string[] = [];
+  const twigs = Math.round(o.w * o.h * 0.09);
+  for (let i = 0; i < twigs; i++) {
+    const u = r() * 2 - 1;
+    const bx = o.x + u * o.w * 0.3;
+    const by = o.y - r() * o.h * 0.25;
+    const a = -Math.PI / 2 + u * 1.15 + (r() - 0.5) * 0.5;
+    const len = (0.5 + r() * 0.5) * o.h * (1 - Math.abs(u) * 0.35);
+    const ex = bx + Math.cos(a) * len * (o.w / o.h) * 0.55;
+    const ey = by + Math.sin(a) * len;
+    out.push(`M${f(bx)} ${f(by)}L${f(ex)} ${f(ey)}`);
+    // Needles along the outer half of each twig.
+    for (let k = 0; k < 3; k++) {
+      const t = 0.45 + k * 0.18 + r() * 0.08;
+      const nx = bx + (ex - bx) * t;
+      const ny = by + (ey - by) * t;
+      const na = a + (k % 2 ? 0.7 : -0.7);
+      out.push(`M${f(nx)} ${f(ny)}l${f(Math.cos(na) * o.h * 0.09)} ${f(Math.sin(na) * o.h * 0.09)}`);
+    }
+  }
+  const tone = o.tone ?? 4;
+  m.push({ d: `M${f(o.x - o.w * 0.24)} ${f(o.y + 0.3)}C${f(o.x - o.w * 0.2)} ${f(o.y - o.h * 0.2)} ${f(o.x + o.w * 0.2)} ${f(o.y - o.h * 0.22)} ${f(o.x + o.w * 0.24)} ${f(o.y + 0.3)}Z`, c: `f${tone}` });
+  m.push({ d: out.join(''), c: `l${tone}`, w: 0.42 });
+}
+
+/**
+ * Wombat tracks, 25 May: pushing through prickly brush, "the track of the wombat". Its paired
+ * prints run across a patch of sand to its burrow, a dark mouth under a sandy bank with the spoil
+ * fanned out in front, and the wombat itself ambling home.
+ */
 function wombats(seed = 231): Scene {
   const m: Mark[] = [];
-  sky(m, { seed, w: W, horizon: 70, clouds: [cloudBank(seed + 1, 300, 22, 180, 18, 8)], reach: 0.7 });
-  const far = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 70, amp: 3, scale: 110, plateau: 0.8 });
+  sky(m, { seed, w: W, horizon: 66, clouds: [cloudBank(seed + 1, 300, 20, 180, 16, 8)], reach: 0.7 });
+  const far = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 66, amp: 3, scale: 110, plateau: 0.8 });
   hills(m, far, H, 0, { seed: seed + 11, depth: 8, gap: 1.6, growth: 0.25 });
-  // The prickly brush, thick and dark behind.
-  const bank = flat(100, seed + 3, 2);
-  const brushTop = canopy(bank, { seed: seed + 20, size: 9, tall: 0.15 });
-  m.push({ d: areaPath(brushTop, H + 2), c: 'pp' });
-  m.push({ d: bandPath(brushTop, shift(bank, 0.5)), c: 'f3' });
-  // A low bank of sand with the burrow in it.
-  const sand = curve(-4, W + 4, (x) => 106 - 9 * Math.exp(-(((x - 316) / 38) ** 2)) + 0.6 * Math.sin(x / 7));
-  hills(m, sand, H + 2, 2, { seed: seed + 30, depth: 6, gap: 2.2, growth: 0.4 });
-  const bx = 318;
-  const by = yAt(sand, bx) + 8;
-  m.push({ d: `M${f(bx - 9)} ${f(by)}C${f(bx - 9)} ${f(by - 10)} ${f(bx + 9)} ${f(by - 10)} ${f(bx + 9)} ${f(by)}Z`, c: 'f4' });
-  // Sand stippled, and the track running across it to the burrow.
+  const mid = ridgeLine({ seed: seed + 12, x0: -4, x1: W + 4, base: 80, amp: 3, scale: 70, plateau: 0.5 });
+  hills(m, mid, H, 1, { seed: seed + 13, depth: 8, gap: 1.6, growth: 0.25 }, 1);
+  // The ground the brush grows on, and the brush behind the sand: stiff, spiky shrubs.
+  const ground = flat(98, seed + 3, 1.2);
+  hills(m, ground, H + 2, 2, { seed: seed + 14, depth: 4, gap: 1.6 });
+  const rb = rng(seed + 15);
+  for (let x = -6; x < 300; x += 15 + rb() * 16) prickly(m, { seed: seed + 16 + Math.round(x), x, y: yAt(ground, x) + 1, w: 16 + rb() * 12, h: 12 + rb() * 9, tone: 3 });
+  // The sand bank on the right, with the burrow in its face.
+  const bank = curve(220, W + 4, (x) => 100 - 18 * Math.exp(-(((x - 352) / 52) ** 2)) + 0.6 * Math.sin(x / 6), 1);
+  m.push({ d: areaPath(bank, H + 2), c: 'pp' });
+  contourHatch(bank, { seed: seed + 20, depth: 26, gap: 1.6, growth: 0.12, light: 1.6, bias: -0.05 }).forEach((d, i) => d && m.push({ d, c: `l2 o${i}`, w: 0.42 }));
+  m.push({ d: linePath(bank), c: 'l3', w: 0.6 });
+  for (const [i, x] of [300, 344, 384].entries()) prickly(m, { seed: seed + 22 + i, x, y: yAt(bank, x) + 1, w: 18 + i * 3, h: 14 + i * 2, tone: 4 });
+  // The burrow: a dark mouth under an overhanging lip, the spoil fanned out in front.
+  const bx = 334;
+  const by = 106;
+  // The hole dug into the bank's face, wider than high, the turf hanging over its lip.
+  m.push({ d: `M${f(bx - 16)} ${f(by + 1)}C${f(bx - 15)} ${f(by - 15)} ${f(bx + 15)} ${f(by - 15)} ${f(bx + 16)} ${f(by + 1)}Z`, c: 'pp' });
+  m.push({ d: `M${f(bx - 13)} ${f(by + 0.5)}C${f(bx - 12.6)} ${f(by - 13)} ${f(bx + 12.6)} ${f(by - 13)} ${f(bx + 13)} ${f(by + 0.5)}Z`, c: 'f4' });
+  const lip = curve(bx - 15, bx + 15, (x) => by - 11.2 * Math.sqrt(Math.max(0, 1 - ((x - bx) / 15) ** 2)) - 0.6 + 0.5 * Math.sin(x * 1.3), 0.6);
+  m.push({ d: linePath(lip), c: 'l4', w: 1 });
+  m.push({ d: tufts(shift(lip, -0.6), { seed: seed + 23, from: bx - 12, to: bx + 12, every: 5, h: 3.4, blades: 3 }), c: 'l4', w: 0.4 });
+  // The spoil, fanned out in front of the hole.
+  const spoil = curve(bx - 40, bx + 34, (x) => by + 1.2 - 4 * Math.exp(-(((x - bx) / 17) ** 2)), 1);
+  m.push({ d: `${linePath(spoil)}L${f(bx + 34)} ${f(by + 9)}L${f(bx - 40)} ${f(by + 9)}Z`, c: 'pp' }, { d: linePath(spoil), c: 'l3', w: 0.55 });
+  const sp: string[] = [];
+  const rs = rng(seed + 24);
+  for (let i = 0; i < 70; i++) {
+    const x = bx - 30 + rs() * 60;
+    const y = yAt(spoil, x) + 0.8 + rs() * 5;
+    sp.push(`M${f(x)} ${f(y)}h0.25`);
+  }
+  m.push({ d: sp.join(''), c: 'l3', w: 0.7 });
+  // The sand: stippled, finer far off, with a few tufts.
   const r = rng(seed + 40);
   const dots: string[] = [];
-  for (let i = 0; i < 260; i++) {
+  for (let i = 0; i < 520; i++) {
+    const t = r();
+    const y = 100 + t * 34;
     const x = r() * W;
-    const y = 112 + r() * 28;
-    dots.push(`M${f(x)} ${f(y)}h0.01`);
+    if (y < yAt(bank, x) + 1 && x > 220) continue;
+    dots.push(`M${f(x)} ${f(y)}h${f(0.05 + t * 0.3)}`);
   }
-  m.push({ d: dots.join(''), c: 'l2', w: 0.7 });
-  tracks(m, { seed: seed + 41, pts: [[10, 132], [90, 128], [170, 124], [232, 122]], every: 5.2 });
+  m.push({ d: dots.join(''), c: 'l2', w: 0.75 });
+  m.push({ d: tufts(curve(-4, W + 4, () => 112), { seed: seed + 50, from: 4, to: 200, every: 30, h: 4 }), c: 'l3', w: 0.42 });
+  // The track: paired prints, a broad clawed fore print and a longer hind one, coming across the
+  // sand to the burrow, larger as they come nearer.
+  const path: [number, number][] = [
+    [14, 126],
+    [90, 120],
+    [170, 114],
+    [252, 110],
+  ];
+  const prints: string[] = [];
+  const claws: string[] = [];
+  let side = 1;
+  for (let i = 0; i + 1 < path.length; i++) {
+    const [x0, y0] = path[i]!;
+    const [x1, y1] = path[i + 1]!;
+    const len = Math.hypot(x1 - x0, y1 - y0);
+    for (let t = 0; t < len; ) {
+      const x = x0 + ((x1 - x0) * t) / len;
+      const y = y0 + ((y1 - y0) * t) / len;
+      const sc = 0.55 + ((y - 104) / 26) * 0.75;
+      const py = y + side * 1.4 * sc;
+      for (const [dx, rx, ry] of [
+        [0, 1.1, 0.75],
+        [2.6, 1.3, 0.7],
+      ] as const) {
+        const cx = x + dx * sc;
+        prints.push(`M${f(cx - rx * sc)} ${f(py)}A${f(rx * sc)} ${f(ry * sc)} 0 1 0 ${f(cx + rx * sc)} ${f(py)}A${f(rx * sc)} ${f(ry * sc)} 0 1 0 ${f(cx - rx * sc)} ${f(py)}Z`);
+        for (let k = -1.5; k <= 1.6; k += 1) {
+          const qx = cx + rx * sc * 0.85 + 0.9 * sc * Math.cos(k * 0.45);
+          const qy = py + 0.9 * sc * Math.sin(k * 0.45) * 1.2;
+          claws.push(`M${f(qx - 0.22 * sc)} ${f(qy)}a${f(0.22 * sc)} ${f(0.22 * sc)} 0 1 0 ${f(0.44 * sc)} 0a${f(0.22 * sc)} ${f(0.22 * sc)} 0 1 0 ${f(-0.44 * sc)} 0Z`);
+        }
+      }
+      side = -side;
+      t += 6.4 * sc;
+    }
+  }
+  m.push({ d: prints.join(''), c: 'f3' }, { d: claws.join(''), c: 'f3' });
+  // The wombat, ambling home.
   const fig = emptyFigure();
-  wombat(fig, 262, 122, 1.9);
+  wombat(fig, 270, 112, 1.5);
   m.push(...figureMarks(fig));
-  m.push({ d: tufts(curve(-4, W + 4, () => 113), { seed: seed + 50, from: 4, to: 280, every: 22, h: 5 }), c: 'l3', w: 0.45 });
   return { w: W, h: H, marks: m };
 }
 
@@ -767,7 +863,7 @@ export const CARD_PLATE_LABEL: Record<string, string> = {
   ridgeMethod: 'An engraving: one ridge running away to the horizon between two misty valleys, its flanks falling to the forest on both sides; at its near end a man blazes a gum as the party follows.',
   distanceByClock: 'An engraving: a pocket watch standing on a rock at two o’clock, its chain run out, the ridges beyond.',
   cairn: 'An engraving: a pile of stones on the ridge top, a leader pointing it out.',
-  wombats: 'An engraving: a wombat’s track across the sand to its burrow under the prickly brush.',
+  wombats: 'An engraving: a wombat ambling across the sand to its burrow in a bank, its paired tracks behind it, prickly brush all round.',
   rockWall: 'An engraving: looking along a narrow ridge with precipices either side to a tiered mass of sandstone across its whole breadth, a man shifting stones in the one cleft through it, the party waiting.',
   gullyWater: 'An engraving: the camp on a narrow ridge, the gully far below, two men climbing the face with kettles.',
   kangarooDogs: 'An engraving: three kangaroo dogs running down a kangaroo through open forest.',
