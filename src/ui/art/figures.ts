@@ -359,9 +359,10 @@ const SERVANT_IDS: MemberId[] = ['burne', 'fairs', 'servant3', 'servant4', 'serv
 
 /**
  * Who walks where, front first: a dog out ahead, the guide, then each horse led by a man. `omit`
- * leaves those men out, for a plate that draws them elsewhere in the scene.
+ * leaves those men out, for a plate that draws them elsewhere in the scene. `horsesLast` puts the
+ * men on foot and the dogs in front and every horse, with the man leading it, at the back.
  */
-function order(c: PartyCounts, seed: number, omit: readonly MemberId[] = []): Unit[] {
+function order(c: PartyCounts, seed: number, omit: readonly MemberId[] = [], horsesLast = false): Unit[] {
   const r = rng(seed);
   const men: { id: MemberId; leader: boolean; tool: Tool }[] = [];
   // Burne, the guide and hunter, goes first with a gun when he comes; then leaders and servants
@@ -407,7 +408,23 @@ function order(c: PartyCounts, seed: number, omit: readonly MemberId[] = []): Un
     } else units.splice(at, 0, { kind: 'dog' });
     dogs--;
   }
-  return units;
+  if (!horsesLast) return units;
+  const front: Unit[] = [];
+  const back: Unit[] = [];
+  for (let i = 0; i < units.length; i++) {
+    const u = units[i]!;
+    if (u.kind === 'horse') back.push(u);
+    else if (u.kind === 'man' && u.leading) {
+      // The man and the horse he leads go back together; a dog that ran in between goes forward.
+      let j = i + 1;
+      while (units[j]?.kind === 'dog') front.push(units[j++]!);
+      back.push(u);
+      if (units[j]?.kind === 'horse') back.push(units[j]!);
+      else j--;
+      i = j;
+    } else front.push(u);
+  }
+  return [...front, ...back];
 }
 
 /** Length of the procession at scale 1. */
@@ -424,9 +441,9 @@ function span(units: Unit[]): number {
 export function procession(
   c: PartyCounts,
   ground: Curve,
-  o: { from: number; to: number; maxScale: number; seed: number; phase?: number; loads?: Pack[]; swags?: boolean; omit?: readonly MemberId[] },
+  o: { from: number; to: number; maxScale: number; seed: number; phase?: number; loads?: Pack[]; swags?: boolean; omit?: readonly MemberId[]; horsesLast?: boolean },
 ): { fig: Figure; scale: number; slots: Slot[] } {
-  const units = order(c, o.seed, o.omit);
+  const units = order(c, o.seed, o.omit, o.horsesLast);
   const len = span(units);
   const s = Math.min(o.maxScale, (o.to - o.from) / len);
   const fig = emptyFigure();

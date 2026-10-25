@@ -8,7 +8,7 @@ import { outfit1813, packHorses } from '../outfitting';
 import type { Who } from '../people';
 import { brinkFace, fallAway, farGum, gum, hills, ledge, sky, smokePlume, stones, underCliff, type Scene } from './compose';
 import { emptyFigure, figureMarks, procession, standing, type Mark, type Pack, type PartyCounts, type Slot } from './figures';
-import { areaPath, bandPath, canopy, cliffFace, cloudBank, contourHatch, curve, grassTree, gumTree, linePath, ridgeLine, rng, shift, smoke, smooth, taperEnds, tufts, waterHatch, yAt, type Curve } from './kit';
+import { areaPath, bandPath, canopy, cliffFace, cloudBank, contourHatch, curve, f, grassTree, gumTree, linePath, ridgeLine, rng, shift, smoke, smooth, taperEnds, tufts, waterHatch, yAt, type Curve } from './kit';
 
 export type { Scene };
 
@@ -478,9 +478,11 @@ export function highHeath(counts: PartyCounts, seed = 311, loads?: Pack[]): Scen
 }
 
 /**
- * The way down, 28–29 May: the trench cut down the cliff with a hoe, the party leading the horses
- * down it unloaded and carrying the packs themselves ("the party were obliged to carry the
- * packages themselves"), the forest land below with grass for the horses at last.
+ * The way down, 28–29 May: the party coming down "through a pass in the rock, about thirty feet
+ * wide", a steep chute of rubble through the cliff, the men carrying the packs ("the party were
+ * obliged to carry the packages themselves") and the horses led down behind them unloaded, "so steep
+ * that the horses could but just keep their footing without a load"; below it, the trench cut with a
+ * hoe "which kept them from slipping"; the forest land beyond, with grass for the horses at last.
  */
 export function wayDown(counts: PartyCounts, seed = 321, _loads?: Pack[]): Scene {
   const W = 400;
@@ -502,31 +504,97 @@ export function wayDown(counts: PartyCounts, seed = 321, _loads?: Pack[]): Scene
   // At the corner the rock steps down: the lip rounds over onto a bench, then falls sheer.
   const ease = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
   const corner = (x: number) => 11 * ease((x - (edge - 16)) / 11) + 3 * ease((x - (edge - 5)) / 6) + 70 * ease((x - (edge + 1)) / 9) ** 1.4;
-  const plateau = curve(-4, edge + 12, (x) => 64 + 0.8 * Math.sin(x / 11) + corner(x));
+  // The pass: a gap through the cliff about forty wide at the rim and twenty-five at its foot, its
+  // head a dip in the skyline, its floor a steep chute of rubble down to the scree.
+  const gx = 95;
+  const rim = 64;
+  const foot = 118;
+  const headDip = (x: number) => 8 * Math.max(0, 1 - Math.abs(x - gx) / 26) ** 1.5;
+  const plateau = curve(-4, edge + 12, (x) => rim + 0.8 * Math.sin(x / 11) + corner(x) + headDip(x));
   m.push({ d: areaPath(plateau, H + 2), c: 'pp' });
   const cliff = cliffFace(plateau, { seed: seed + 40, height: 96, cover: 2, gap: 1.9, cap: 2 });
   m.push({ d: cliff.face, c: 'l3', w: 0.46 }, { d: cliff.beds, c: 'l3', w: 0.42 });
   const top = canopy(plateau, { seed: seed + 41, size: 2.4, to: edge - 17 });
   m.push({ d: bandPath(top, shift(plateau, 1.2), -4, edge - 17), c: 'f3' });
-  m.push({ d: linePath(plateau), c: 'l4', w: 0.9 });
-  // The talus: scree fans run up into the gullies of the cliff, then a long slope falls to the
-  // grass and runs out into it.
+  const t01 = (y: number) => Math.max(0, Math.min(1, (y - rim) / (foot - rim)));
+  const sideL = (y: number) => gx - 20 + 7.5 * t01(y) + 0.6 * Math.sin(y / 2.6);
+  const sideR = (y: number) => gx + 20 - 7.5 * t01(y) + 0.6 * Math.sin(y / 3.1 + 1);
+  // The chute, laid over the cliff face: from the head of the pass down past the top of the scree.
+  const pt = (x: number, y: number) => `${f(x)} ${f(y)}`;
+  const chute: string[] = [];
+  for (let y = yAt(plateau, sideL(rim)) + 0.6; y <= foot + 6; y += 1.5) chute.push(pt(sideL(y), y));
+  for (let y = foot + 6; y >= yAt(plateau, sideR(rim)) + 0.6; y -= 1.5) chute.push(pt(sideR(y), y));
+  const head: string[] = [];
+  for (let x = sideR(rim); x >= sideL(rim); x -= 1) head.push(pt(x, yAt(plateau, x) + 0.6));
+  m.push({ d: `M${chute.join('L')}L${head.join('L')}Z`, c: 'pp' });
+  // Its floor: lines across, sagging where the chute is hollowed, closer near the top; rubble all
+  // down it, the stones larger lower down.
+  const r = rng(seed + 42);
+  const floor: string[] = [];
+  for (let k = 0, y = yAt(plateau, gx) + 2.5; y < foot + 4; k++, y += 2 + k * 0.35) {
+    const a = sideL(y) + 4.5;
+    const b = sideR(y) - 3.5;
+    if (b - a < 3) continue;
+    floor.push(`M${pt(a, y)}Q${pt((a + b) / 2, y + 1.6 + r())} ${pt(b, y + (r() - 0.5))}`);
+  }
+  m.push({ d: floor.join(''), c: 'l2', w: 0.4 });
+  for (let k = 0; k < 5; k++) {
+    const y0 = rim + 6 + k * 11;
+    const y1 = y0 + 11;
+    const g = curve(sideL(y1) + 4, sideR(y1) - 3.5, () => y0, 1);
+    stones(m, { seed: seed + 43 + k, ground: g, from: sideL(y1) + 5, to: sideR(y1) - 4.5, bottom: y1 + 2.5, count: 7 + k * 2, size: 0.9 + k * 0.25 });
+  }
+  // The walls of the cleft, both in shadow, the west one deeper.
+  const walls: string[] = [];
+  for (let y = rim; y < foot + 4; y += 0.5 + r() * 1.5) {
+    for (const [x0, w, dens] of [
+      [sideL(y), 5, 0.9],
+      [sideR(y) - 3.6, 3.6, 0.65],
+    ] as const) {
+      for (let x = x0 + r() * 0.8; x < x0 + w; x += 0.8 + r() * 0.6) {
+        const len = 2 + r() * 4;
+        if (r() < dens && y > yAt(plateau, x) + 1 && y + len < foot + 6) walls.push(`M${pt(x, y)}V${f(y + len)}`);
+      }
+    }
+    y += 2;
+  }
+  m.push({ d: walls.join(''), c: 'l4', w: 0.42 });
+  m.push({ d: linePath(plateau, -4, sideL(rim)) + linePath(plateau, sideR(rim), edge + 12), c: 'l4', w: 0.9 });
+  m.push({ d: `M${chute.slice(0, Math.ceil(chute.length / 2)).join('L')}`, c: 'l4', w: 0.7 });
+  // The talus: scree fans run up into the gullies of the cliff and up into the foot of the pass,
+  // then a long slope falls to the grass and runs out into it.
   const slope = curve(-4, W + 4, (x) => {
-    const fans = 7 * Math.max(0, Math.sin(x / 15 + 0.6)) ** 3 + 3 * Math.max(0, Math.sin(x / 6.3)) ** 4;
+    const fans = 7 * Math.max(0, Math.sin(x / 15 + 0.6)) ** 3 + 3 * Math.max(0, Math.sin(x / 6.3)) ** 4 + 5 * Math.max(0, 1 - Math.abs(x - gx) / 16) ** 2;
     const fall = x < 140 ? 0 : 44 * (1 - Math.cos((Math.min(1, (x - 140) / 196) * Math.PI) / 2));
     return Math.min(yAt(low, x), 120 - (x < 150 ? fans : fans * Math.max(0, 1 - (x - 150) / 20)) + fall + 0.5 * Math.sin(x / 5));
   });
   hills(m, slope, H + 2, 3, { seed: seed + 39, depth: 40, gap: 1.25, growth: 0.06, bias: 0.25, light: 0.7 });
   m.push({ d: tufts(slope, { seed: seed + 31, from: 330, to: W - 2, every: 9, h: 5 }), c: 'l3', w: 0.42 });
   gum(m, { seed: seed + 32, x: 356, y: yAt(slope, 356) + 1, h: 92, lean: -0.06, spread: 0.9, density: 0.5, depth: 3 }, 3);
-  // The cut: a shelf slanting across the cliff face, then down the talus, the trench along it.
-  const ramp = curve(30, 336, (x) => (x < 140 ? 70 + ((x - 30) / 110) * 46 : yAt(slope, x) - 1.5 - 4 * Math.max(0, 1 - (x - 140) / 40)) + 0.8 * Math.sin(x / 9));
-  const below = shift(ramp, 3);
-  m.push({ d: bandPath(ramp, below), c: 'pp' });
-  m.push({ d: linePath(below), c: 'l4', w: 0.6 }, { d: linePath(shift(ramp, 1.3)), c: 'l3', w: 0.35 });
-  // The horses go down bare but for their pack saddles; the men carry the loads.
+  // The trench the hoe cut down the steep scree below the pass, zigzagging.
+  const zig = [
+    [gx + 2, 0],
+    [gx + 17, 3],
+    [gx + 5, 6],
+    [gx + 19, 9],
+    [gx + 7, 12],
+    [gx + 20, 15],
+  ].map(([x, dy]) => [x!, yAt(slope, gx + 8) + 3 + dy!] as const);
+  m.push({ d: `M${zig.map(([x, y]) => pt(x, y - 0.8)).join('L')}`, c: 'lp', w: 1 }, { d: `M${zig.map(([x, y]) => pt(x, y)).join('L')}`, c: 'l4', w: 0.7 });
+  // The way the party goes: off the top beside the pass, down the chute and out along the scree.
+  const chuteTop = sideL(rim) + 3;
+  const chuteFoot = gx + 12;
+  const track = curve(-4, 336, (x) => {
+    if (x <= chuteTop) return yAt(plateau, x);
+    const y0 = yAt(plateau, chuteTop);
+    const y1 = yAt(slope, chuteFoot) - 1;
+    if (x < chuteFoot) return y0 + (y1 - y0) * ((x - chuteTop) / (chuteFoot - chuteTop)) ** 0.9;
+    return yAt(slope, x) - 1;
+  });
+  // The men go first under the packs; the horses come down behind them, led, bare but for their
+  // pack saddles.
   const bare: Pack[] = Array.from({ length: counts.horses }, () => ({ total: 4, items: {} }));
-  const { fig, slots } = procession(counts, ramp, { from: 54, to: 318, maxScale: 0.5, seed: seed + 3, loads: bare, swags: true });
+  const { fig, slots } = procession(counts, track, { from: 4, to: 300, maxScale: 0.5, seed: seed + 3, loads: bare, swags: true, horsesLast: true });
   m.push(...figureMarks(fig));
   return { w: W, h: H, marks: m, slots };
 }
@@ -550,7 +618,7 @@ export function milestone(id: string, counts: PartyCounts, loads?: Pack[]): Scen
 export const MILESTONE_LABEL: Record<string, string> = {
   viewBack: 'An engraving: the party on a ledge of the second ridge, looking back east over the foothills to the Nepean winding across the plain, farms and smoke from the houses.',
   highHeath: 'An engraving: the party crossing open heath on the summit of the third ridge, grass trees and low scrub, cliffs falling away into the gorge beyond.',
-  wayDown: 'An engraving: the party leading the horses down a cut slanting across the cliff face, forest land and grass below.',
+  wayDown: 'An engraving: the party coming down through a pass in the cliff, the men carrying the packs and leading the unloaded horses, forest land and grass below.',
   sugarloaf: 'An engraving: the party on the last ridge, looking out over open grassy country to a lone conical hill.',
 };
 
