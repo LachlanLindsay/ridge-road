@@ -263,89 +263,121 @@ export function repulsed(counts: PartyCounts, seed = 41, loads?: Pack[]): Scene 
 
 // ---------------------------------------------------------------- the milestone cards
 
-/** A small house in the distance: walls, a roof, a thread of smoke from the chimney. */
-function cottage(m: Mark[], x: number, y: number, s: number, seed: number, smokeH = 0) {
-  const P = (dx: number, dy: number) => `${(x + dx * s).toFixed(1)} ${(y + dy * s).toFixed(1)}`;
-  m.push({ d: `M${P(-3, 0)}L${P(-3, -2.6)}L${P(3, -2.6)}L${P(3, 0)}Z`, c: 'pk', w: 0.3 });
-  m.push({ d: `M${P(-3.8, -2.4)}L${P(-1.6, -4.6)}L${P(1.8, -4.6)}L${P(3.8, -2.4)}Z`, c: 'f3' });
-  if (smokeH) smoke({ seed, x: x + 1.6 * s, y: y - 4.6 * s, h: smokeH, drift: 0.6 }).forEach((d, j) => d && m.push({ d, c: `ls o${j}`, w: 0.35 }));
+/**
+ * A settler's cottage in the distance, gable end on: whitewashed walls, a steep pitched roof, a
+ * chimney at one end, the door dark; a thread of smoke from the chimney.
+ */
+function cottage(m: Mark[], x: number, y: number, s: number, seed: number, smokeH = 0, flip = false) {
+  const k = flip ? -1 : 1;
+  const P = (dx: number, dy: number) => `${(x + k * dx * s).toFixed(1)} ${(y + dy * s).toFixed(1)}`;
+  // The long side running back from the gable, its roof, then the gable end in front of them.
+  m.push({ d: `M${P(3.6, 0)}L${P(3.6, -3.2)}L${P(7.6, -3.5)}L${P(7.6, -0.3)}Z`, c: 'pk', w: 0.28 });
+  m.push({ d: `M${P(0.9, -6.4)}L${P(4.9, -6.7)}L${P(8, -3.4)}L${P(4, -3)}Z`, c: 'f3' });
+  m.push({ d: `M${P(-1.8, 0)}L${P(-1.8, -3.2)}L${P(0.9, -6.4)}L${P(3.6, -3.2)}L${P(3.6, 0)}Z`, c: 'pk', w: 0.3 });
+  m.push({ d: `M${P(-2.4, -2.6)}L${P(0.9, -6.6)}L${P(4.2, -2.6)}`, c: 'l3', w: 0.5 * s });
+  m.push({ d: `M${P(0.4, 0)}L${P(0.4, -1.9)}L${P(1.4, -1.9)}L${P(1.4, 0)}Z` + `M${P(5.6, -6.3)}L${P(5.6, -8.2)}L${P(6.5, -8.2)}L${P(6.5, -6.2)}Z`, c: 'f3' });
+  if (smokeH) smoke({ seed, x: x + k * 6 * s, y: y - 8.2 * s, h: smokeH, drift: 0.6 }).forEach((d, j) => d && m.push({ d, c: `ls o${j}`, w: 0.35 }));
 }
 
 /**
  * The view back, 19 May: from the second ridge, east over the colony. The foothills fall away below
- * the party to the Nepean winding across the plain, the farms cleared out of the bush, smoke from
- * the houses, and the plain running on in haze to the horizon.
+ * the party to the Nepean winding across the plain, the farms cleared out of the bush in ruled
+ * paddocks, smoke from the houses, and the plain running on in haze to the horizon.
  */
 export function viewBack(counts: PartyCounts, seed = 301, loads?: Pack[]): Scene {
   const W = 400;
   const H = 180;
-  const HZ = 96;
+  const HZ = 82;
   const m: Mark[] = [];
-  sky(m, { seed, w: W, horizon: HZ, clouds: [cloudBank(seed + 1, 260, 34, 220, 26, 9), cloudBank(seed + 2, 90, 52, 120, 12, 5)], reach: 0.82 });
-  // The plain: bands of country from the horizon down, paler with distance; rows of fields and
-  // bush, the fields ruled in furrows, the bush a dark speckle.
+  sky(m, { seed, w: W, horizon: HZ, clouds: [cloudBank(seed + 1, 260, 28, 220, 24, 9), cloudBank(seed + 2, 90, 44, 120, 12, 5)], reach: 0.82 });
+  // The plain, in rows from the horizon down, each split into paddocks and bush. Fences run back
+  // toward a point above the horizon, so the paddocks lie flat; the cleared ones are ruled in
+  // furrows, across or along; the bush is a band of treetops along the row's near edge.
   const r = rng(seed + 10);
-  const rows = [HZ, HZ + 2.2, HZ + 5, HZ + 8.6, HZ + 13.2, HZ + 19, HZ + 26.4, HZ + 35.6, HZ + 47];
+  const vx = 200;
+  const vy = HZ - 70;
+  const back = (x: number, yNear: number, yFar: number) => vx + (x - vx) * ((yFar - vy) / (yNear - vy));
+  const rows = [HZ, HZ + 2.4, HZ + 5.4, HZ + 9.2, HZ + 14, HZ + 20, HZ + 27.6, HZ + 37, HZ + 49];
   m.push({ d: `M-4 ${HZ}H${W + 4}V${H + 2}H-4Z`, c: 'pp' });
-  m.push({ d: `M-4 ${HZ}L246 ${HZ}Q262 ${HZ - 4.6} 280 ${HZ - 4.4}Q296 ${HZ - 4.6} 312 ${HZ}L${W + 4} ${HZ}`, c: 'l0', w: 0.6 });
+  m.push({ d: `M-4 ${HZ}L246 ${HZ}Q262 ${HZ - 4.2} 280 ${HZ - 4}Q296 ${HZ - 4.2} 312 ${HZ}L${W + 4} ${HZ}`, c: 'l0', w: 0.6 });
   const furrows: string[][] = [[], [], []];
-  const bush: string[][] = [[], [], []];
-  const hedges: string[] = [];
+  const fences: string[][] = [[], [], []];
   for (let k = 0; k + 1 < rows.length; k++) {
     const y0 = rows[k]!;
     const y1 = rows[k + 1]!;
     const tone = k < 3 ? 0 : k < 6 ? 1 : 2;
     const depth = (y1 - HZ) / (rows[rows.length - 1]! - HZ);
-    let x = -4 - r() * 30;
-    while (x < W + 4) {
-      const wf = (18 + r() * 40) * (0.4 + depth);
+    let x = -30 - r() * 30;
+    while (x < W + 30) {
+      const wf = (26 + r() * 46) * (0.35 + depth);
       const x1 = x + wf;
-      const cleared = r() < 0.5;
-      if (cleared) {
-        for (let y = y0 + 0.7; y < y1 - 0.2; y += 0.8 + depth * 1.3) furrows[tone]!.push(`M${(x + 0.6).toFixed(1)} ${y.toFixed(1)}H${(x1 - 0.6).toFixed(1)}`);
-        hedges.push(`M${x.toFixed(1)} ${y0.toFixed(1)}V${y1.toFixed(1)}`);
-      } else {
-        for (let i = 0; i < wf * (y1 - y0) * 0.16; i++) {
-          const bx = x + r() * wf;
-          const by = y0 + 0.4 + r() * (y1 - y0 - 0.4);
-          const br = 0.35 + depth * 0.9;
-          bush[tone]!.push(`M${(bx - br).toFixed(1)} ${by.toFixed(1)}a${br.toFixed(2)} ${(br * 0.7).toFixed(2)} 0 1 0 ${(br * 2).toFixed(2)} 0Z`);
+      // The farms keep to the river; back from it the bush closes in.
+      const kind = r();
+      const farmed = k >= 3 && k <= 6 ? 0.6 : 0.22;
+      if (kind < farmed) {
+        // A paddock: its fences, and furrows across or along it.
+        const f0 = back(x, y1, y0);
+        const f1 = back(x1, y1, y0);
+        fences[tone]!.push(`M${f0.toFixed(1)} ${y0.toFixed(1)}L${x.toFixed(1)} ${y1.toFixed(1)}`);
+        if (r() < 0.5) {
+          for (let y = y0 + 0.8; y < y1 - 0.3; y += 0.7 + depth * 1.2) {
+            const a = back(x, y1, y) + 0.5;
+            const b = back(x1, y1, y) - 0.5;
+            furrows[tone]!.push(`M${a.toFixed(1)} ${y.toFixed(1)}H${b.toFixed(1)}`);
+          }
+        } else {
+          const n = Math.max(2, Math.round(wf / (1.4 + depth * 1.6)));
+          for (let i = 1; i < n; i++) {
+            const t = i / n;
+            furrows[tone]!.push(`M${(f0 + (f1 - f0) * t).toFixed(1)} ${(y0 + 0.5).toFixed(1)}L${(x + (x1 - x) * t).toFixed(1)} ${(y1 - 0.3).toFixed(1)}`);
+          }
         }
+      } else if (kind < farmed + (1 - farmed) * 0.75) {
+        // Bush: a band of treetops along the row's near edge.
+        const g = curve(x, x1, () => y1 - 0.2, 0.8);
+        const top = taperEnds(canopy(g, { seed: seed + 11 + Math.round(x * 7 + k), size: 0.7 + depth * 1.9 }), g, x, x1, Math.min(4, wf * 0.2));
+        m.push({ d: bandPath(top, g), c: `f${tone}` });
       }
+      // Otherwise rough open grazing, left bare.
       x = x1;
     }
   }
-  furrows.forEach((f2, i) => f2.length && m.push({ d: f2.join(''), c: `l${i}`, w: 0.32 }));
-  bush.forEach((b, i) => b.length && m.push({ d: b.join(''), c: `f${i}` }));
-  m.push({ d: hedges.join(''), c: 'l1', w: 0.35 });
-  // The Nepean, winding across the plain: a band of light with the water ruled across it.
-  const riverY = (x: number) => HZ + 22 + 5 * Math.sin(x / 38 + 1) + 2.4 * Math.sin(x / 13);
-  const top = curve(-4, W + 4, (x) => riverY(x) - 1.3 - 0.6 * Math.sin(x / 9));
-  const bot = curve(-4, W + 4, (x) => riverY(x) + 1.3 + 0.6 * Math.sin(x / 7));
+  furrows.forEach((d, i) => d.length && m.push({ d: d.join(''), c: `l${i}`, w: 0.3 }));
+  fences.forEach((d, i) => d.length && m.push({ d: d.join(''), c: `l${i + 1}`, w: 0.34 }));
+  // The Nepean, winding across the plain: a ribbon of water, wider as it comes nearer, ruled across.
+  const riverY = (x: number) => HZ + 24 + 5 * Math.sin(x / 38 + 1) + 2.4 * Math.sin(x / 13);
+  const half = (x: number) => 1.5 + 0.5 * Math.sin(x / 29);
+  const top = curve(-4, W + 4, (x) => riverY(x) - half(x));
+  const bot = curve(-4, W + 4, (x) => riverY(x) + half(x));
   m.push({ d: bandPath(top, bot), c: 'pp' });
   const wl: string[] = [];
-  for (let x = -4; x < W + 4; x += 2.4 + r() * 2) wl.push(`M${x.toFixed(1)} ${riverY(x).toFixed(1)}h${(1.2 + r() * 2).toFixed(1)}`);
-  m.push({ d: wl.join(''), c: 'lw', w: 0.4 }, { d: linePath(top) + linePath(bot), c: 'lw', w: 0.45 });
-  // The settlements: houses along the river, smoke from a few chimneys.
-  const houses: [number, number, number, number][] = [
-    [120, -4, 0.9, 10],
-    [131, -3, 0.8, 0],
-    [214, 5, 1.1, 12],
-    [226, 6, 0.9, 0],
-    [318, -6, 0.7, 8],
-    [62, 7, 1.2, 14],
+  for (let x = -4; x < W + 4; x += 1.6 + r() * 1.6) {
+    const y = riverY(x) + (r() - 0.5) * half(x) * 1.2;
+    wl.push(`M${x.toFixed(1)} ${y.toFixed(1)}h${(1.4 + r() * 2.4).toFixed(1)}`);
+  }
+  m.push({ d: wl.join(''), c: 'lw', w: 0.4 }, { d: linePath(top), c: 'l2', w: 0.4 }, { d: linePath(bot), c: 'lw', w: 0.5 });
+  // The settlements: houses along the river, smoke from most chimneys.
+  const houses: [number, number, number, number, boolean][] = [
+    [66, 9, 1.5, 14, false],
+    [118, -6, 1.1, 10, true],
+    [132, -5, 1, 0, false],
+    [212, 6, 1.4, 12, false],
+    [228, 7, 1.2, 0, true],
+    [318, -7, 1, 9, false],
+    [352, 4, 1.2, 0, true],
   ];
-  for (const [i, [hx, dy, hs, sm]] of houses.entries()) cottage(m, hx, riverY(hx) + dy, hs, seed + 20 + i, sm);
+  for (const [i, [hx, dy, hs, sm, flip]] of houses.entries()) cottage(m, hx, riverY(hx) + dy, hs, seed + 20 + i, sm, flip);
   // The foothills falling away below the party, wooded, to the edge of the plain.
-  const foot = curve(-4, W + 4, (x) => 150 + 10 * Math.sin(x / 70 + 0.5) + 2 * Math.sin(x / 17) - x * 0.03);
+  const foot = curve(-4, W + 4, (x) => 140 + 9 * Math.sin(x / 70 + 0.5) + 2 * Math.sin(x / 17) - x * 0.05);
   hills(m, foot, H, 2, { seed: seed + 30, depth: 24, gap: 1.3, growth: 0.15, bias: 0.15 }, 1.8);
-  // The party on its ledge, looking out over the colony.
-  const ledgeTop = curve(-4, 190, (x) => 158 + (x / 190) * 4 + 1.2 * Math.sin(x / 9) + (x > 168 ? ((x - 168) / 22) ** 2 * 12 : 0));
+  // The party on its ledge, looking out over the colony; the ledge rounds over where it ends.
+  const ledgeTop = curve(-4, 200, (x) => 142 + (x / 180) * 4 + 1.2 * Math.sin(x / 9) + fallAway(x, 182, 1, 16, 20));
   ledge(m, ledgeTop, H + 2, seed + 40);
+  brinkFace(m, { seed: seed + 42, top: ledgeTop, edgeX: 188, side: 1, depth: 22, bottom: H });
   m.push({ d: tufts(ledgeTop, { seed: seed + 41, from: 4, to: 172, every: 10, h: 6 }), c: 'l4', w: 0.5 });
-  const { fig, slots } = procession(counts, ledgeTop, { from: 40, to: 168, maxScale: 0.52, seed: seed + 3, loads });
+  const { fig, slots } = procession(counts, ledgeTop, { from: 36, to: 172, maxScale: 0.55, seed: seed + 3, loads });
   m.push(...figureMarks(fig));
-  gum(m, { seed: seed + 50, x: 18, y: yAt(ledgeTop, 18) + 2, h: 132, lean: 0.08, spread: 0.9, density: 0.6, depth: 3 });
+  gum(m, { seed: seed + 50, x: 16, y: yAt(ledgeTop, 16) + 2, h: 122, lean: 0.08, spread: 0.9, density: 0.6, depth: 3 });
   return { w: W, h: H, marks: m, slots };
 }
 
