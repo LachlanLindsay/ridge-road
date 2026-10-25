@@ -26,6 +26,7 @@ export {
 } from './advice';
 export { chooseEvent, eventCard } from './events';
 export { endDay, dogOdds } from './night';
+export { runway, horseNightRate, huntOdds, walkedAhead, feedOf, FOOD_MARGIN_DAYS, type Runway, type Feed } from './forecast';
 export { computeOutcome, routeShare } from './score';
 export { dateOf, weekday } from './day';
 export {
@@ -41,6 +42,7 @@ export {
   pathMiles,
   zoneOf,
   trenchNeed,
+  huntHabitat,
   EPS,
 } from './map';
 export {

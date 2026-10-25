@@ -1,7 +1,7 @@
 // Small pieces shared by the plan and camp sheets.
 import { useContext, useState } from 'preact/hooks';
-import { T, capacity, horseCapacity, isAway, loadLb, withParty, type GameState, type Horse, type Member, type Task } from '../engine';
-import { CONDITION_LABEL, TASK_HINT, TASK_LABEL, lb, localize, shortName } from './format';
+import { T, capacity, feedOf, horseCapacity, isAway, loadLb, runway, withParty, type GameState, type Horse, type MapNode, type Member, type Runway, type Task } from '../engine';
+import { CONDITION_LABEL, TASK_HINT, TASK_LABEL, lb, localize, plural, shortName } from './format';
 import type { Draft } from './draft';
 import { available, taskChoices } from './draft';
 import { ManMark } from './art/cardArt';
@@ -241,5 +241,73 @@ export function Stepper({ id, value, min = 0, max, step = 1, onChange, label, un
         +
       </button>
     </div>
+  );
+}
+
+/** "spent in about 8 nights" and the like: the horses' runway in words. */
+export function horseRunwayText(state: GameState, r: Runway, where: string): string | null {
+  if (!r.weakest) return null;
+  const name = shortName(r.weakest.name);
+  const c = Math.round(r.weakest.condition);
+  if (r.rate >= 0) return `${name}, the weakest, is at ${c}. ${where}: each horse gains about ${r.rate} a night.`;
+  const loss = `${where}: each horse loses about ${-r.rate} a night`;
+  if (r.nightsToSpent === 0) return `${name} is spent (${c}). ${loss}.`;
+  return `${name}, the weakest, is at ${c}. ${loss}, so ${name} is spent in about ${plural(r.nightsToSpent!, 'night')}.`;
+}
+
+/** "Half feed and water" for a camp: what its night offers a horse. */
+export function horseNightPlace(node: MapNode): string {
+  const feed = feedOf(node.grass);
+  const f = feed === 'full' ? 'Full feed' : feed === 'half' ? 'Half feed' : 'No feed';
+  const w = node.water === 'swamp' || node.water === 'stream' || node.water === 'lagoon';
+  return `${f}${w ? ' and water' : ', no water for horses'}`;
+}
+
+export function grassRunwayText(state: GameState, r: Runway): string | null {
+  if (!r.horses || state.stores.grass < 1) return null;
+  if (r.grassNights > 0) return `Cut grass carried: ${plural(r.grassNights, 'night')} for all ${r.horses} horses.`;
+  return `${lb(state.stores.grass)} of cut grass carried: less than a night for all ${r.horses} horses.`;
+}
+
+export function foodRunwayText(r: Runway, rations: string): string {
+  const days = Math.floor(r.foodDays + 1e-9);
+  return `About ${plural(days, 'day')} at ${rations} rations; home along the trail is about ${plural(r.homeDays, 'day')}.${r.foodShort ? ' Too little to spare: hunt, or cut the rations.' : ''}`;
+}
+
+/** Whether the horses' runway is worth a line on the plan: one is weakening, or losing condition here. */
+export function horsesMatter(r: Runway): boolean {
+  return !!r.weakest && (r.weakest.condition < 60 || r.rate < 0);
+}
+
+/**
+ * The plan sheet's runway: food against the way home, and, when it matters, the weakest horse
+ * against tonight's camp and the cut grass. Short lines, under the camp they describe.
+ */
+export function RunwayLines({ state, night }: { state: GameState; night: string }) {
+  const r = runway(state, night);
+  const node = state.map.nodes[night]!;
+  const days = Math.floor(r.foodDays + 1e-9);
+  const food = `${plural(days, 'day')} at ${state.rations} rations · home about ${plural(r.homeDays, 'day')}${r.foodShort ? ' · too little to spare' : ''}`;
+  let horses: string | null = null;
+  if (horsesMatter(r) && r.weakest) {
+    const at = night === state.camp ? 'here' : `at ${node.label ?? 'the new camp'}`;
+    const per = r.rate >= 0 ? `+${r.rate} a night ${at}` : `${r.rate} a night ${at}`;
+    const spent = r.nightsToSpent === 0 ? ' · spent' : r.nightsToSpent ? ` · spent in about ${plural(r.nightsToSpent, 'night')}` : '';
+    horses = `${shortName(r.weakest.name)} ${Math.round(r.weakest.condition)} · ${horseNightPlace(node).toLowerCase()}, ${per}${spent}`;
+    if (r.horses && state.stores.grass >= 1) horses += ` · cut grass for ${r.grassNights > 0 ? plural(r.grassNights, 'night') : 'under a night'}`;
+  }
+  return (
+    <dl class="facts runway">
+      <div>
+        <dt>Food</dt>
+        <dd class={r.foodShort ? 'is-warn' : ''}>{food}</dd>
+      </div>
+      {horses && (
+        <div>
+          <dt>Horses</dt>
+          <dd class={r.rate < 0 && (r.nightsToSpent ?? 99) <= 5 ? 'is-warn' : ''}>{horses}</dd>
+        </div>
+      )}
+    </dl>
   );
 }

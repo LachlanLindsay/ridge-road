@@ -5,7 +5,9 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { getUnits } from './format';
 import { distToSeg, hachurePath, lerp, targetPoint, type Bounds, type MapDraw, type NodeDraw, type P, type SegDraw } from './geometry';
-import { BRUSH, cliffLine, cover, grassMark, haze, hazeStep, mapLabel, NEPEAN, placeLabels, rockHoleMark, streamMark, swampMark, type LabelItem, type Rect } from './mapArt';
+import { BRUSH, cliffLine, cover, haze, hazeStep, mapLabel, NEPEAN, placeLabels, rockHoleMark, streamMark, swampMark, type LabelItem, type Rect } from './mapArt';
+import { MapLegend } from './MapKey';
+import { Cover, FeedDot, leadArrow } from './mapMarks';
 import { SizeButtons, type MapSize } from './MapSize';
 
 interface View {
@@ -35,6 +37,28 @@ function uiScale(w: number, h: number): number {
 }
 const f = (v: number) => (Math.round(v * 1000) / 1000).toString();
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+const LEGEND_KEY = 'ridge-road.legend.v1';
+
+/** Whether the docked key is open: the player's last choice, else open where the map has room for it. */
+function readLegend(wide: boolean): boolean {
+  try {
+    const v = localStorage.getItem(LEGEND_KEY);
+    if (v === 'open') return true;
+    if (v === 'closed') return false;
+  } catch {
+    // A convenience only.
+  }
+  return wide;
+}
+
+function writeLegend(open: boolean) {
+  try {
+    localStorage.setItem(LEGEND_KEY, open ? 'open' : 'closed');
+  } catch {
+    // A convenience only.
+  }
+}
+
 const reducedMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function kLimits(draw: MapDraw, w: number, h: number) {
@@ -117,6 +141,11 @@ export function MapView({ draw, campKey, selected, target, moveTo, onTap, onKey,
   const anim = useRef<number | null>(null);
   const pointers = useRef(new Map<number, P>());
   const gesture = useRef<{ start: P; t0: number; moved: boolean; dist?: number; mid?: P } | null>(null);
+  const [legend, setLegend] = useState<boolean | null>(null);
+  const showLegend = (open: boolean) => {
+    setLegend(open);
+    writeLegend(open);
+  };
 
   useLayoutEffect(() => {
     const el = wrap.current!;
@@ -131,6 +160,7 @@ export function MapView({ draw, campKey, selected, target, moveTo, onTap, onKey,
   useEffect(() => {
     if (!size.w || !size.h) return;
     if (!viewRef.current) setView(frameCamp(draw, size.w, size.h));
+    if (legend === null) setLegend(readLegend(size.w >= 640));
   }, [size.w, size.h]);
 
   // After each half, keep the camp and the work front in view: pan when they have drifted toward
@@ -375,9 +405,10 @@ export function MapView({ draw, campKey, selected, target, moveTo, onTap, onKey,
           <span>N</span>
         </div>
         {v && <ScaleBar k={v.k} />}
+        {legend && box && <MapLegend view={{ draw, box, target: !!targetPoint(draw, target), moveTo: !!moveTo }} onWhole={onKey} onClose={() => showLegend(false)} />}
         <SizeButtons size={mapSize} onSize={onSize} />
         <div class="map-buttons">
-          <button type="button" class="map-btn" onClick={onKey} aria-label="Map key">
+          <button type="button" class={legend ? 'map-btn is-on' : 'map-btn'} onClick={() => showLegend(!legend)} aria-label={legend ? 'Hide the map key' : 'Show the map key'} aria-pressed={!!legend}>
             Key
           </button>
           <button type="button" class="map-btn" onClick={() => zoomBy(1.6)} aria-label="Zoom in">
@@ -408,22 +439,6 @@ function River({ k }: { k: number }) {
       <text class="map-river-label" font-size={12 / k} transform={`translate(${f(0.52)} ${f(1.75)}) rotate(-84)`}>
         Nepean River
       </text>
-    </g>
-  );
-}
-
-export function Cover({ art, k }: { art: NonNullable<ReturnType<typeof cover>>; k: number }) {
-  return (
-    <g class="cover">
-      {art.brush.map((r) => (
-        <path key={`${r.standing}:${r.w}:${r.dash}`} class={r.standing ? 'cover-brush' : 'cover-brush cover-brush-cut'} d={r.d} stroke-width={r.w} stroke-dasharray={r.dash} />
-      ))}
-      <path class="cover-rocks" d={art.rocks} stroke-width={0.75 / k} />
-      <path class="cover-gum-wood" d={art.gumWood} stroke-width={0.9 / k} />
-      <path class="cover-gum-crown" d={art.gumCrowns} />
-      <path class="cover-heath" d={art.heath} stroke-width={0.8 / k} />
-      <path class="cover-meadow" d={art.meadow} stroke-width={0.9 / k} />
-      <path class="cover-marsh" d={art.marsh} stroke-width={0.8 / k} />
     </g>
   );
 }
@@ -478,7 +493,7 @@ function Seg({ s, k, selected }: { s: SegDraw; k: number; selected: boolean }) {
     out.push(line(s.a, s.b, 'seg-seen', 1.3, `${px(1.5)} ${px(3.5)}`));
     if (s.marked > 0.001) out.push(line(s.a, lerp(s.a, s.b, s.marked), 'seg-marked', 1.8, `${px(6)} ${px(4)}`));
     if (s.open > 0.001) out.push(line(s.a, lerp(s.a, s.b, s.open), s.crossed ? 'seg-crossed' : 'seg-open', s.crossed ? 2.6 : 3.4, s.crossed ? `${px(0.1)} ${px(5)}` : undefined));
-    if (s.lead && !s.farKnown) out.push(<circle cx={f(s.b.x)} cy={f(s.b.y)} r={px(4)} class="lead-end" stroke-width={px(1.4)} />);
+    if (s.lead && !s.farKnown) out.push(<path d={leadArrow(s.a, s.b, px)} class="lead-end" stroke-width={px(1.6)} />);
   }
   return <g>{out}</g>;
 }
@@ -528,7 +543,7 @@ function Node({ n, k, selected, camp }: { n: NodeDraw; k: number; selected: bool
       out.push(<path class="glyph-goal" stroke-width={px(1.3)} d={`M${at(-13, 4)}Q${at(0, -18)} ${at(13, 4)}Z`} />);
       break;
   }
-  // Water above the point, grass to its left, a cache below: the label goes to the right.
+  // Water above the point and a cache below; the point itself shows the feed. The label goes to the right.
   if (n.feature !== 'ford') {
     if (n.water === 'swamp' || n.water === 'lagoon') {
       const m = swampMark(pt(0, -9.5), px(1), n.water === 'lagoon');
@@ -540,11 +555,9 @@ function Node({ n, k, selected, camp }: { n: NodeDraw; k: number; selected: bool
       out.push(<path class="glyph-rock" stroke-width={px(0.9)} d={m.rock} />, <path class="glyph-rockhole" d={m.pool} />);
     }
   }
-  if (n.grass === 'good' || n.grass === 'tall') out.push(<path class="glyph-grass" stroke-width={px(1.2)} d={grassMark(pt(-10, 4), px(1), n.grass === 'tall')} />);
-  else if (n.grass === 'rushy') out.push(<path class="glyph-grass glyph-grass-rushy" stroke-width={px(1)} d={grassMark(pt(-9, 4), px(0.75), false)} />);
   if (n.cache) out.push(<rect x={f(n.p.x - px(3))} y={f(n.p.y + px(6))} width={f(px(6))} height={f(px(5))} class="glyph-cache" stroke-width={px(1.2)} />);
   if (n.horsesLeft) out.push(<path class="glyph-horse" stroke-width={px(1.6)} d={`M${at(-12, -5)}a${f(px(3))} ${f(px(3))} 0 1 1 ${f(px(6))} 0`} />);
-  out.push(<circle cx={f(n.p.x)} cy={f(n.p.y)} r={px(n.reached ? 3 : 2.6)} class={n.reached ? 'node node-reached' : 'node'} stroke-width={px(1.2)} />);
+  out.push(<FeedDot n={n} k={k} />);
   return <g>{out}</g>;
 }
 

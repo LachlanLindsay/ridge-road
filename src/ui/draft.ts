@@ -5,9 +5,20 @@ import {
   canWork,
   capacity,
   chooseTarget,
+  feedOf,
+  huntHabitat,
+  huntOdds,
+  runway,
+  stepsToTarget,
+  walkedAhead,
+  withParty,
+  horseReach,
+  hoursAvailable,
   isAway,
   isBusy,
   loadLb,
+  moveHours,
+  suggestCampMove,
   targetSpent,
   validTarget,
   type Cache,
@@ -147,14 +158,15 @@ export function normalizeDraft(s: GameState, prev: Draft | null): Draft {
   else if (resting) tasks = Object.fromEntries(s.men.map((m) => [m.id, 'rest' as Task]));
   else tasks = { ...roster };
   fitTasks(s, tasks, roster);
-  if (fresh && !resting && s.leg === 'out') minderCutsGrass(s, tasks);
+  if (fresh && !resting && s.leg === 'out') noGrassToCut(s, tasks);
   let target = prev?.target ?? null;
   if (target && !validTarget(s, target)) target = null;
   if (fresh && targetSpent(s, target)) target = chooseTarget(s);
   if (!target) target = chooseTarget(s);
-  let moveTo = fresh || resting ? null : (prev?.moveTo ?? null);
+  // A new half moves the camp forward with the work, as the suggestion has it; "Stay instead" undoes it.
+  let moveTo = resting ? null : fresh ? campFor(s, target) : (prev?.moveTo ?? null);
   if (moveTo === s.camp) moveTo = null;
-  const advance = resting ? false : fresh ? !!target && canAdvance(s, s.camp, target) : (prev?.advance ?? false);
+  const advance = resting ? false : fresh ? !!target && canAdvance(s, moveTo ?? s.camp, target) : (prev?.advance ?? false);
   const out: Draft = { key, roster, tasks, target, moveTo, advance, blaze: prev?.blaze ?? true, halt: fresh ? false : (prev?.halt ?? false) };
   if (!fresh && prev?.cache) out.cache = prev.cache;
   // Horses that cannot carry the load cannot push on, unless the plan leaves the excess here.
@@ -175,21 +187,34 @@ export function setTask(s: GameState, d: Draft, m: Member, next: Task): Draft {
 }
 
 /**
- * Both Camp and Grass mind the horses. Where the grass is good and there is room to carry it, one
- * minder other than Blaxland cuts grass for the dry camps ahead; elsewhere grass cutters go back to
- * minding camp.
+ * Both Camp and Grass mind the horses. Where the grass is not worth cutting to carry, a standing
+ * Grass order goes back to minding camp. Nobody is put on Grass unasked: the plan sheet offers it
+ * where it matters (see grassOffer).
  */
-function minderCutsGrass(s: GameState, tasks: Partial<Record<MemberId, Task>>) {
+function noGrassToCut(s: GameState, tasks: Partial<Record<MemberId, Task>>) {
   const node = s.map.nodes[s.camp]!;
-  const good = node.grass === 'good' || node.grass === 'tall';
-  const room = capacity(s) - loadLb(s.stores) > T.horses.night.grassLbPerHorse;
-  if (good && room) {
-    if (s.men.some((m) => tasks[m.id] === 'grass')) return;
-    const minder = s.men.find((m) => m.id !== 'blaxland' && tasks[m.id] === 'camp' && available(s, m) !== 'away' && available(s, m) !== 'busy');
-    if (minder) tasks[minder.id] = 'grass';
-  } else {
-    for (const m of s.men) if (tasks[m.id] === 'grass') tasks[m.id] = 'camp';
-  }
+  if (node.grass === 'good' || node.grass === 'tall') return;
+  for (const m of s.men) if (tasks[m.id] === 'grass') tasks[m.id] = 'camp';
+}
+
+/**
+ * The camp move that goes with a target: the suggestion for it, when the horses can carry the
+ * load and get there this half. Null keeps the camp where it is.
+ */
+export function campFor(s: GameState, target: string | null, cache?: Cache): string | null {
+  if (!target || s.leg !== 'out' || restDay(s)) return null;
+  if (overload(s) > 1e-6 && !cache) return null;
+  const to = suggestCampMove(s, target);
+  if (!to) return null;
+  const steps = horseReach(s.map, s.camp, s.stores).get(to);
+  if (!steps || moveHours(s, steps) > hoursAvailable(s) + 1e-6) return null;
+  return to;
+}
+
+/** A new target, with the camp move that goes with it and whether the party can push on. */
+export function withTarget(s: GameState, d: Draft, target: string): Draft {
+  const moveTo = campFor(s, target, d.cache);
+  return { ...d, target, moveTo, advance: canAdvance(s, moveTo ?? s.camp, target) && !(overload(s) > 1e-6 && !d.cache) };
 }
 
 export function toPlan(s: GameState, d: Draft): HalfDayPlan {
@@ -213,4 +238,96 @@ export function taskCounts(s: GameState, d: Draft): Partial<Record<Task, number>
     out[t] = (out[t] ?? 0) + 1;
   }
   return out;
+}
+
+/** A suggestion the plan sheet puts to the player: what it says, its button, and the plan it makes. */
+export interface Offer {
+  id: 'grass' | 'hunt';
+  text: string;
+  action: string;
+  apply: (d: Draft) => Draft;
+}
+
+function nameOf(m: Member): string {
+  return m.name.startsWith('Servant') ? m.name : (m.name.split(' ').slice(-1)[0] ?? m.name);
+}
+
+/** Up to n fit men to take off their work for a half, servants first, never Blaxland at camp. */
+function spareHands(s: GameState, d: Draft, n: number): Member[] {
+  const fit = s.men.filter((m) => available(s, m) === 'yes' && !m.condition);
+  const rank = (m: Member) => {
+    const t = d.tasks[m.id] ?? 'camp';
+    const base = t === 'camp' ? 0 : t === 'rest' ? 1 : t === 'cut' ? 2 : 9;
+    return base + (m.leader ? 10 : 0);
+  };
+  return fit
+    .filter((m) => m.id !== 'blaxland' && rank(m) < 9 + 10 && (d.tasks[m.id] ?? 'camp') !== 'scout')
+    .sort((a, b) => rank(a) - rank(b))
+    .slice(0, n);
+}
+
+/**
+ * Cut grass before leaving good grass behind: offered at a full-feed camp when the camp is about to
+ * move somewhere poorer, or the ground already walked toward the flag has no good grass. What the
+ * 1813 party did at the forest tract before going into the brush.
+ */
+export function grassOffer(s: GameState, d: Draft): Offer | null {
+  if (s.leg !== 'out' || restDay(s) || !d.target) return null;
+  const camp = s.map.nodes[s.camp]!;
+  const herd = s.horses.filter(withParty).length;
+  if (!herd || feedOf(camp.grass) !== 'full') return null;
+  if (s.men.some((m) => d.tasks[m.id] === 'grass')) return null;
+  const perNight = T.horses.night.grassLbPerHorse * herd;
+  if (s.stores.grass >= 2 * perNight) return null;
+  if (capacity(s) - loadLb(s.stores) < T.horses.night.grassLbPerHorse) return null;
+  // Bare ground ahead: a camp with no feed at all before any good grass, on the ground already
+  // walked toward the flag or where the camp is moving. Rushy grass alone is a slow loss, not this.
+  const moving = d.moveTo ? s.map.nodes[d.moveTo]! : null;
+  const ahead = walkedAhead(s, stepsToTarget(s.map, s.camp, d.target));
+  const firstGood = ahead.findIndex((n) => feedOf(n.grass) === 'full');
+  const bare = (firstGood < 0 ? ahead : ahead.slice(0, firstGood)).some((n) => feedOf(n.grass) === 'none') || (!!moving && feedOf(moving.grass) === 'none');
+  if (!bare) return null;
+  const hands = spareHands(s, d, 2);
+  if (!hands.length) return null;
+  const names = hands.map(nameOf).join(' and ');
+  return {
+    id: 'grass',
+    text: `No feed for the horses on the ground walked ahead. On 17 May 1813 the party loaded the horses “with as much grass as could be put on them” before going into the brush.`,
+    action: moving ? `Stay here and cut grass: ${names}` : `Cut grass here: ${names}`,
+    apply: (x) => {
+      const tasks = { ...x.tasks };
+      for (const m of hands) tasks[m.id] = 'grass';
+      return { ...x, tasks, moveTo: null, advance: false };
+    },
+  };
+}
+
+function inTen(p: number): string {
+  return `about ${Math.max(1, Math.round(p * 10))} in 10`;
+}
+
+/**
+ * Hunt when the food will not see the party home with days to spare, from a camp where hunting is
+ * good (forest or grass). On the way home that means halting for the half.
+ */
+export function huntOffer(s: GameState, d: Draft): Offer | null {
+  const home = s.leg === 'home';
+  const camp = home || !d.moveTo ? s.camp : d.moveTo;
+  const r = runway(s, camp);
+  if (!r.foodShort || s.stores.shots < 1) return null;
+  if (s.men.some((m) => d.tasks[m.id] === 'hunt' && (!home || d.halt))) return null;
+  if (huntHabitat(s.map, camp) !== 'good') return null;
+  const fit = s.men.filter((m) => available(s, m) === 'yes' && !m.condition);
+  const hunter = fit.find((m) => m.id === 'burne') ?? spareHands(s, d, 1)[0];
+  if (!hunter) return null;
+  const p = huntOdds(s, hunter, camp);
+  const days = Math.floor(r.foodDays + 1e-9);
+  const poor = T.hunting.man.poor * (hunter.id === 'burne' ? T.hunting.burneFactor : 1);
+  const who = hunter.id === 'burne' ? 'Burne' : 'A hunter';
+  return {
+    id: 'hunt',
+    text: `Food for about ${days} day${days === 1 ? '' : 's'}; home is about ${r.homeDays}. ${who} brings in a kangaroo ${inTen(p)} half-days from a camp like this, ${inTen(poor)} in brush, heath or swamp.`,
+    action: home ? `Halt and send ${nameOf(hunter)} hunting` : `Send ${nameOf(hunter)} hunting`,
+    apply: (x) => ({ ...x, halt: home ? true : x.halt, tasks: { ...x.tasks, [hunter.id]: 'hunt' } }),
+  };
 }

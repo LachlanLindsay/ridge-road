@@ -127,10 +127,10 @@ export const TERRAIN_LABEL: Record<Terrain, string> = {
 };
 
 export const GRASS_LABEL: Record<Grass, string> = {
-  none: 'None',
+  none: 'None, no feed',
   rushy: 'Rushy, half feed',
-  good: 'Good',
-  tall: 'Tall',
+  good: 'Good, full feed',
+  tall: 'Tall, full feed',
 };
 
 export function waterLabel(water: Water, gullyFt?: number): string {

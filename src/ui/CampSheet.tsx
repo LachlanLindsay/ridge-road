@@ -1,6 +1,7 @@
 // The evening in camp: rations, tea, rest, shoes, grass, caches and the turn for home.
 import { useState } from 'preact/hooks';
 import {
+  runway,
   T,
   dailyFood,
   foodLb,
@@ -13,7 +14,7 @@ import {
   type Rations,
 } from '../engine';
 import { GRASS_LABEL, horseWaterAt, itemText, lb, num, plural, waterLabel } from './format';
-import { Horses, ManRow, Report, Stepper, Toggle } from './parts';
+import { Horses, ManRow, Report, Stepper, Toggle, foodRunwayText, horseNightPlace, horseRunwayText } from './parts';
 import { PlaceInfo } from './PlaceInfo';
 
 interface Props {
@@ -64,8 +65,8 @@ export function CampSheet({ state, onMakeCamp, selected, setSelected }: Props) {
   const horseWater = horseWaterAt(node.water);
   const goodGrass = node.grass === 'good' || node.grass === 'tall';
   const food = foodLb(st);
-  const tonight = dailyFood(state, rations);
-  const daysLeft = tonight > 0 ? food / tonight : 0;
+  const run = runway(state, state.camp, rations);
+  const horseLine = horseRunwayText(state, run, `${horseNightPlace(node)} here`);
   const men = state.men.filter((m) => !isAway(state, m));
   const horsesWithUs = state.horses.filter((h) => h.leftAt === null).length;
   const grassNights = Math.floor(st.grass / T.horses.night.grassLbPerHorse);
@@ -117,11 +118,17 @@ export function CampSheet({ state, onMakeCamp, selected, setSelected }: Props) {
           </div>
           <div>
             <dt>Food</dt>
-            <dd class={daysLeft < 7 ? 'is-warn' : ''}>
+            <dd class={run.foodShort ? 'is-warn' : ''}>
               {lb(food)}
-              {freshLb(st) > 0 ? `, ${lb(freshLb(st))} of it fresh meat` : ''}. About {plural(Math.round(daysLeft), 'day')} at {rations} rations.
+              {freshLb(st) > 0 ? `, ${lb(freshLb(st))} of it fresh meat` : ''}. {foodRunwayText(run, rations)}
             </dd>
           </div>
+          {horseLine && (
+            <div>
+              <dt>Horses</dt>
+              <dd class={run.rate < 0 && (run.nightsToSpent ?? 99) <= 5 ? 'is-warn' : ''}>{horseLine}</dd>
+            </div>
+          )}
         </dl>
 
         <fieldset class="segmented">
@@ -176,26 +183,28 @@ export function CampSheet({ state, onMakeCamp, selected, setSelected }: Props) {
           />
         )}
 
-        <div class="disclosure">
-          <button type="button" class="link-btn" aria-expanded={cacheOpen} onClick={() => setCacheOpen(!cacheOpen)}>
-            {cacheOpen ? 'Hide supplies to leave here' : 'Leave supplies here for the way home'}
-          </button>
-          {cacheOpen && (
-            <div class="cache-list">
-              {CACHE_ITEMS.filter(({ item }) => st[item] > 0).map(({ item, step, label }) => (
-                <Stepper
-                  key={item}
-                  id={`cache-${item}`}
-                  value={Math.round(cache[item] ?? 0)}
-                  max={Math.floor(st[item])}
-                  step={step}
-                  onChange={(v) => setCache({ ...cache, [item]: v })}
-                  label={label}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        {state.leg === 'out' && !atGoal && (
+          <div class="disclosure">
+            <button type="button" class="link-btn" aria-expanded={cacheOpen} onClick={() => setCacheOpen(!cacheOpen)}>
+              {cacheOpen ? 'Hide supplies to leave here' : 'Leave supplies here for the way home'}
+            </button>
+            {cacheOpen && (
+              <div class="cache-list">
+                {CACHE_ITEMS.filter(({ item }) => st[item] > 0).map(({ item, step, label }) => (
+                  <Stepper
+                    key={item}
+                    id={`cache-${item}`}
+                    value={Math.round(cache[item] ?? 0)}
+                    max={Math.floor(st[item])}
+                    step={step}
+                    onChange={(v) => setCache({ ...cache, [item]: v })}
+                    label={label}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {state.leg === 'out' &&
           (atGoal ? (

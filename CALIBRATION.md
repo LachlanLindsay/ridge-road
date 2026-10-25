@@ -102,6 +102,33 @@ Played on a laptop the way a Year 5 class would, the defaults lost: a player who
 
 Log lines name items ("87 lb of flour", not "87 flour"); the descent and the climb home are narrated; scouts who stop at an unread fork say so; the journal line carries the day's finds, dead ends and views.
 
+## Changes after the first outside tester (24 October 2026)
+
+The first player outside the project crossed on day 23 with one horse of four and no food left at the ford, and could not tell which camps had grass. 28 of the 50 camps on the route are rushy, half feed, and the map drew rushy grass as a smaller copy of the good-grass mark, with only good grass in the key. These changed:
+
+| Rule | Was | Now |
+| --- | --- | --- |
+| "A fine stream" (region 4) | Good grass | Rushy. Blaxland's 22 May entry gives the high ground only "short coarse grass", and on 28 May the horses "tasted fresh grass for the first time since they left the forest land". The route now has no good grass from the forest tract to the descent, as the journal has it (`test/runway.test.ts`) |
+| Grass on the map | A tuft beside the point; rushy a fainter tuft | The point itself: solid green full feed, half green half feed, empty no feed, a small pencil ring for a point seen only from a lookout |
+| Cut grass | A minder was put on Grass at every good-grass camp, unasked | Nobody is put on Grass unasked. At a good-grass camp, when the ground walked toward the flag (or the camp's next stop) has no feed before any good grass, the plan offers it with the 17 May 1813 line; "Stay here and cut grass" keeps the camp and takes up to two men, servants first, never Blaxland |
+| Hunting | Never suggested | When food at these rations will not cover the days home plus three, at a forest or grass camp with shot left, the plan offers a hunt with the odds (Burne first). On the way home that means halting |
+| Camp move | A "Move camp forward" button, pressed each half | The suggested move is filled in with the target each half and whenever the target changes; "Stay instead" undoes it |
+| Runway | Food in pounds and days | Food in days against the days home along the trail; the weakest horse against tonight's camp ("spent in about 8 nights") and the cut grass in nights, on the plan and camp sheets (`engine/forecast.ts`) |
+| Lightening loads on the way home | "Left here for the way home", and a cache mark | "Abandon": the goods are dropped, with no cache to collect. The camp sheet no longer offers to leave supplies on the way home or at the goal |
+| Map key | A full sheet over the map; an unexplored ridge was the same dotted line as a seen one with a 4 px ring | Key opens a legend docked on the map listing only the marks in view, with the whole key a tap away; an unexplored ridge ends in an open arrow into the haze |
+
+Historical bot, 200 seeds, before and after the stream correction: reached the goal 90.0% → 84.5%, median day 22.5 → 22.0, horses at the descent 48.7 → 45.2, all repulses by horses. M1 acceptance still passes.
+
+A player who trusts the plan sheet (its draft each half, Go, the first live choice on every card, the camp sheet's defaults), 60 seeds each:
+
+| | Easy | Historical |
+| --- | --- | --- |
+| 24 October build, pressing "Move camp forward" whenever offered | 60 crossed · goal day 17 · 3.8 horses home | 57 crossed · day 19 · 3.6 |
+| This build, ignoring the offers | 57 crossed · day 17 · 2.6 horses | 39 crossed · day 19 · 2.0 |
+| This build, taking the offers | 60 crossed · day 17 · 3.95 horses | 60 crossed · day 19 · 3.8 |
+
+Grass is now a decision with a cost the sheet states. The pace is unchanged: the fork, Sunday and the dew are still made for the player, which is the open "nobody can lose" item.
+
 ## Re-running
 
 ```sh

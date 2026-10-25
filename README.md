@@ -17,6 +17,10 @@ A tap-driven expedition sim of the 1813 crossing of the Blue Mountains: outfit t
 
 Played on a laptop as a primary-school class would (see the project doc `primary-school-playtest.md`): the map now frames the same few miles on every screen and draws them bigger on a laptop; Easy is the default; the first-day card comes before the first event; tapping a man opens a task picker; the camp suggestion looks for water and grass and says what the camp has; a chilled man kept at camp stays there until he is well; caches keep the blankets and the food for the way home, and the men carry a cache home when the horses cannot; the milestone cards (the view back, the high heath, the way down, the sugarloaf hill) open by themselves; the journal runs oldest first, takes the player's own line for each day, and prints; the end screen keeps the journal and says what to do differently after a repulse; a finished expedition stays on the title until a new one sets out; the menu has metric units and an expedition code; the map key is in plain words. `CALIBRATION.md` lists the engine rules that changed.
 
+## After the first outside tester
+
+The map shows feed in each camp's point (full, half, none), the key docks on the map and lists only what is in view, unexplored ridges end in an arrow, and "A fine stream" has the coarse grass Blaxland describes. The plan and camp sheets give the runway: food in days against the days home, and the weakest horse against tonight's camp. The plan offers grass cutting before bare ground and a hunt when food runs short, instead of setting them silently; the camp move comes with the target. Nothing is left "for the way home" once on it. `CALIBRATION.md` has the numbers.
+
 ## Play on your iPhone over Tailscale
 
 On your Mac, with Node 20 or later and Tailscale running:
@@ -70,6 +74,7 @@ src/engine/             the pure, deterministic engine
   map.ts world.ts       map build, fog of war, Lawson's hints, lookouts, dead ends
   plan.ts               validatePlan and plan helpers
   advice.ts             suggestions from what the player can see: next lead, camp move, push on
+  forecast.ts           the runway: food against the way home, a night's effect on the horses, hunt odds
   half.ts               resolveHalfDay: camp moves, the advance, scouting, cutting, camp tasks, the way home
   night.ts day.ts       endDay: rations, horses, recovery, illness, morale; dawn and weather
   events.ts             event cards and chooseEvent
@@ -79,9 +84,11 @@ src/ui/                 the Preact app
   MapView.tsx           the SVG survey plot: pan, pinch, tap to select, labels placed clear of each other
   mapArt.ts             the map's engraving (pure, tested): haze over unknown country, brush, trees,
                         heath and swamp along the ridges, cliff lines, water marks, the label placer
-  MapKey.tsx            the map key, drawn by the same code as the map
+  MapKey.tsx            the map key, drawn by the same code as the map, and the legend docked on it
+  mapMarks.tsx          marks shared by the map and its key: cover, feed in a point, the lead arrow
   geometry.ts           what the map may show under fog of war (pure, tested)
-  draft.ts              the plan sheet's draft: standing orders, rest days, illness, caches (pure, tested)
+  draft.ts              the plan sheet's draft: standing orders, rest days, illness, caches, the camp
+                        move with the target, the grass and hunt offers (pure, tested)
   Outfit.tsx            choosing the party and stores; outfitting.ts packs the horses (pure, tested)
   MapSize.tsx           the map's minimise and maximise controls and the drag handle
   Info.tsx people.ts     cards for the men, horses and dogs (traits with live numbers, 1813 history), and
