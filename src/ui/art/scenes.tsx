@@ -6,7 +6,7 @@ import { useMemo } from 'preact/hooks';
 import { useInfo } from '../Info';
 import { outfit1813, packHorses } from '../outfitting';
 import type { Who } from '../people';
-import { brinkFace, fallAway, farGum, gum, hills, ledge, sky, smokePlume, stones, type Scene } from './compose';
+import { brinkFace, fallAway, farGum, gum, hills, ledge, sky, smokePlume, stones, underCliff, type Scene } from './compose';
 import { emptyFigure, figureMarks, procession, standing, type Mark, type Pack, type PartyCounts, type Slot } from './figures';
 import { areaPath, bandPath, canopy, cliffFace, cloudBank, contourHatch, curve, grassTree, gumTree, linePath, ridgeLine, rng, shift, smoke, smooth, taperEnds, tufts, waterHatch, yAt, type Curve } from './kit';
 
@@ -141,12 +141,13 @@ export function country(seed = 21, o: { watchers?: boolean } = {}): Scene {
   const H = 200;
   const m: Mark[] = [];
   sky(m, { seed, w: W, horizon: 80, clouds: [cloudBank(seed + 1, 250, 26, 150, 22, 7)] });
-  // The far wall: plateau, a pale cliff band, then dark forested slopes down into the valley.
+  // The far wall: plateau, a pale cliff band the whole way along, then dark slopes falling from its
+  // foot into the valley (no crest of their own, so the cliffs read as one wall).
   const topGround = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 64, amp: 3.5, scale: 120, plateau: 0.85, gullies: 4, gullyDepth: 6, gullyWidth: 10 });
   hills(m, topGround, H, 1, { seed: seed + 13, depth: 3, gap: 1 }, 0.8);
-  const cliff = cliffFace(topGround, { seed: seed + 12, height: 22, cover: 0.4, gap: 2.6, cap: 2 });
+  const cliff = cliffFace(topGround, { seed: seed + 12, height: 20, cover: 2, gap: 2.6, cap: 2, grain: 0.2, grainScale: 30 });
   m.push({ d: cliff.face, c: 'l1', w: 0.42 }, { d: cliff.beds, c: 'l1', w: 0.36 });
-  hills(m, cliff.foot, H, 3, { seed: seed + 15, depth: 54, gap: 1.05, growth: 0.1, bias: 0.4 }, 1.2);
+  underCliff(m, cliff.foot, H, 3, { seed: seed + 15, depth: 54, gap: 1.05, growth: 0.1, bias: 0.4 });
   // The valley floor, all forest: low rolling treelines one behind another, the crowns small and
   // close far off, larger near. Smoke rises from fires among the far ones, pale billowing plumes
   // leaning with the wind up over the far wall and thinning away, the nearer trees in front of their feet.
@@ -253,13 +254,13 @@ export function repulsed(counts: PartyCounts, seed = 41, loads?: Pack[]): Scene 
   const H = 180;
   const m: Mark[] = [];
   sky(m, { seed, w: W, horizon: 64, clouds: [cloudBank(seed + 1, 250, 24, 220, 24, 9)], reach: 0.95 });
-  // The far wall: the plateau, then a cliff band that rises and breaks, buttresses standing out
-  // between wooded gullies, its bedding showing; forest falling from its foot into the gorge.
+  // The far wall: the plateau, then a cliff band unbroken along the gorge, notched where gullies
+  // cut back, its bedding showing; the slope falling from its foot into the gorge.
   const wall = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 46, amp: 2.5, scale: 110, plateau: 0.85, gullies: 5, gullyDepth: 7, gullyWidth: 9 });
   hills(m, wall, H, 1, { seed: seed + 11, depth: 3, gap: 1 }, 0.9);
-  const cliff = cliffFace(wall, { seed: seed + 12, height: 34, cover: 0.62, gap: 2.3, cap: 2.2 });
+  const cliff = cliffFace(wall, { seed: seed + 12, height: 32, cover: 2, gap: 2.3, cap: 2.2, grain: 0.2, grainScale: 30 });
   m.push({ d: cliff.face, c: 'l2', w: 0.46 }, { d: cliff.beds, c: 'l2', w: 0.44 });
-  hills(m, cliff.foot, H, 2, { seed: seed + 13, depth: 30, gap: 1.2, growth: 0.14, bias: 0.25 }, 1.2);
+  underCliff(m, cliff.foot, H, 2, { seed: seed + 13, depth: 30, gap: 1.2, growth: 0.14, bias: 0.25 });
   // Far below, under a lane of mist, the tops of the trees on the floor of the gorge.
   const floor = [
     { y: 141, crown: 1.7, tone: 2 },

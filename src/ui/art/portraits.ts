@@ -7,7 +7,7 @@
 // to draw, and the figures stay silhouettes, as everywhere else in the game. Pure: each returns a
 // Scene of marks (see compose.ts).
 import type { MemberId } from '../../engine';
-import { bedroll, brinkFace, campfire, cask, fallAway, farGum, gum, gunOnGround, hills, kettle, ledge, sack, sky, type Scene } from './compose';
+import { bedroll, brinkFace, campfire, cask, fallAway, farGum, gum, gunOnGround, hills, kettle, ledge, sack, sky, underCliff, type Scene } from './compose';
 import { dog, emptyFigure, figureMarks, horse, horseDown, kangaroo, man, sitting, standing, type Figure, type Mark, type Pack } from './figures';
 import { areaPath, bandPath, canopy, cliffFace, cloudBank, curve, f, grassTree, linePath, ridgeLine, rng, shift, taperEnds, tufts, waterHatch, yAt, type Curve } from './kit';
 
@@ -119,9 +119,9 @@ function wentworth(seed = 421): Scene {
   // The far wall of the gorge: a tall broken cliff under the plateau, forest falling below it.
   const wall = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 48, amp: 4, scale: 70, plateau: 0.7, gullies: 4, gullyDepth: 10, gullyWidth: 9 });
   hills(m, wall, H, 1, { seed: seed + 11, depth: 2.5, gap: 1 }, 0.8);
-  const cliff = cliffFace(wall, { seed: seed + 12, height: 34, cover: 0.85, gap: 1.9, cap: 2 });
+  const cliff = cliffFace(wall, { seed: seed + 12, height: 34, cover: 2, gap: 1.9, cap: 2, grain: 0.2, grainScale: 30 });
   m.push({ d: cliff.face, c: 'l2', w: 0.5 }, { d: cliff.beds, c: 'l2', w: 0.42 });
-  hills(m, cliff.foot, H, 2, { seed: seed + 13, depth: 40, gap: 1.15, growth: 0.12, bias: 0.3 }, 1.1);
+  underCliff(m, cliff.foot, H, 2, { seed: seed + 13, depth: 40, gap: 1.15, growth: 0.12, bias: 0.3 });
   // Our ridge: the end of the track, the stumps and the cut brushwood behind him.
   const edgeX = 258;
   const ridge = curve(-4, edgeX + 12, (x) => 118 + (x / edgeX) * 4 + 1.1 * Math.sin(x / 10) + fallAway(x, edgeX, 1, 22, 26));
@@ -228,9 +228,9 @@ function waterCarrier(seed = 461): Scene {
   // The far wall of the gully.
   const far = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 52, amp: 2.5, scale: 110, plateau: 0.85 });
   hills(m, far, H, 1, { seed: seed + 11, depth: 3, gap: 1 }, 0.6);
-  const fc = cliffFace(far, { seed: seed + 12, height: 26, cover: 0.8, gap: 2.2, cap: 1.5 });
+  const fc = cliffFace(far, { seed: seed + 12, height: 26, cover: 2, gap: 2.2, cap: 1.5, grain: 0.2, grainScale: 30 });
   m.push({ d: fc.face, c: 'l1', w: 0.4 }, { d: fc.beds, c: 'l1', w: 0.34 });
-  hills(m, fc.foot, H, 2, { seed: seed + 13, depth: 40, gap: 1.3, growth: 0.12, bias: 0.25 }, 1);
+  underCliff(m, fc.foot, H, 2, { seed: seed + 13, depth: 40, gap: 1.3, growth: 0.12, bias: 0.25 });
   // The water hole at the bottom.
   const wh = waterHatch({ seed: seed + 14, from: 238, to: W + 4, top: 114, bottom: 128, gap: 1.6 });
   m.push({ d: `M226 113.4H${W + 4}V${H + 2}H226Z`, c: 'pp' }, { d: wh.light, c: 'lw', w: 0.45 }, { d: wh.dark, c: 'lw', w: 0.5 });

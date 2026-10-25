@@ -1,7 +1,7 @@
 // A plate for each journal card, shown at the head of the card and as its thumbnail in the
 // journal. The four milestone cards draw the party as it is (see scenes.tsx); the rest are fixed
 // scenes, drawn once from a seed. Pure: each returns a Scene of marks (see compose.ts).
-import { bedroll, campfire, cask, farGum, gum, hills, kettle, ledge, sack, sky, stonePile, tracks, type Scene } from './compose';
+import { bedroll, campfire, cask, farGum, gum, hills, kettle, ledge, sack, sky, stonePile, tracks, underCliff, type Scene } from './compose';
 import { dog, dogRunning, emptyFigure, figureMarks, kangaroo, lying, procession, standing, wombat, type Mark, type Pack, type PartyCounts } from './figures';
 import { areaPath, bandPath, canopy, cliffFace, cloudBank, contourHatch, curve, f, linePath, ridgeLine, rng, shift, tufts, waterHatch, yAt } from './kit';
 
@@ -484,9 +484,9 @@ function gullyWater(seed = 251): Scene {
   // The far wall of the gully.
   const far = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 46, amp: 2.5, scale: 110, plateau: 0.85 });
   hills(m, far, H, 1, { seed: seed + 11, depth: 3, gap: 1 }, 0.6);
-  const fc = cliffFace(far, { seed: seed + 12, height: 26, cover: 0.8, gap: 2.2, cap: 1.5 });
+  const fc = cliffFace(far, { seed: seed + 12, height: 26, cover: 2, gap: 2.2, cap: 1.5, grain: 0.2, grainScale: 30 });
   m.push({ d: fc.face, c: 'l1', w: 0.4 }, { d: fc.beds, c: 'l1', w: 0.34 });
-  hills(m, fc.foot, H, 2, { seed: seed + 13, depth: 40, gap: 1.3, growth: 0.12, bias: 0.25 }, 1);
+  underCliff(m, fc.foot, H, 2, { seed: seed + 13, depth: 40, gap: 1.3, growth: 0.12, bias: 0.25 });
   // The creek at the bottom of the gully.
   const wh = waterHatch({ seed: seed + 14, from: 160, to: W + 4, top: 128, bottom: 136, gap: 1.6 });
   m.push({ d: `M160 127.4H${W + 4}V${H + 2}H160Z`, c: 'pp' }, { d: wh.light, c: 'lw', w: 0.45 }, { d: wh.dark, c: 'lw', w: 0.5 });

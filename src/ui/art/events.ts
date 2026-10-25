@@ -3,7 +3,7 @@
 // night. Close-ups: the figures fill the strip, the sky is a band above them. Pure: each returns a
 // Scene of marks (see compose.ts).
 import type { EventId } from '../../engine';
-import { axeOnGround, bedroll, campfire, cask, farGum, gum, gunOnGround, hills, kettle, nightSky, sack, sky, type Scene } from './compose';
+import { axeOnGround, bedroll, campfire, cask, farGum, gum, gunOnGround, hills, kettle, nightSky, sack, sky, underCliff, type Scene } from './compose';
 import { dogRunning, emptyFigure, figureMarks, horse, horseDown, kangaroo, lying, man, sitting, standing, type Figure, type Mark } from './figures';
 import { areaPath, bandPath, canopy, cliffFace, cloudBank, curve, f, linePath, ridgeLine, rng, shift, taperEnds, tufts, yAt, type Curve } from './kit';
 
@@ -125,9 +125,9 @@ function dryCamp(seed = 131): Scene {
   // Across the gully, the far wall: plateau, a pale cliff band, then shadow down into the depths.
   const wall = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 30, amp: 2, scale: 120, plateau: 0.9 });
   hills(m, wall, H, 0, { seed: seed + 11, depth: 3, gap: 1.2 });
-  const cl = cliffFace(wall, { seed: seed + 12, height: 14, cover: 0.9, gap: 3.4, cap: 1.5 });
+  const cl = cliffFace(wall, { seed: seed + 12, height: 14, cover: 2, gap: 3.4, cap: 1.5, grain: 0.2, grainScale: 30 });
   m.push({ d: cl.face, c: 'l0', w: 0.4 }, { d: cl.beds, c: 'l0', w: 0.34 });
-  hills(m, cl.foot, H, 1, { seed: seed + 13, depth: 22, gap: 1.6, growth: 0.15, bias: 0.1 });
+  underCliff(m, cl.foot, H, 1, { seed: seed + 13, depth: 22, gap: 1.6, growth: 0.15, bias: 0.1 });
   // Our ridge, ending at the brink; below it, the face the men go down.
   const edgeX = 246;
   const top = curve(-4, edgeX, (x) => 58 + 0.8 * Math.sin(x / 13) + (x > edgeX - 8 ? ((x - edgeX + 8) / 8) ** 2 * 2 : 0));
