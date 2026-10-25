@@ -3,7 +3,7 @@
 // scenes, drawn once from a seed. Pure: each returns a Scene of marks (see compose.ts).
 import { bedroll, campfire, cask, farGum, gum, hills, kettle, ledge, sack, sky, stonePile, tracks, underCliff, type Scene } from './compose';
 import { dog, dogRunning, emptyFigure, figureMarks, kangaroo, lying, procession, standing, wombat, type Mark, type Pack, type PartyCounts } from './figures';
-import { areaPath, bandPath, canopy, cliffFace, cloudBank, contourHatch, curve, f, linePath, ridgeLine, rng, shift, tufts, waterHatch, yAt } from './kit';
+import { areaPath, bandPath, canopy, cliffFace, cloudBank, contourHatch, curve, f, linePath, noise1, ridgeLine, rng, shift, tufts, waterHatch, yAt } from './kit';
 
 const W = 400;
 const H = 140;
@@ -377,7 +377,13 @@ function wombats(seed = 231): Scene {
   return { w: W, h: H, marks: m };
 }
 
-/** The rock wall: the narrow ridge blocked by a mass of rock, the men shifting stones in its one gap. */
+/**
+ * The rock wall, 18 May: "a perpendicular mass of rock, nearly thirty feet high, extending across the
+ * whole breadth" of a narrow ridge with "deep precipices on each side". Seen from the side, one
+ * weathered sandstone outcrop standing on the ridge, four or five men high: its sides lean back and
+ * bulge, its top is ragged, its beds run through it end to end at a slight dip, and a single V-shaped
+ * cleft splits it from the top to the track, where a man is shifting stones. The party waits behind.
+ */
 function rockWall(seed = 241, counts: PartyCounts = { servants: 2, horses: 2, dogs: 1 }, loads?: Pack[]): Scene {
   const m: Mark[] = [];
   sky(m, { seed, w: W, horizon: 62, clouds: [cloudBank(seed + 1, 120, 22, 170, 16, 7)], reach: 0.8 });
@@ -386,94 +392,183 @@ function rockWall(seed = 241, counts: PartyCounts = { servants: 2, horses: 2, do
   hills(m, far, H, 0, { seed: seed + 11, depth: 8, gap: 1.6, growth: 0.25 });
   const low = ridgeLine({ seed: seed + 12, x0: -4, x1: W + 4, base: 80, amp: 3, scale: 70, plateau: 0.5 });
   hills(m, low, H, 1, { seed: seed + 13, depth: 12, gap: 1.6, growth: 0.25 });
-  // The ridge top, narrow, its near side a precipice falling out of the plate.
+  // The ridge top, narrow, its near side rounding over into a precipice that falls away into the
+  // haze below, the whole length of the plate.
   const ridge = curve(-4, W + 4, (x) => 110 + 0.8 * Math.sin(x / 17) + 0.4 * Math.sin(x / 5));
   m.push({ d: areaPath(ridge, H + 2), c: 'pp' });
-  const drop = cliffFace(ridge, { seed: seed + 20, height: 30, cover: 0.4, gap: 2, cap: 0.8 });
-  m.push({ d: drop.face, c: 'l2', w: 0.42 }, { d: drop.beds, c: 'l2', w: 0.36 });
-  m.push({ d: linePath(ridge), c: 'l4', w: 0.9 });
-  // The rock: weathered sandstone rising sheer from the ridge, bedded, scrub on top, a broken cleft
-  // through the middle where the track goes.
-  const wx0 = 214;
-  const wx1 = 346;
-  const gapX = 282;
+  contourHatch(ridge, { seed: seed + 19, depth: 4.5, gap: 0.8, growth: 0.25, bias: 0.6, bands: 2 }).forEach((d, i) => d && m.push({ d, c: `l4 o${i}`, w: 0.5 }));
   const n = rng(seed + 30);
-  const lumps = Array.from({ length: 14 }, () => n());
-  const topAt = (x: number) => {
-    const u = ((x - wx0) / (wx1 - wx0)) * 13;
-    const i = Math.floor(u);
-    const t = u - i;
-    const a = lumps[Math.max(0, Math.min(13, i))]!;
-    const b = lumps[Math.max(0, Math.min(13, i + 1))]!;
-    return 56 + (a + (b - a) * t * t * (3 - 2 * t)) * 7 + 0.4 * Math.sin(x / 1.7);
-  };
+  const fall: string[][] = [[], [], []];
+  for (let x = -4; x < W + 4; x += 1.1 + n() * 0.9) {
+    const y0 = yAt(ridge, x) + 4 + n() * n() * 5;
+    const len = 16 + 16 * n();
+    for (let y = y0; y < y0 + len; ) {
+      const y2 = y + 2 + n() * 5;
+      const t = (y - y0) / len;
+      if (n() > 0.15 + t * 0.4) fall[Math.min(2, Math.floor(t * 3))]!.push(`M${f(x)} ${f(y)}V${f(Math.min(y0 + len, y2))}`);
+      y = y2 + 0.8 + n() * 1.8;
+    }
+  }
+  fall.forEach((d, i) => d.length && m.push({ d: d.join(''), c: `l${3 - i} o${i}`, w: 0.42 }));
+  const beds: string[] = [];
+  for (const [k, dy] of [9, 17, 25].entries()) {
+    let x = -4 + n() * 30;
+    while (x < W + 4) {
+      const len = 30 + n() * 70;
+      beds.push(`M${f(x)} ${f(yAt(ridge, x) + dy + n())}Q${f(x + len / 2)} ${f(yAt(ridge, x + len / 2) + dy + (n() - 0.5) * 2)} ${f(x + len)} ${f(yAt(ridge, x + len) + dy + n())}`);
+      x += len + 8 + n() * 30;
+    }
+    m.push({ d: beds.splice(0).join(''), c: `l${3 - k} o${k}`, w: 0.4 });
+  }
+  m.push({ d: linePath(ridge), c: 'l4', w: 0.9 });
+  // The outcrop: its foot along the ridge from wx0 to wx1, its top a ragged line about four and a
+  // half men up, its sides leaning back about sixteen units and bulging, the cleft at gapX.
+  const wx0 = 212;
+  const wx1 = 374;
+  const gapX = 276;
   const base = (x: number) => yAt(ridge, x);
-  const courses: string[] = [];
-  const joints: string[] = [];
-  const shade: string[] = [];
-  for (const [x0, x1, lean0, lean1] of [
-    [wx0, gapX - 3.5, 4, 1],
-    [gapX + 3.5, wx1, 1, 5],
-  ] as const) {
-    // The outline: a leaning, broken side up to a rounded, ragged top and down the other side.
-    const outline: [number, number][] = [];
-    const sideL = (y: number) => x0 + lean0 * ((base(x0) - y) / (base(x0) - topAt(x0))) ** 1.6 + (n() - 0.5) * 0.8;
-    const sideR = (y: number) => x1 - lean1 * ((base(x1) - y) / (base(x1) - topAt(x1))) ** 1.6 + (n() - 0.5) * 0.8;
-    for (let y = base(x0); y > topAt(x0) + 3; y -= 2) outline.push([sideL(y), y]);
-    const xa = x0 + lean0;
-    const xb = x1 - lean1;
-    for (let x = xa; x <= xb; x += 1) {
-      const round = Math.min(1, (x - xa) / 4, (xb - x) / 4);
-      outline.push([x, topAt(x) + (1 - round) * 3]);
-    }
-    for (let y = topAt(x1) + 3; y < base(x1); y += 2) outline.push([sideR(y), y]);
-    m.push({ d: outline.map(([x, y], i) => `${i ? 'L' : 'M'}${f(x)} ${f(y)}`).join('') + 'Z', c: 'pp' });
-    m.push({ d: outline.map(([x, y], i) => `${i ? 'L' : 'M'}${f(x)} ${f(y)}`).join(''), c: 'l4', w: 0.95 });
-    // Scrub along the top.
-    const crest = curve(xa + 2, xb - 2, (x) => topAt(x) + 0.4, 1);
-    const scrubTop = canopy(crest, { seed: seed + 33 + x0, size: 3.4, sparse: 0.25 });
-    m.push({ d: bandPath(scrubTop, crest), c: 'f3' });
-    // Bedding: wavering, broken courses; a few upright joints; shade on the side away from the light.
-    for (let y = topAt((x0 + x1) / 2) + 6; y < base(x0) - 3; y += 5 + n() * 3) {
-      let x = x0 + lean0 + 1 + n() * 4;
-      while (x < x1 - lean1 - 2) {
-        const len = 5 + n() * 14;
-        const xe = Math.min(x1 - lean1 - 1, x + len);
-        if (y > topAt(x) + 3) courses.push(`M${f(x)} ${f(y)}Q${f((x + xe) / 2)} ${f(y + (n() - 0.5) * 2.2)} ${f(xe)} ${f(y + (n() - 0.5) * 1.2)}`);
-        x = xe + 2 + n() * 5;
-      }
-    }
-    for (let x = x0 + 8 + n() * 8; x < x1 - 6; x += 12 + n() * 14) {
-      const y0 = topAt(x) + 4 + n() * 10;
-      joints.push(`M${f(x)} ${f(y0)}Q${f(x + (n() - 0.5) * 3)} ${f(y0 + 8)} ${f(x + (n() - 0.5) * 2)} ${f(Math.min(base(x) - 1, y0 + 10 + n() * 18))}`);
-    }
-    for (let x = x0 + (x1 - x0) * 0.55; x < x1 - lean1 * 0.5; x += 1 + n() * 0.9) {
-      for (let y = topAt(x) + 3; y < base(x) - 0.5; y += 2.4 + n() * 3.6) shade.push(`M${f(x)} ${f(y)}V${f(Math.min(base(x) - 0.5, y + 1.5 + n() * 3))}`);
+  const crestN = noise1(seed + 31);
+  // The top is one ragged line across the whole mass, rising a little to the east, broken by the
+  // V of the cleft.
+  const mouth = (x: number) => 7 * Math.max(0, 1 - Math.abs(x - gapX) / 11);
+  const crest = (x: number) => 42 - ((x - wx0) / (wx1 - wx0)) * 9 + 4 * crestN(x / 12) + 1.2 * Math.sin(x / 4.3) + 0.5 * Math.sin(x / 1.9) + mouth(x);
+  const lean0 = 16;
+  const lean1 = 15;
+  const top0 = crest(wx0 + lean0);
+  const top1 = crest(wx1 - lean1);
+  // The beds, top down: where each crosses the rock, at a slight dip to the east.
+  const beds0 = [50, 58, 71, 80, 95].map((y) => ({ y: y + (n() - 0.5) * 3, ph: n() * 9 }));
+  const bedAt = (k: number, x: number) => beds0[k]!.y + (x - wx0) * 0.035 + 1.1 * Math.sin(x / 14 + beds0[k]!.ph) + 0.4 * Math.sin(x / 4.6 + beds0[k]!.ph * 2);
+  // Each bed weathers back a little at the rock's ends, so the sides step in and out.
+  const step = (x: number, y: number) => beds0.reduce((sum, _, k) => sum + Math.exp(-(((y - bedAt(k, x)) / 1.4) ** 2)), 0);
+  // Where each side is at height y: leaning back as it rises, bulging a little, stepped at the beds.
+  const sideL = (y: number) => {
+    const u = (base(wx0) - y) / (base(wx0) - top0);
+    return wx0 + lean0 * u ** 1.3 - 2 * Math.sin(Math.PI * u) + 0.5 * Math.sin(y / 2.3) + step(wx0 + 8, y);
+  };
+  const sideR = (y: number) => {
+    const u = (base(wx1) - y) / (base(wx1) - top1);
+    return wx1 - lean1 * u ** 1.3 + 2.5 * Math.sin(Math.PI * u) + 0.5 * Math.sin(y / 2.7 + 1) - step(wx1 - 8, y);
+  };
+  // The cleft: a V from the top, about twelve wide there and three at the floor, flaring at its
+  // mouth, its walls a little ragged.
+  const floor = base(gapX);
+  const lipL = crest(gapX - 6);
+  const lipR = crest(gapX + 6);
+  const half = (y: number, lip: number) => 1.5 + 4.5 * Math.max(0, Math.min(1, (floor - y) / (floor - lip))) ** 2;
+  const wallL = (y: number) => gapX - half(y, lipL) + 0.4 * Math.sin(y / 1.7);
+  const wallR = (y: number) => gapX + half(y, lipR) + 0.4 * Math.sin(y / 2.1 + 2);
+  // Below the cleft's open mouth its far end is in deep shadow, and it reads as a crack in the one
+  // mass rather than a gap between two.
+  const deepTop = lipL + (floor - lipL) * 0.35;
+  // The two halves of the outline, each closed along the foot. The outer tops round over.
+  const pt = (x: number, y: number) => `${f(x)} ${f(y)}`;
+  const left: string[] = [];
+  for (let y = base(wx0); y > top0 + 4; y -= 1.5) left.push(pt(sideL(y), y));
+  const lx0 = sideL(top0 + 4);
+  for (let x = lx0 + 1; x < gapX - 6; x += 1) {
+    const round = Math.min(1, (x - lx0) / 4);
+    left.push(pt(x, crest(x) + (1 - round * (2 - round)) * 4));
+  }
+  for (let y = lipL; y < deepTop; y += 1.2) left.push(pt(wallL(y), y));
+  const leftLow: string[] = [];
+  for (let y = deepTop; y < floor; y += 1.2) leftLow.push(pt(wallL(y), y));
+  leftLow.push(pt(wallL(floor), floor));
+  const rightLow: string[] = [];
+  for (let y = floor; y > deepTop; y -= 1.2) rightLow.push(pt(wallR(y), y));
+  const right: string[] = [];
+  for (let y = deepTop; y > lipR; y -= 1.2) right.push(pt(wallR(y), y));
+  const rx1 = sideR(top1 + 4);
+  for (let x = gapX + 6; x < rx1 - 1; x += 1) {
+    const round = Math.min(1, (rx1 - x) / 4);
+    right.push(pt(x, crest(x) + (1 - round * (2 - round)) * 4));
+  }
+  for (let y = top1 + 4; y < base(wx1); y += 1.5) right.push(pt(sideR(y), y));
+  right.push(pt(wx1, base(wx1)));
+  const outline = (ps: string[]) => `M${ps.join('L')}`;
+  const footBack = (x0: number, x1: number) => {
+    const back: string[] = [];
+    for (let x = x1; x >= x0; x -= 2) back.push(pt(x, base(x)));
+    return back.join('L');
+  };
+  m.push({ d: `${outline([...left, ...leftLow])}L${footBack(wx0, wallL(floor))}Z${outline([...rightLow, ...right])}L${footBack(wallR(floor), wx1)}Z`, c: 'pp' });
+  const cleftIn: string[] = [];
+  for (let y = deepTop; y <= floor; y += 1.2) cleftIn.push(pt(wallL(y) - 0.2, y));
+  for (let y = floor; y >= deepTop; y -= 1.2) cleftIn.push(pt(wallR(y) + 0.2, y));
+  m.push({ d: `M${cleftIn.join('L')}Z`, c: 'pp' });
+  // Daylight shows again at the floor, where the passage comes out on the far side; the man shifting
+  // stones there stands against it.
+  const deep: string[] = [];
+  const lit = floor - 20;
+  for (let x = gapX - 6; x < gapX + 6; x += 0.6) {
+    for (let y = deepTop + n() * 3; y < lit; y += 2.6 + n() * 2) {
+      const y2 = Math.min(lit - n() * 4, y + 2 + n() * 4);
+      if (x > wallL(y) + 0.2 && x < wallR(y) - 0.2 && x > wallL(y2) + 0.2 && x < wallR(y2) - 0.2) deep.push(`M${pt(x, y)}V${f(y2)}`);
     }
   }
-  m.push({ d: courses.join(''), c: 'l3', w: 0.5 }, { d: joints.join(''), c: 'l4', w: 0.45 }, { d: shade.join(''), c: 'l3', w: 0.4 });
-  // The cleft between: dark, narrowing to the broken floor where the track goes through.
-  m.push({ d: `M${f(gapX - 3.6)} ${f(topAt(gapX - 3.6) + 4)}L${f(gapX - 1.4)} ${f(base(gapX) - 9)}L${f(gapX + 1.4)} ${f(base(gapX) - 9)}L${f(gapX + 3.6)} ${f(topAt(gapX + 3.6) + 4)}Z`, c: 'f4' });
-  // Rubble at the foot.
+  m.push({ d: deep.join(''), c: 'l4', w: 0.45 });
+  // Is (x, y) on the rock face, clear of its edges by `pad`?
+  const onRock = (x: number, y: number, pad: number) => {
+    if (y > base(x) - 0.5) return false;
+    if (y < crest(x) + 4 + pad) return false;
+    if (x < sideL(y) + pad || x > sideR(y) - pad) return false;
+    return y > floor || x < wallL(y) - pad || x > wallR(y) + pad;
+  };
+  // The face in tone: upright strokes broken at the beds, sparse where the light falls on the west,
+  // close on the east flank, under each bed where it overhangs, and down the cleft's west wall,
+  // which faces away from the light.
+  const tone: string[][] = [[], []];
+  for (let x = wx0 - 2; x < wx1 + 4; x += 0.8 + n() * 0.7) {
+    const east = Math.max(0, Math.min(1, (x - (wx1 - 52)) / 40));
+    for (let y = crest(x) + 4.5 + n() * 2; y < base(x) - 0.6; ) {
+      const y2 = Math.min(base(x) - 0.6, y + 1.5 + n() * 3.5);
+      const below = Math.min(...beds0.map((_, k) => { const d = y - bedAt(k, x); return d < -0.6 ? 99 : d; }));
+      const crosses = beds0.some((_, k) => { const b = bedAt(k, x); return b > y - 0.6 && b < y2 + 0.6; });
+      const cleft = y < floor && x < gapX && x > wallL(y) - 4.5;
+      const p = cleft ? 0.95 : 0.14 + 0.7 * east + (below < 3.2 ? 0.45 : 0);
+      if (!crosses && n() < p && onRock(x, y, 0.5) && onRock(x, y2, 0.5)) tone[cleft || below < 1.6 ? 1 : 0]!.push(`M${pt(x, y)}V${f(y2)}`);
+      y = y2 + 0.7 + n() * 1.6;
+    }
+  }
+  m.push({ d: tone[0]!.join(''), c: 'l3', w: 0.4 }, { d: tone[1]!.join(''), c: 'l4', w: 0.42 });
+  // The beds: long wavering lines from end to end, broken only where the cleft splits the rock.
+  const strata: string[] = [];
+  for (let k = 0; k < beds0.length; k++) {
+    let on = false;
+    for (let x = wx0 - 6; x < wx1 + 6; x += 1.5) {
+      const y = bedAt(k, x);
+      if (onRock(x, y, 0.4)) {
+        strata.push(`${on ? 'L' : 'M'}${pt(x, y)}`);
+        on = true;
+      } else on = false;
+    }
+  }
+  m.push({ d: strata.join(''), c: 'l4', w: 0.5 });
+  // The outline round the mass against the sky, down into the mouth of the cleft; below that the
+  // cleft's edges are only a fine line in the shadow.
+  m.push({ d: `${outline(left)}${outline(right)}`, c: 'l4', w: 0.85 }, { d: `${outline(leftLow)}${outline(rightLow)}`, c: 'l3', w: 0.4 });
+  // Stones shifted out of the cleft, and loose rubble at the foot.
   const rubble: string[] = [];
-  for (const x of [wx0 - 4, wx0 + 6, wx1 - 6, wx1 + 4, gapX - 12]) {
-    const y = base(x) + 0.2;
-    const sz = 1.2 + n() * 1.4;
-    rubble.push(`M${f(x - sz * 1.6)} ${f(y)}C${f(x - sz * 1.6)} ${f(y - sz * 1.6)} ${f(x + sz * 1.4)} ${f(y - sz * 1.8)} ${f(x + sz * 1.6)} ${f(y)}Z`);
+  for (const [x, sz] of [
+    [wx0 - 3, 0.5],
+    [wx0 + 5, 0.35],
+    [gapX - 9, 0.45],
+    [gapX + 8, 0.5],
+    [gapX + 14, 0.38],
+    [wx1 - 4, 0.4],
+    [wx1 + 4, 0.5],
+  ] as const) {
+    const y = base(x) + 0.3;
+    rubble.push(`M${f(x - 4 * sz)} ${f(y)}C${f(x - 4.4 * sz)} ${f(y - 5.6 * sz)} ${f(x + 3.4 * sz)} ${f(y - 6.2 * sz)} ${f(x + 4.2 * sz)} ${f(y)}Z`);
   }
-  m.push({ d: rubble.join(''), c: 'pk', w: 0.45 });
-  // Stones moved out of the cleft, and a man lifting another.
-  for (const [i, x] of [264, 300, 310].entries()) {
-    const y = yAt(ridge, x) + 0.3;
-    const sz = 1 - i * 0.12;
-    m.push({ d: `M${f(x - 4 * sz)} ${f(y)}C${f(x - 4.4 * sz)} ${f(y - 5.6 * sz)} ${f(x + 3.4 * sz)} ${f(y - 6.2 * sz)} ${f(x + 4.2 * sz)} ${f(y)}Z`, c: 'pk', w: 0.5 });
-  }
+  m.push({ d: rubble.join(''), c: 'pk', w: 0.4 });
   const men = emptyFigure();
-  standing(men, gapX - 1, yAt(ridge, gapX), 0.78, { leader: false, arms: 'stone', lean: 0.3 });
+  standing(men, gapX - 0.4, floor, 0.42, { leader: false, arms: 'stone', lean: 0.3 });
   m.push(...figureMarks(men));
   // The party waiting behind.
-  const { fig } = procession(counts, ridge, { from: 8, to: 196, maxScale: 0.62, seed: seed + 40, loads });
+  const { fig } = procession(counts, ridge, { from: 96, to: 200, maxScale: 0.4, seed: seed + 40, loads });
   m.push(...figureMarks(fig));
+  m.push({ d: tufts(ridge, { seed: seed + 41, from: 2, to: wx0 - 6, every: 9, h: 2.6, blades: 3 }), c: 'l4', w: 0.36 });
   return { w: W, h: H, marks: m };
 }
 
@@ -902,7 +997,7 @@ export const CARD_FOCUS: Record<string, readonly [number, number, number, number
   distanceByClock: [64, 40, 250, 96],
   cairn: [96, 52, 200, 86],
   wombats: [180, 76, 200, 64],
-  rockWall: [140, 40, 240, 96],
+  rockWall: [150, 18, 240, 116],
   gullyWater: [10, 26, 240, 100],
   kangarooDogs: [120, 52, 240, 86],
   frost: [110, 54, 230, 82],
