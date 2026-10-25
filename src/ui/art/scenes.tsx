@@ -47,29 +47,44 @@ export function vista(seed = 3): Scene {
   return { w: W, h: H, marks: m };
 }
 
-/** May 1813: the party wading the Nepean, the wall of the range beyond. */
+/**
+ * May 1813: the party wading the Nepean, mid-river with the water about their legs, and beyond the
+ * far bank the long wall of the range rising from the plain, level along the top, forested, with
+ * rock showing under its rim.
+ */
 export function ford(seed = 11, loads: Pack[] = loads1813(), counts: PartyCounts = COUNTS_1813): Scene {
   const W = 400;
   const H = 200;
   const m: Mark[] = [];
-  sky(m, { seed, w: W, horizon: 100, clouds: [cloudBank(seed + 1, 96, 30, 150, 26, 7), cloudBank(seed + 2, 300, 54, 96, 14, 5)] });
-  const range = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 80, amp: 2.6, scale: 150, plateau: 0.9, gullies: 6, gullyDepth: 4, gullyWidth: 7, tilt: 0.012 });
-  hills(m, range, H, 1, { seed: seed + 12, depth: 20, gap: 1.45, growth: 0.14, light: 1.6 }, 0.7);
-  const foothills = ridgeLine({ seed: seed + 20, x0: -4, x1: W + 4, base: 108, amp: 6, scale: 60, plateau: 0.3 });
-  hills(m, foothills, H, 2, { seed: seed + 22, depth: 18, gap: 1.35, growth: 0.13 }, 1.2);
-  // Trees along the far bank.
-  const bankGround = curve(-4, W + 4, (x) => 139 + 1.2 * Math.sin(x / 31));
-  const bank = hills(m, bankGround, H, 3, { seed: seed + 32, depth: 2.5, gap: 0.9 }, 2.6);
-  // The party, wading: drawn before the water, so the river hides their legs.
-  const water = 141.5;
-  const { fig, scale } = procession(counts, curve(-4, W + 4, () => water + 6.5), { from: 86, to: 312, maxScale: 0.6, seed: seed + 3, loads });
+  sky(m, { seed, w: W, horizon: 84, clouds: [cloudBank(seed + 1, 96, 26, 150, 22, 7), cloudBank(seed + 2, 300, 44, 96, 12, 5)] });
+  // The wall of the range: a level top, steep forested slopes scored by gullies, rock under the rim.
+  const range = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 62, amp: 2.4, scale: 150, plateau: 0.9, gullies: 8, gullyDepth: 5, gullyWidth: 7, tilt: 0.01 });
+  hills(m, range, H, 1, { seed: seed + 12, depth: 3, gap: 1 }, 0.7);
+  const rim = cliffFace(range, { seed: seed + 13, height: 8, cover: 0.35, gap: 2, cap: 1.4 });
+  m.push({ d: rim.face, c: 'l2', w: 0.4 }, { d: rim.beds, c: 'l2', w: 0.36 });
+  hills(m, rim.foot, H, 1, { seed: seed + 14, depth: 34, gap: 1.2, growth: 0.1, light: 1.6, bias: 0.15 }, 0.9);
+  const foothills = ridgeLine({ seed: seed + 20, x0: -4, x1: W + 4, base: 100, amp: 5, scale: 60, plateau: 0.3 });
+  hills(m, foothills, H, 2, { seed: seed + 22, depth: 14, gap: 1.35, growth: 0.13 }, 1.2);
+  // The far bank, trees along it, and the broad river.
+  const bankGround = curve(-4, W + 4, (x) => 120 + 1.2 * Math.sin(x / 31));
+  const bank = hills(m, bankGround, H, 3, { seed: seed + 32, depth: 2.5, gap: 0.9 }, 2.4);
+  const far = 122.5;
+  m.push({ d: `M-4 ${far}H${W + 4}V${H + 2}H-4Z`, c: 'pp' });
+  const wf = waterHatch({ seed: seed + 40, from: -4, to: W + 4, top: far, bottom: 184, gap: 1.5, bank, squash: 1 });
+  m.push({ d: wf.dark, c: 'l3', w: 0.5 }, { d: wf.light, c: 'lw', w: 0.42 });
+  // The party, wading: drawn on the water, then the river laid again over their legs.
+  const water = 146;
+  const { fig, scale, slots } = procession(counts, curve(-4, W + 4, () => water + 5), { from: 70, to: 300, maxScale: 0.64, seed: seed + 3, loads });
   m.push(...figureMarks(fig));
   m.push({ d: `M-4 ${water}H${W + 4}V${H + 2}H-4Z`, c: 'pp' });
-  const wh = waterHatch({ seed: seed + 40, from: -4, to: W + 4, top: water, bottom: 184, gap: 1.5, bank, squash: 1 });
-  m.push({ d: wh.dark, c: 'l3', w: 0.5 }, { d: wh.light, c: 'lw', w: 0.42 });
-  // Ripples where the party breaks the surface.
+  const wn = waterHatch({ seed: seed + 41, from: -4, to: W + 4, top: water, bottom: 184, gap: 1.6, squash: 1 });
+  m.push({ d: wn.dark, c: 'l3', w: 0.5 }, { d: wn.light, c: 'lw', w: 0.42 });
+  // Ripples round each man's, horse's and dog's legs where they break the surface.
   const rip: string[] = [];
-  for (let x = 88; x < 312; x += 9 + (x % 4)) rip.push(`M${(x - 4 * scale).toFixed(1)} ${water + 1.4}q${(4 * scale).toFixed(1)} 1.3 ${(8 * scale).toFixed(1)} 0`);
+  for (const sl of slots) {
+    for (let x = sl.x + 1; x < sl.x + sl.w - 1; x += 5 * scale + 1) rip.push(`M${(x - 3 * scale).toFixed(1)} ${(water + 1.2).toFixed(1)}q${(3 * scale).toFixed(1)} 1.4 ${(6 * scale).toFixed(1)} 0`);
+    rip.push(`M${(sl.x - 2).toFixed(1)} ${(water + 3).toFixed(1)}h${(sl.w * 0.6).toFixed(1)}M${(sl.x + sl.w * 0.3).toFixed(1)} ${(water + 5).toFixed(1)}h${(sl.w * 0.7).toFixed(1)}`);
+  }
   m.push({ d: rip.join(''), c: 'lw', w: 0.5 });
   // The near bank.
   const near = curve(-4, W + 4, (x) => 182 + 2.5 * Math.sin(x / 40 + 1) - (x > 300 ? (x - 300) * 0.14 : 0));
@@ -597,7 +612,7 @@ export function SetOutArt({ counts, loads }: { counts: PartyCounts; loads: Pack[
   const scene = useMemo(() => ford(11, loads, counts), [counts.servants, counts.horses, counts.dogs, key]);
   const men = 3 + counts.servants;
   // A strip from the range down to the near bank, so the card stays short on a phone.
-  return <Plate scene={scene} view={[0, 66, 400, 124]} label={`An engraving: your party of ${men} men, ${counts.horses} pack horses and ${counts.dogs} dogs wading the Nepean, the wall of the Blue Mountains beyond.`} class="plate" />;
+  return <Plate scene={scene} view={[0, 52, 400, 128]} label={`An engraving: your party of ${men} men, ${counts.horses} pack horses and ${counts.dogs} dogs wading the Nepean, the wall of the Blue Mountains beyond.`} class="plate" />;
 }
 
 export function TitleArt() {
