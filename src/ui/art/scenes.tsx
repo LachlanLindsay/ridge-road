@@ -204,12 +204,22 @@ export function crossed(counts: PartyCounts, seed = 31, loads?: Pack[]): Scene {
   const roll = curve(-4, W + 4, (x) => 124 + 3 * Math.sin(x / 47 + 1) + 2 * Math.sin(x / 19));
   hills(m, roll, H, 1, { seed: seed + 13, depth: 10, gap: 1.6, growth: 0.25 });
   for (const [i, x] of [196, 214, 300, 338, 352, 384].entries()) gum(m, { seed: seed + 40 + i, x, y: yAt(roll, x) + 0.5, h: 16 + (i % 3) * 5, density: 0.8 }, 2);
-  // A creek winding across the flats, a line of trees along it.
-  const creek: string[] = [];
-  for (let x = 150; x < W + 4; x += 2) creek.push(`${creek.length ? 'L' : 'M'}${x} ${(146 + 4 * Math.sin(x / 23) + 2 * Math.sin(x / 7)).toFixed(1)}`);
+  // A river winding across the flats, a line of trees along it: a ribbon of water between its
+  // banks, wider as it comes nearer, ruled across like the Nepean on the ford plate.
   const flats = curve(-4, W + 4, (x) => 138 + 2 * Math.sin(x / 31));
   hills(m, flats, H, 2, { seed: seed + 14, depth: 6, gap: 1.6, growth: 0.3 });
-  m.push({ d: creek.join(''), c: 'lw', w: 0.9 });
+  const mid = (x: number) => 147 + 4.2 * Math.sin(x / 26 + 0.4) + 1.6 * Math.sin(x / 11 + 1) + 0.7 * Math.sin(x / 5);
+  const half = (x: number) => 1.6 + Math.max(0, (x - 150) / 250) * 1.5 + 0.35 * Math.sin(x / 17);
+  const bankT = curve(150, W + 4, (x) => mid(x) - half(x));
+  const bankB = curve(150, W + 4, (x) => mid(x) + half(x));
+  m.push({ d: bandPath(bankT, bankB), c: 'pp' });
+  const rw = rng(seed + 15);
+  const ripples: string[] = [];
+  for (let x = 152; x < W + 4; x += 1.4 + rw() * 1.8) {
+    const y = mid(x) + (rw() - 0.5) * half(x) * 1.3;
+    ripples.push(`M${x.toFixed(1)} ${y.toFixed(1)}h${(1.2 + rw() * 2.6).toFixed(1)}`);
+  }
+  m.push({ d: ripples.join(''), c: 'lw', w: 0.42 }, { d: linePath(bankT), c: 'l2', w: 0.5 }, { d: linePath(bankB), c: 'lw', w: 0.55 });
   for (const [i, x] of [232, 266, 318, 372].entries()) gum(m, { seed: seed + 50 + i, x, y: yAt(flats, x) + 0.5, h: 24 + (i % 2) * 8, density: 0.9 }, 3);
   // The last ridge in the left foreground, where the party stands looking out.
   const ridge = curve(-4, 196, (x) => 150 - (x / 196) * 6 + 1.2 * Math.sin(x / 9) + (x > 170 ? ((x - 170) / 26) ** 2 * 30 : 0));
