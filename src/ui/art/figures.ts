@@ -357,14 +357,17 @@ const TALL = { man: 41, horse: 46, dog: 20 };
 const LEADER_IDS: MemberId[] = ['blaxland', 'lawson', 'wentworth'];
 const SERVANT_IDS: MemberId[] = ['burne', 'fairs', 'servant3', 'servant4', 'servant5', 'servant6'];
 
-/** Who walks where, front first: a dog out ahead, the guide, then each horse led by a man. */
-function order(c: PartyCounts, seed: number): Unit[] {
+/**
+ * Who walks where, front first: a dog out ahead, the guide, then each horse led by a man. `omit`
+ * leaves those men out, for a plate that draws them elsewhere in the scene.
+ */
+function order(c: PartyCounts, seed: number, omit: readonly MemberId[] = []): Unit[] {
   const r = rng(seed);
   const men: { id: MemberId; leader: boolean; tool: Tool }[] = [];
   // Burne, the guide and hunter, goes first with a gun when he comes; then leaders and servants
   // take turns, the servants with axes.
-  const servants = Array.from({ length: Math.min(c.servants, SERVANT_IDS.length) }, (_, i) => ({ id: SERVANT_IDS[i]!, leader: false, tool: (i === 0 ? 'gun' : 'axe') as Tool }));
-  const leaders = LEADER_IDS.map((id) => ({ id, leader: true, tool: 'gun' as Tool }));
+  const servants = Array.from({ length: Math.min(c.servants, SERVANT_IDS.length) }, (_, i) => ({ id: SERVANT_IDS[i]!, leader: false, tool: (i === 0 ? 'gun' : 'axe') as Tool })).filter((u) => !omit.includes(u.id));
+  const leaders = LEADER_IDS.filter((id) => !omit.includes(id)).map((id) => ({ id, leader: true, tool: 'gun' as Tool }));
   if (servants.length) men.push(servants.shift()!);
   while (leaders.length || servants.length) {
     if (leaders.length) men.push(leaders.shift()!);
@@ -377,7 +380,7 @@ function order(c: PartyCounts, seed: number): Unit[] {
     dogs--;
   }
   let m = 0;
-  units.push({ kind: 'man', ...men[m++]!, leading: false });
+  if (men.length) units.push({ kind: 'man', ...men[m++]!, leading: false });
   for (let h = 0; h < c.horses; h++) {
     if (m < men.length) {
       const who = men[m++]!;
@@ -414,15 +417,16 @@ function span(units: Unit[]): number {
 
 /**
  * Lay the party out along `ground`, heading right, centred in [from, to], no larger than `maxScale`.
- * `loads` is what each horse carries, first horse first. Returns the figure, the scale used and
- * where each figure stands.
+ * `loads` is what each horse carries, first horse first; `omit` leaves out men the plate draws
+ * elsewhere (a leader at the brink, two standing over a blaze). Returns the figure, the scale used
+ * and where each figure stands.
  */
 export function procession(
   c: PartyCounts,
   ground: Curve,
-  o: { from: number; to: number; maxScale: number; seed: number; phase?: number; loads?: Pack[]; swags?: boolean },
+  o: { from: number; to: number; maxScale: number; seed: number; phase?: number; loads?: Pack[]; swags?: boolean; omit?: readonly MemberId[] },
 ): { fig: Figure; scale: number; slots: Slot[] } {
-  const units = order(c, o.seed);
+  const units = order(c, o.seed, o.omit);
   const len = span(units);
   const s = Math.min(o.maxScale, (o.to - o.from) / len);
   const fig = emptyFigure();
