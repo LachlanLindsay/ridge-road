@@ -237,9 +237,17 @@ export type Tool = 'axe' | 'gun' | 'none';
  * A man walking right, feet on y = 0, about 34 tall bareheaded. Leaders wear tall hats and
  * tailcoats; servants short jackets and low hats. Returns where his trailing hand is, for a lead rope.
  */
-export function man(fig: Figure, X: number, Y: number, s: number, step: number, leader: boolean, tool: Tool, leading = false): [number, number] {
+export function man(fig: Figure, X: number, Y: number, s: number, step: number, leader: boolean, tool: Tool, leading = false, swag = false): [number, number] {
   const p = at(X, Y, s);
   const a = Math.sin(step);
+  if (swag) {
+    // A pack on his back, tied round twice: the load a horse could not take down the pass.
+    fig.paper.push({
+      d: `M${p(-2.6, -28.6)}C${p(-5, -30)} ${p(-8, -29)} ${p(-8.3, -25.4)}L${p(-8.5, -21)}C${p(-8.5, -18.6)} ${p(-6.5, -17.8)} ${p(-4.4, -18)}L${p(-2.8, -18.4)}Z`,
+      w: 0.8 * s,
+    });
+    fig.rope.push({ d: `M${p(-8.3, -25)}L${p(-2.7, -25.3)}M${p(-8.5, -21.4)}L${p(-2.8, -21.7)}`, w: 0.55 * s });
+  }
   fig.ink.push(
     // Head and nose.
     `M${p(-2.15, -30.2)}a${f(2.55 * s)} ${f(2.55 * s)} 0 1 0 ${f(5.1 * s)} 0a${f(2.55 * s)} ${f(2.55 * s)} 0 1 0 ${f(-5.1 * s)} 0Z` +
@@ -403,7 +411,7 @@ function span(units: Unit[]): number {
 export function procession(
   c: PartyCounts,
   ground: Curve,
-  o: { from: number; to: number; maxScale: number; seed: number; phase?: number; loads?: Pack[] },
+  o: { from: number; to: number; maxScale: number; seed: number; phase?: number; loads?: Pack[]; swags?: boolean },
 ): { fig: Figure; scale: number; slots: Slot[] } {
   const units = order(c, o.seed);
   const len = span(units);
@@ -422,7 +430,7 @@ export function procession(
     const ox = x - right * s;
     const y = yAt(ground, ox);
     step += 1.7;
-    if (u.kind === 'man') lastHand = man(fig, ox, y, s, step, u.leader, u.tool, u.leading);
+    if (u.kind === 'man') lastHand = man(fig, ox, y, s, step, u.leader, u.tool, u.leading, o.swags);
     else if (u.kind === 'dog') dog(fig, ox, y, s, step * 1.6);
     else {
       const prev = units[i - 1];

@@ -8,7 +8,7 @@ import { outfit1813, packHorses } from '../outfitting';
 import type { Who } from '../people';
 import { brinkFace, fallAway, farGum, gum, hills, ledge, sky, smokePlume, type Scene } from './compose';
 import { emptyFigure, figureMarks, procession, standing, type Mark, type Pack, type PartyCounts, type Slot } from './figures';
-import { bandPath, canopy, cliffFace, cloudBank, contourHatch, curve, grassTree, gumTree, linePath, ridgeLine, rng, shift, smoke, smooth, tufts, waterHatch, yAt, type Curve } from './kit';
+import { areaPath, bandPath, canopy, cliffFace, cloudBank, contourHatch, curve, grassTree, gumTree, linePath, ridgeLine, rng, shift, smoke, smooth, tufts, waterHatch, yAt, type Curve } from './kit';
 
 export type { Scene };
 
@@ -411,9 +411,10 @@ export function highHeath(counts: PartyCounts, seed = 311, loads?: Pack[]): Scen
 
 /**
  * The way down, 28–29 May: the trench cut down the cliff with a hoe, the party leading the horses
- * down it, the forest land below with grass for the horses at last.
+ * down it unloaded and carrying the packs themselves ("the party were obliged to carry the
+ * packages themselves"), the forest land below with grass for the horses at last.
  */
-export function wayDown(counts: PartyCounts, seed = 321, loads?: Pack[]): Scene {
+export function wayDown(counts: PartyCounts, seed = 321, _loads?: Pack[]): Scene {
   const W = 400;
   const H = 180;
   const m: Mark[] = [];
@@ -424,31 +425,40 @@ export function wayDown(counts: PartyCounts, seed = 321, loads?: Pack[]): Scene 
   const roll = curve(-4, W + 4, (x) => 118 + 3 * Math.sin(x / 47 + 2) + 1.4 * Math.sin(x / 15));
   hills(m, roll, H, 1, { seed: seed + 12, depth: 12, gap: 1.6, growth: 0.25 });
   for (const [i, x] of [190, 226, 262, 300, 334, 376].entries()) farGum(m, { seed: seed + 20 + i, x, y: yAt(roll, x) + 0.5, h: 18 + (i % 3) * 4, tone: 1 });
-  // The grass at the foot of the cliffs, open forest on it.
+  // The grass at the foot of the cliffs.
   const low = curve(-4, W + 4, (x) => 162 + 2 * Math.sin(x / 31));
   hills(m, low, H + 2, 2, { seed: seed + 30, depth: 10, gap: 1.6, growth: 0.3 });
-  m.push({ d: tufts(low, { seed: seed + 31, from: 150, to: W - 2, every: 9, h: 5 }), c: 'l2', w: 0.42 });
-  gum(m, { seed: seed + 32, x: 356, y: yAt(low, 356) + 1, h: 92, lean: -0.06, spread: 0.9, density: 0.5, depth: 3 }, 3);
-  // The talus: a long steep slope from the foot of the cliffs down to the grass.
-  const slope = curve(-4, 338, (x) => (x < 150 ? 120 + 0.6 * Math.sin(x / 7) : 120 + 44 * (1 - Math.cos((Math.min(1, (x - 150) / 188) * Math.PI) / 2))) + 0.5 * Math.sin(x / 5));
+  // The escarpment on the left: the plateau's edge rounding over at its corner and plunging, the
+  // cliff hung under it. The talus is drawn after, so the cliff's foot is buried in its own scree.
+  const edge = 150;
+  // At the corner the rock steps down: the lip rounds over onto a bench, then falls sheer.
+  const ease = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
+  const corner = (x: number) => 11 * ease((x - (edge - 16)) / 11) + 3 * ease((x - (edge - 5)) / 6) + 70 * ease((x - (edge + 1)) / 9) ** 1.4;
+  const plateau = curve(-4, edge + 12, (x) => 64 + 0.8 * Math.sin(x / 11) + corner(x));
+  m.push({ d: areaPath(plateau, H + 2), c: 'pp' });
+  const cliff = cliffFace(plateau, { seed: seed + 40, height: 96, cover: 2, gap: 1.9, cap: 2 });
+  m.push({ d: cliff.face, c: 'l3', w: 0.46 }, { d: cliff.beds, c: 'l3', w: 0.42 });
+  const top = canopy(plateau, { seed: seed + 41, size: 2.4, to: edge - 17 });
+  m.push({ d: bandPath(top, shift(plateau, 1.2), -4, edge - 17), c: 'f3' });
+  m.push({ d: linePath(plateau), c: 'l4', w: 0.9 });
+  // The talus: scree fans run up into the gullies of the cliff, then a long slope falls to the
+  // grass and runs out into it.
+  const slope = curve(-4, W + 4, (x) => {
+    const fans = 7 * Math.max(0, Math.sin(x / 15 + 0.6)) ** 3 + 3 * Math.max(0, Math.sin(x / 6.3)) ** 4;
+    const fall = x < 140 ? 0 : 44 * (1 - Math.cos((Math.min(1, (x - 140) / 196) * Math.PI) / 2));
+    return Math.min(yAt(low, x), 120 - (x < 150 ? fans : fans * Math.max(0, 1 - (x - 150) / 20)) + fall + 0.5 * Math.sin(x / 5));
+  });
   hills(m, slope, H + 2, 3, { seed: seed + 39, depth: 40, gap: 1.25, growth: 0.06, bias: 0.25, light: 0.7 });
-  // The cliff band on the left, from the plateau down to the talus, and the plateau's scrub on top.
-  const edge = 158;
-  const plateau = curve(-4, edge, (x) => 64 + 0.8 * Math.sin(x / 11) + (x > edge - 16 ? ((x - edge + 16) / 16) ** 2 * 6 : 0));
-  m.push({ d: `${linePath(plateau)}L${edge} ${yAt(slope, edge).toFixed(1)}L-4 ${yAt(slope, -4).toFixed(1)}Z`, c: 'pp' });
-  // Tall enough to meet the talus, no taller: strokes that ran on past it hung down into the
-  // slope's hatching like the arches of a bridge.
-  const cliff = cliffFace(plateau, { seed: seed + 40, height: 56, cover: 2, gap: 1.9, cap: 2 });
-  m.push({ d: cliff.face, c: 'l3', w: 0.46 }, { d: cliff.beds, c: 'l3', w: 0.4 });
-  const top = canopy(plateau, { seed: seed + 41, size: 2.4, to: edge - 14 });
-  m.push({ d: bandPath(top, shift(plateau, 1.2), -4, edge - 14), c: 'f3' });
-  m.push({ d: linePath(plateau), c: 'l4', w: 0.9 }, { d: `M${edge} ${yAt(plateau, edge).toFixed(1)}L${edge + 1.5} ${yAt(slope, edge + 1.5).toFixed(1)}`, c: 'l4', w: 0.8 });
+  m.push({ d: tufts(slope, { seed: seed + 31, from: 330, to: W - 2, every: 9, h: 5 }), c: 'l3', w: 0.42 });
+  gum(m, { seed: seed + 32, x: 356, y: yAt(slope, 356) + 1, h: 92, lean: -0.06, spread: 0.9, density: 0.5, depth: 3 }, 3);
   // The cut: a shelf slanting across the cliff face, then down the talus, the trench along it.
-  const ramp = curve(30, 336, (x) => (x < 150 ? 68 + ((x - 30) / 120) * 50 : yAt(slope, x) - 1.5 - 6 * Math.max(0, 1 - (x - 150) / 40)) + 0.8 * Math.sin(x / 9));
+  const ramp = curve(30, 336, (x) => (x < 140 ? 70 + ((x - 30) / 110) * 46 : yAt(slope, x) - 1.5 - 4 * Math.max(0, 1 - (x - 140) / 40)) + 0.8 * Math.sin(x / 9));
   const below = shift(ramp, 3);
   m.push({ d: bandPath(ramp, below), c: 'pp' });
   m.push({ d: linePath(below), c: 'l4', w: 0.6 }, { d: linePath(shift(ramp, 1.3)), c: 'l3', w: 0.35 });
-  const { fig, slots } = procession(counts, ramp, { from: 54, to: 318, maxScale: 0.5, seed: seed + 3, loads });
+  // The horses go down bare but for their pack saddles; the men carry the loads.
+  const bare: Pack[] = Array.from({ length: counts.horses }, () => ({ total: 4, items: {} }));
+  const { fig, slots } = procession(counts, ramp, { from: 54, to: 318, maxScale: 0.5, seed: seed + 3, loads: bare, swags: true });
   m.push(...figureMarks(fig));
   return { w: W, h: H, marks: m, slots };
 }
