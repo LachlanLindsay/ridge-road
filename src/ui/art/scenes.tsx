@@ -6,8 +6,8 @@ import { useMemo } from 'preact/hooks';
 import { useInfo } from '../Info';
 import { outfit1813, packHorses } from '../outfitting';
 import type { Who } from '../people';
-import { farGum, gum, hills, ledge, sky, type Scene } from './compose';
-import { figureMarks, procession, standing, type Mark, type Pack, type PartyCounts, type Slot } from './figures';
+import { farGum, gum, hills, ledge, sky, smokePlume, type Scene } from './compose';
+import { emptyFigure, figureMarks, procession, standing, type Mark, type Pack, type PartyCounts, type Slot } from './figures';
 import { bandPath, canopy, cliffFace, cloudBank, contourHatch, curve, grassTree, gumTree, linePath, ridgeLine, rng, shift, smoke, smooth, tufts, waterHatch, yAt, type Curve } from './kit';
 
 export type { Scene };
@@ -118,53 +118,69 @@ export function partyPlate(counts: PartyCounts, seed = 5, loads?: Pack[]): Scene
   return { w: W, h: H, marks: [...b.before, ...party, ...b.after], slots, loads };
 }
 
-/** Whose Country: across a valley to a cliffed wall, smoke rising from fires far below. */
-export function country(seed = 21): Scene {
+/**
+ * Whose Country: from a ledge across a deep valley to a wall of sandstone cliffs, the valley floor
+ * all forest, smoke rising out of the trees from fires far below. With `watchers`, two of the party
+ * stand on the ledge looking down, as on 26 May.
+ */
+export function country(seed = 21, o: { watchers?: boolean } = {}): Scene {
   const W = 400;
   const H = 200;
   const m: Mark[] = [];
   sky(m, { seed, w: W, horizon: 80, clouds: [cloudBank(seed + 1, 250, 26, 150, 22, 7)] });
   // The far wall: plateau, a pale cliff band, then dark forested slopes down into the valley.
   const topGround = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 64, amp: 3.5, scale: 120, plateau: 0.85, gullies: 4, gullyDepth: 6, gullyWidth: 10 });
-  const top = hills(m, topGround, H, 1, { seed: seed + 13, depth: 3, gap: 1 }, 0.8);
-  void top;
+  hills(m, topGround, H, 1, { seed: seed + 13, depth: 3, gap: 1 }, 0.8);
   const cliff = cliffFace(topGround, { seed: seed + 12, height: 22, cover: 0.4, gap: 2.6, cap: 2 });
   m.push({ d: cliff.face, c: 'l1', w: 0.42 }, { d: cliff.beds, c: 'l1', w: 0.36 });
-  const talus = hills(m, cliff.foot, H, 3, { seed: seed + 15, depth: 54, gap: 1.05, growth: 0.1, bias: 0.4 }, 1.2);
-  void talus;
-  // The valley floor, all forest, seen from above.
-  const floor = curve(-4, W + 4, (x) => 140 + 2.2 * Math.sin(x / 37) + 1.2 * Math.sin(x / 13 + 2));
-  hills(m, floor, H, 2, { seed: seed + 16, depth: 64, gap: 1.25, growth: 0.06, bias: 0.12 }, 1);
-  // Smoke from fires down there: grey columns, the darkest soft marks in the valley, each kept
-  // clear of the hatching by a margin of paper and standing on the smudge of its fire. A fourth,
-  // fainter, further off.
-  for (const [i, sm] of [
-    { x: 168, y: 142, h: 64, drift: 0.34, w: 1.6 },
-    { x: 246, y: 141, h: 52, drift: 0.4, w: 1.45 },
-    { x: 312, y: 143, h: 40, drift: 0.46, w: 1.3 },
-    { x: 206, y: 140, h: 26, drift: 0.5, w: 0.9 },
-  ].entries()) {
-    const bands = smoke({ seed: seed + 20 + i, x: sm.x, y: sm.y, h: sm.h, drift: sm.drift });
-    bands.forEach((d, j) => d && m.push({ d, c: 'lp', w: sm.w * 2.6 - j * 0.6 }));
-    bands.forEach((d, j) => d && m.push({ d, c: `${i === 3 ? 'l2' : 'l3'} o${j}`, w: sm.w - j * 0.3 }));
-    const fx = sm.x;
-    const fy = sm.y + 0.6;
-    m.push({ d: `M${(fx - 3.4).toFixed(1)} ${fy.toFixed(1)}Q${fx.toFixed(1)} ${(fy - 3.2).toFixed(1)} ${(fx + 3.4).toFixed(1)} ${fy.toFixed(1)}Z`, c: i === 3 ? 'f2' : 'f3' });
-  }
+  hills(m, cliff.foot, H, 3, { seed: seed + 15, depth: 54, gap: 1.05, growth: 0.1, bias: 0.4 }, 1.2);
+  // The valley floor, all forest: low rolling treelines one behind another, the crowns small and
+  // close far off, larger near. Smoke rises from fires among the far ones, white plumes leaning with
+  // the wind up over the far wall, the nearer trees standing in front of their feet.
+  const treelines = [
+    { y: 140, crown: 2.6, tone: 2 },
+    { y: 151, crown: 3.4, tone: 3 },
+    { y: 165, crown: 4.4, tone: 3 },
+    { y: 183, crown: 5.6, tone: 3 },
+  ];
+  treelines.forEach((t, i) => {
+    if (i === 1) {
+      for (const [k, sm] of [
+        { x: 166, y: 150, h: 70, drift: 0.34 },
+        { x: 248, y: 149, h: 58, drift: 0.36 },
+        { x: 314, y: 151, h: 46, drift: 0.38 },
+        { x: 206, y: 145, h: 28, drift: 0.4 },
+      ].entries()) {
+        smokePlume(m, { seed: seed + 20 + k, x: sm.x, y: sm.y, h: sm.h, drift: sm.drift, tone: k === 3 ? 1 : 2 });
+      }
+    }
+    const ph = i * 1.7;
+    const g = curve(-4, W + 4, (x) => t.y + (1.6 + i * 0.7) * Math.sin(x / (34 + i * 12) + ph) + 0.9 * Math.sin(x / 13 + ph * 2));
+    hills(m, g, H + 4, t.tone, { seed: seed + 16 + i * 3, depth: 13 + i * 5, gap: 1.05 + i * 0.1, growth: 0.16, bias: 0.3 }, t.crown);
+  });
   // A nearer spur coming in from the left, cliffed along its flank.
   const spurGround = curve(-4, 152, (x) => (x < 128 ? 108 + (x / 128) * 8 : 116 + ((x - 128) / 24) ** 1.6 * 64) + 1.1 * Math.sin(x / 11));
   hills(m, spurGround, H, 3, { seed: seed + 31, depth: 3, gap: 0.9 }, 1.6);
   const spurCliff = cliffFace(spurGround, { seed: seed + 32, height: 16, cover: 0.8, gap: 1.7, cap: 2.6, to: 126 });
   m.push({ d: spurCliff.face, c: 'l3', w: 0.48 }, { d: spurCliff.beds, c: 'l3', w: 0.4 });
   contourHatch(spurCliff.foot, { seed: seed + 33, depth: 50, gap: 1, growth: 0.06, bias: 0.5, to: 152 }).forEach((d, i) => d && m.push({ d, c: `l4 o${i}`, w: 0.55 }));
-  // The ledge in the right foreground, with a grass tree and a gum.
-  const lip = curve(236, W + 4, (x) => 180 - ((x - 236) / 168) * 14 + 1.1 * Math.sin(x / 8));
+  // The ledge in the right foreground, its end rounded off where the rock breaks away, with a grass
+  // tree and a gum on it.
+  const lip = curve(228, W + 4, (x) => {
+    const end = x < 246 ? ((246 - x) / 18) ** 2 * 22 : 0;
+    return 180 - ((x - 236) / 168) * 14 + 1.1 * Math.sin(x / 8) + end;
+  });
   ledge(m, lip, H + 2, seed + 40);
-  m.push({ d: `M236 ${yAt(lip, 236).toFixed(1)}V${H}`, c: 'l4', w: 0.9 });
-  m.push({ d: tufts(lip, { seed: seed + 41, from: 244, to: W, every: 12, h: 6 }), c: 'l4', w: 0.5 });
-  const gt = grassTree({ seed: seed + 42, x: 318, y: yAt(lip, 318) + 1, h: 40 });
+  m.push({ d: tufts(lip, { seed: seed + 41, from: 250, to: W, every: 12, h: 6 }), c: 'l4', w: 0.5 });
+  const gt = grassTree({ seed: seed + 42, x: 336, y: yAt(lip, 336) + 1, h: 40 });
   m.push({ d: gt.trunk, c: 'f4' }, { d: gt.leaves, c: 'l4', w: 0.42 }, { d: gt.spike, c: 'l4', w: 1.1 });
-  gum(m, { seed: seed + 43, x: 380, y: yAt(lip, 380) + 2, h: 168, lean: -0.13, spread: 0.95 });
+  gum(m, { seed: seed + 43, x: 384, y: yAt(lip, 384) + 2, h: 168, lean: -0.13, spread: 0.95 });
+  if (o.watchers) {
+    const fig = emptyFigure();
+    standing(fig, 262, yAt(lip, 262), 1.25, { leader: true, arms: 'point', dir: -1 });
+    standing(fig, 286, yAt(lip, 286), 1.25, { leader: true, arms: 'notes', dir: -1 });
+    m.push(...figureMarks(fig));
+  }
   return { w: W, h: H, marks: m };
 }
 

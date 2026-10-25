@@ -18,13 +18,19 @@ describe('card art', () => {
     for (const id of cardIds) expect(hasCardArt(id), id).toBe(true);
   });
 
-  it('draws no people, huts or camps for the Signs of Country: they share the Country landscape', () => {
+  it('gives each Sign of Country its own moment, the fires of 26 May on the Country landscape', () => {
+    // Each sign used to share the one Country plate, so the huts and the woodcutter showed fires in a
+    // valley. Now each draws the party's side of its own moment; none draws the people or their huts.
     const signs = cardIds.filter((id) => id.startsWith('signs-'));
-    expect(signs.length).toBe(4);
-    for (const id of signs) {
-      expect(isCountryCard(id)).toBe(true);
-      expect(CARD_PLATES[id]).toBeUndefined();
+    expect(signs.sort()).toEqual(['signs-camps', 'signs-huts', 'signs-smoke', 'signs-woodcutter']);
+    expect(isCountryCard('whoseCountry')).toBe(true);
+    expect(isCountryCard('signs-smoke')).toBe(true);
+    for (const id of ['signs-camps', 'signs-huts', 'signs-woodcutter']) {
+      expect(isCountryCard(id), id).toBe(false);
+      expect(CARD_PLATES[id], id).toBeDefined();
     }
+    const drawn = ['signs-camps', 'signs-huts', 'signs-woodcutter'].map((id) => JSON.stringify(CARD_PLATES[id]!()));
+    expect(new Set(drawn).size).toBe(3);
   });
 
   it('gives each fixed plate a thumbnail crop inside the plate', () => {

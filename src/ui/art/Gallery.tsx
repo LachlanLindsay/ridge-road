@@ -59,6 +59,7 @@ const PLATES: Item[] = [
   { name: 'party-heavy', make: () => partyPlate({ servants: 4, horses: 3, dogs: 5 }, 5, packHorses(outfit({ horses: 3 }, { flour: 300, saltMeat: 220 }))) },
   { name: 'party-bare', make: () => partyPlate({ servants: 4, horses: 4, dogs: 5 }, 5, packHorses(outfit({}, { flour: 0, saltMeat: 0, tea: 0, shots: 0, axes: 0, hatchets: 0, hoe: 0, blankets: 0, shoes: 0, campKit: 1 }))) },
   { name: 'country', make: () => country() },
+  { name: 'country-watchers', make: () => country(21, { watchers: true }) },
   ...(['blaxland', 'lawson', 'wentworth', 'burne', 'fairs', 'servant3', 'servant4', 'servant5', 'servant6'] as const).map((id) => ({ name: `who-${id}`, make: () => manPortrait(id) })),
   ...['Bay', 'Grey', 'Chestnut', 'Black', 'Dun', 'Roan'].map((n, i) => ({ name: `who-horse-${n}`, make: () => horsePortrait(i + 1, n, { pack: loads1813()[i] ?? loads1813()[0]!, condition: i === 3 ? 30 : 90 }).scene })),
   { name: 'who-horse-down', make: () => horsePortrait(2, 'Grey', { pack: null, down: true }).scene },
