@@ -111,8 +111,9 @@ function horseExhausted(seed = 121): Scene {
   ground(m, g, seed + 20);
   gum(m, { seed: seed + 30, x: 346, y: yAt(g, 346) + 1, h: 76, lean: -0.05, spread: 0.85, density: 0.5, depth: 2 }, 4);
   const fig = emptyFigure();
-  horse(fig, 176, yAt(g, 176), 1.55, 0, null, { total: 180, items: { flour: 70, saltMeat: 55, blankets: 3, axes: 1, campKit: 1 } }, { droopDeg: 48 });
-  standing(fig, 254, yAt(g, 254), 1.4, { leader: true, arms: 'down', dir: -1 });
+  // The horse can barely stand: legs braced out, head hanging to its knees under the load.
+  horse(fig, 176, yAt(g, 176) + 1.2, 1.55, 0, null, { total: 180, items: { flour: 70, saltMeat: 55, blankets: 3, axes: 1, campKit: 1 } }, { droopDeg: 58, spent: true });
+  standing(fig, 248, yAt(g, 248), 1.4, { leader: true, arms: 'down', dir: -1, lean: 0.12 });
   ink(m, fig);
   return { w: W, h: H, marks: m };
 }
@@ -299,7 +300,7 @@ export const EVENT_ART: Record<EventId, () => Scene> = {
 export const EVENT_ART_LABEL: Record<EventId, string> = {
   dew: 'An engraving: men waiting by a fire beside scrub beaded with dew, mist in the valley.',
   horseFall: 'An engraving: a pack horse down on the track, its load spilled, a man hauling at its halter.',
-  horseExhausted: 'An engraving: a pack horse standing with its head hung low under its load, a man beside it.',
+  horseExhausted: 'An engraving: a pack horse that can barely stand under its load, legs braced out and head hanging to its knees, a man looking it over.',
   dryCamp: 'An engraving: two men carrying the kettles over the edge of the ridge, down toward the gully.',
   chill: 'An engraving: a man wrapped in a blanket by the fire while two others set off to work.',
   bowel: 'An engraving: a man lying ill under his blanket, another bringing the kettle, the salt-meat cask by the fire.',
