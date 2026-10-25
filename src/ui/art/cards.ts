@@ -610,42 +610,79 @@ function kangarooDogs(seed = 261): Scene {
   return { w: W, h: H, marks: m };
 }
 
-/** Frost: dawn under the western cliffs, the camp asleep in the white, the kangaroo leg hung frozen. */
+/**
+ * Frost, 30 May: dawn under the western cliffs. The sun just clearing the cliff top behind, the
+ * wall dark against it; the camp below in the white, the ground bare paper with no hatching, hoar
+ * on every tuft and on the blankets of the men still asleep, the fire out, the kangaroo leg hung
+ * frozen from the meat pole.
+ */
 function frost(seed = 271): Scene {
   const m: Mark[] = [];
-  // A clear, cold sky, ruled close, and the sun just up.
-  sky(m, { seed, w: W, horizon: 84, clouds: [[{ x: 302, y: 80, rx: 11, ry: 11 }]], reach: 0.95 });
-  const far = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 80, amp: 2.5, scale: 120, plateau: 0.8 });
-  hills(m, far, H, 1, { seed: seed + 11, depth: 5, gap: 1.8, growth: 0.3 });
-  // The ground white with frost: no hatching, only a crust of tiny crystals and pale tufts.
-  const g = flat(118, seed, 1);
-  m.push({ d: areaPath(g, H + 2), c: 'pp' }, { d: linePath(g), c: 'l3', w: 0.7 });
+  const sun = { x: 300, y: 40 };
+  sky(m, { seed, w: W, horizon: 62, clouds: [[{ x: sun.x, y: sun.y, rx: 11, ry: 11 }]], reach: 0.95 });
+  // The low sun: its rim, and rays cut through the ruled sky as bare paper.
+  const rays: string[] = [];
+  for (let a = -168; a <= -12; a += 13) {
+    const t = (a * Math.PI) / 180;
+    rays.push(`M${f(sun.x + Math.cos(t) * 13)} ${f(sun.y + Math.sin(t) * 13)}L${f(sun.x + Math.cos(t) * 64)} ${f(sun.y + Math.sin(t) * 64)}`);
+  }
+  m.push({ d: rays.join(''), c: 'lp', w: 1.3 });
+  m.push({ d: `M${f(sun.x - 8)} ${f(sun.y)}A8 8 0 0 1 ${f(sun.x + 8)} ${f(sun.y)}`, c: 'l2', w: 0.5 });
+  // The western cliffs behind the camp, backlit: scrub along the top, the face dark, a dark
+  // forested slope falling from its foot.
+  const top = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 44, amp: 2.2, scale: 120, plateau: 0.9, gullies: 3, gullyDepth: 4, gullyWidth: 8 });
+  hills(m, top, H, 3, { seed: seed + 11, depth: 2.5, gap: 1 }, 1.3);
+  const face = cliffFace(top, { seed: seed + 12, height: 30, cover: 0.6, gap: 1.4, cap: 1.6 });
+  m.push({ d: face.face, c: 'l3', w: 0.5 }, { d: face.beds, c: 'l3', w: 0.44 });
+  hills(m, face.foot, H, 3, { seed: seed + 13, depth: 22, gap: 1.05, growth: 0.1, bias: 0.5 }, 1.5);
+  // The edge of the trees behind the camp, dark against the white ground.
+  const trees = flat(100, seed + 2, 1.4);
+  hills(m, trees, H, 4, { seed: seed + 14, depth: 3, gap: 1 }, 2.6);
+  // The ground white with frost: bare paper, a fine ground line, crystals glinting, more near.
+  const g = flat(108, seed, 0.8);
+  m.push({ d: areaPath(g, H + 2), c: 'pp' }, { d: linePath(g), c: 'l2', w: 0.5 });
   const r = rng(seed + 20);
   const xs: string[] = [];
-  for (let i = 0; i < 150; i++) {
-    const x = r() * W;
-    const y = yAt(g, x) + 2 + r() * 20;
-    const s = 0.5 + r() * 0.6;
-    xs.push(`M${f(x - s)} ${f(y)}h${f(2 * s)}M${f(x)} ${f(y - s)}v${f(2 * s)}`);
+  const star = (x: number, y: number, sz: number) => xs.push(`M${f(x - sz)} ${f(y)}h${f(2 * sz)}M${f(x)} ${f(y - sz)}v${f(2 * sz)}M${f(x - sz * 0.6)} ${f(y - sz * 0.6)}l${f(sz * 1.2)} ${f(sz * 1.2)}`);
+  for (let i = 0; i < 170; i++) {
+    const t = r() ** 0.8;
+    star(r() * W, yAt(g, 200) + 2 + t * 26, 0.35 + t * 0.6);
   }
-  m.push({ d: xs.join(''), c: 'l2', w: 0.32 });
-  m.push({ d: tufts(g, { seed: seed + 21, from: 2, to: W - 2, every: 16, h: 4 }), c: 'l2', w: 0.4 });
-  gum(m, { seed: seed + 30, x: 54, y: yAt(g, 54) + 1, h: 112, lean: 0.07, spread: 0.9, density: 0.45, depth: 3 });
-  // The meat pole: three sticks, the kangaroo leg hung from the top.
-  const px = 160;
-  const py = yAt(g, px);
+  // Tufts of grass stiff with hoar: pale blades, each tip a crystal.
+  const tuftsAt = (gl: ReturnType<typeof flat>, sd: number, every: number, h: number) => {
+    const d = tufts(gl, { seed: sd, from: 2, to: W - 2, every, h, blades: 4 });
+    m.push({ d, c: 'l2', w: 0.42 });
+    for (const mt of d.matchAll(/ ([-\d.]+) ([-\d.]+)(?=M|$)/g)) star(Number(mt[1]), Number(mt[2]), 0.55);
+  };
+  tuftsAt(g, seed + 21, 18, 4);
+  tuftsAt(shift(g, 9), seed + 22, 24, 5);
+  tuftsAt(shift(g, 19), seed + 23, 30, 6);
+  gum(m, { seed: seed + 30, x: 46, y: yAt(g, 46) + 1, h: 92, lean: 0.07, spread: 0.9, density: 0.45, depth: 3 });
+  // The meat pole: three sticks, the kangaroo leg hung from the top, white with rime.
+  const px = 150;
+  const py = yAt(g, px) + 4;
   m.push({ d: `M${f(px - 12)} ${f(py)}L${f(px)} ${f(py - 40)}L${f(px + 12)} ${f(py)}M${f(px + 2)} ${f(py + 0.5)}L${f(px)} ${f(py - 40)}`, c: 'l4', w: 0.8 });
   m.push({ d: `M${f(px)} ${f(py - 40)}L${f(px)} ${f(py - 34)}`, c: 'l4', w: 0.5 });
   m.push({
     d: `M${f(px - 1.6)} ${f(py - 34)}C${f(px - 4)} ${f(py - 30)} ${f(px - 4.4)} ${f(py - 24)} ${f(px - 2)} ${f(py - 20)}L${f(px - 1.2)} ${f(py - 12)}L${f(px - 3.6)} ${f(py - 9.6)}L${f(px - 0.6)} ${f(py - 9.8)}L${f(px + 0.4)} ${f(py - 12.6)}L${f(px + 1.6)} ${f(py - 21)}C${f(px + 3.6)} ${f(py - 25)} ${f(px + 3)} ${f(py - 31)} ${f(px + 1.6)} ${f(py - 34)}Z`,
     c: 'f4',
   });
-  // The fire out, a last thread of smoke; the men asleep under their blankets.
-  campfire(m, { seed: seed + 40, x: 224, y: yAt(g, 224), s: 1, out: true, smoke: 30, drift: 0.05 });
+  m.push({ d: `M${f(px - 2.6)} ${f(py - 30)}l0.8 1.6M${f(px - 3)} ${f(py - 26)}l1 1.4M${f(px - 1.8)} ${f(py - 22)}l0.7 1.6M${f(px - 1)} ${f(py - 16)}l0.5 1.4M${f(px - 1.6)} ${f(py - 33)}h2.6`, c: 'lp', w: 0.55 });
+  // The fire out, a last thread of smoke going straight up in the still cold; the men asleep, hoar
+  // on their blankets.
+  campfire(m, { seed: seed + 40, x: 224, y: yAt(g, 224) + 5, s: 1, out: true, smoke: 30, drift: 0.02 });
   const fig = emptyFigure();
-  lying(fig, 248, yAt(g, 248), 1.2);
-  lying(fig, 196, yAt(g, 196), 1.15, { dir: -1 });
+  const sleepers: [number, number, 1 | -1][] = [
+    [244, 1.2, 1],
+    [200, 1.15, -1],
+  ];
+  for (const [x, sc, dir] of sleepers) {
+    const y = yAt(g, x) + 6;
+    lying(fig, x, y, sc, { dir });
+    for (let dx = 4; dx < 27; dx += 1.5 + r() * 1.5) star(x + dir * dx * sc, y + (-6.4 + r() * 1.6) * sc, 0.5);
+  }
   m.push(...figureMarks(fig));
+  m.push({ d: xs.join(''), c: 'l2', w: 0.3 });
   return { w: W, h: H, marks: m };
 }
 
@@ -921,7 +958,7 @@ export const CARD_PLATE_LABEL: Record<string, string> = {
   rockWall: 'An engraving: looking along a narrow ridge with precipices either side to a tiered mass of sandstone across its whole breadth, a man shifting stones in the one cleft through it, the party waiting.',
   gullyWater: 'An engraving: the camp on a narrow ridge, the gully far below, two men climbing the face with kettles.',
   kangarooDogs: 'An engraving: three kangaroo dogs running down a kangaroo through open forest.',
-  frost: 'An engraving: dawn on a frosty camp, the men asleep under blankets, a kangaroo leg hanging frozen from a meat pole.',
+  frost: 'An engraving: dawn under the western cliffs, the sun just clearing the cliff top; the camp below in white frost, hoar on the grass and on the blankets of the sleeping men, the fire out, a kangaroo leg hanging frozen from a meat pole.',
   saltMeat: 'An engraving: an open cask of salt meat by a dying fire, a man laid up under his blanket.',
   after1813: 'An engraving: a road cut slantwise across a ridge and over its crest, stumps along it, nobody on it.',
   'signs-huts': 'An engraving: open forest on the foothills, a line of old blazes cut in the gums running on through the trees, the party halted at the first of them, a leader pointing on along the line.',
