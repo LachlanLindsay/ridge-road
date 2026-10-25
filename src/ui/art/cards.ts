@@ -226,102 +226,175 @@ function wombats(seed = 231): Scene {
   return { w: W, h: H, marks: m };
 }
 
-/** The rock wall: the narrow ridge blocked by a mass of rock, the men shifting stones in its one gap. */
+/**
+ * The rock wall, 18 May: looking along the ridge, "not more than fifteen or twenty yards over, with
+ * deep precipices on each side", to the mass of rock "nearly thirty feet high, extending across the
+ * whole breadth": weathered sandstone, its cap overhanging, honeycombed, one broken cleft through
+ * the middle where a man shifts the stones and the party waits its turn.
+ */
 function rockWall(seed = 241, counts: PartyCounts = { servants: 2, horses: 2, dogs: 1 }, loads?: Pack[]): Scene {
   const m: Mark[] = [];
-  sky(m, { seed, w: W, horizon: 62, clouds: [cloudBank(seed + 1, 120, 22, 170, 16, 7)], reach: 0.8 });
-  // Across the gorge, the far side in haze.
-  const far = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 58, amp: 2.5, scale: 120, plateau: 0.85, gullies: 3 });
-  hills(m, far, H, 0, { seed: seed + 11, depth: 8, gap: 1.6, growth: 0.25 });
-  const low = ridgeLine({ seed: seed + 12, x0: -4, x1: W + 4, base: 80, amp: 3, scale: 70, plateau: 0.5 });
-  hills(m, low, H, 1, { seed: seed + 13, depth: 12, gap: 1.6, growth: 0.25 });
-  // The ridge top, narrow, its near side a precipice falling out of the plate.
-  const ridge = curve(-4, W + 4, (x) => 110 + 0.8 * Math.sin(x / 17) + 0.4 * Math.sin(x / 5));
-  m.push({ d: areaPath(ridge, H + 2), c: 'pp' });
-  const drop = cliffFace(ridge, { seed: seed + 20, height: 30, cover: 0.4, gap: 2, cap: 0.8 });
-  m.push({ d: drop.face, c: 'l2', w: 0.42 }, { d: drop.beds, c: 'l2', w: 0.36 });
-  m.push({ d: linePath(ridge), c: 'l4', w: 0.9 });
-  // The rock: weathered sandstone rising sheer from the ridge, bedded, scrub on top, a broken cleft
-  // through the middle where the track goes.
-  const wx0 = 214;
-  const wx1 = 346;
-  const gapX = 282;
-  const n = rng(seed + 30);
-  const lumps = Array.from({ length: 14 }, () => n());
-  const topAt = (x: number) => {
-    const u = ((x - wx0) / (wx1 - wx0)) * 13;
-    const i = Math.floor(u);
-    const t = u - i;
-    const a = lumps[Math.max(0, Math.min(13, i))]!;
-    const b = lumps[Math.max(0, Math.min(13, i + 1))]!;
-    return 56 + (a + (b - a) * t * t * (3 - 2 * t)) * 7 + 0.4 * Math.sin(x / 1.7);
+  const HZ = 50;
+  sky(m, { seed, w: W, horizon: HZ, clouds: [cloudBank(seed + 1, 80, 18, 150, 14, 7), cloudBank(seed + 2, 350, 12, 100, 10, 5)], reach: 0.8 });
+  // The far sides of the two gorges, cliffed under their tops, forest falling to the floors.
+  const far = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: HZ, amp: 2, scale: 120, plateau: 0.85, gullies: 3 });
+  hills(m, far, H, 0, { seed: seed + 11, depth: 5, gap: 1.6, growth: 0.3 });
+  for (const [i, [x0, x1, base]] of ([
+    [-4, 170, 58],
+    [230, W + 4, 56],
+  ] as const).entries()) {
+    const wall = ridgeLine({ seed: seed + 12 + i, x0, x1, base, amp: 2, scale: 60, plateau: 0.8, tilt: i ? -0.03 : 0.03 });
+    hills(m, wall, H, 1, { seed: seed + 14 + i, depth: 3, gap: 1.2 }, 1);
+    const cl = cliffFace(wall, { seed: seed + 16 + i, height: 14, cover: 0.5, gap: 1.9, cap: 1 });
+    m.push({ d: cl.face, c: 'l1', w: 0.4 }, { d: cl.beds, c: 'l1', w: 0.34 });
+    hills(m, cl.foot, H, 1, { seed: seed + 18 + i, depth: 20, gap: 1.4, growth: 0.18, bias: 0.15 }, 1.4);
+  }
+  // The gorge floors far below, forest under a lying mist.
+  for (const [i, y] of [96, 114].entries()) {
+    const gl = curve(-4, W + 4, (x) => y + 1.3 * Math.sin(x / (24 + i * 9) + i) + 0.6 * Math.sin(x / 8 + i * 2), 1.5);
+    hills(m, gl, H + 4, 2 + i, { seed: seed + 20 + i * 3, depth: 5 + i * 3, gap: 1.5, growth: 0.3 }, 1.8 + i);
+    m.push({ d: `M-4 ${f(y + 6 + i * 2)}H${W + 4}M-4 ${f(y + 7.4 + i * 2)}H${W + 4}`, c: 'lp', w: 1 });
+  }
+  // The ridge, from under our feet to the rock: narrowing as it goes, its edges broken rims of rock
+  // with the ground falling away outside them.
+  const vy = 60;
+  const cxAt = (y: number) => 200 + 6 * Math.sin((y - vy) / 23);
+  const nz = rng(seed + 25);
+  const ys: number[] = [];
+  for (let y = 100; y <= H + 6; y += 1.5) ys.push(y);
+  const wob = ys.map(() => (nz() - 0.5) * 2.2);
+  const edgeL = ys.map((y, i) => [cxAt(y) - 1.45 * (y - vy) + wob[i]!, y] as const);
+  const edgeR = ys.map((y, i) => [cxAt(y) + 1.45 * (y - vy) - wob[(i + 7) % ys.length]!, y] as const);
+  const pt = ([x, y]: readonly [number, number]) => `${f(x)} ${f(y)}`;
+  m.push({ d: `M${edgeL.map(pt).join('L')}L${[...edgeR].reverse().map(pt).join('L')}Z`, c: 'pp' });
+  // The ground falling away outside each rim: hachures running outward and down, darkest at the lip.
+  const fall: [string[], string[]] = [[], []];
+  for (const [k, edge] of [edgeL, edgeR].entries()) {
+    const side = k ? 1 : -1;
+    for (let i = 0; i < edge.length; i += 1) {
+      const [x, y] = edge[i]!;
+      const sc = (y - vy) / 80;
+      const L = (5 + nz() * 4) * sc * 2;
+      const D = (7 + nz() * 6) * sc * 2;
+      fall[k]!.push(`M${f(x + side * 0.4)} ${f(y + 0.4)}Q${f(x + side * L * 0.25)} ${f(y + D * 0.6)} ${f(x + side * L)} ${f(y + D)}`);
+    }
+  }
+  m.push({ d: fall[0]!.join(''), c: 'l3', w: 0.42 }, { d: fall[1]!.join(''), c: 'l4', w: 0.5 });
+  m.push({ d: `M${edgeL.map(pt).join('L')}M${edgeR.map(pt).join('L')}`, c: 'l4', w: 0.9 });
+  // The ridge top: ground lines across it, closer far off, and coarse grass.
+  const across: string[] = [];
+  for (let y = 104; y < H; y += 1.6 + (y - 100) * 0.09) {
+    const hw = 1.45 * (y - vy) - 3;
+    const cx = cxAt(y);
+    let x = cx - hw + nz() * 4;
+    while (x < cx + hw - 3) {
+      const len = 4 + nz() * 12 * ((y - vy) / 60);
+      if (nz() < 0.55) across.push(`M${f(x)} ${f(y)}h${f(Math.min(len, cx + hw - x))}`);
+      x += len + 2 + nz() * 6;
+    }
+  }
+  m.push({ d: across.join(''), c: 'l3', w: 0.4 });
+  const crestG = curve(cxAt(122) - 72, cxAt(122) + 72, () => 122);
+  m.push({ d: tufts(crestG, { seed: seed + 26, from: crestG.x0 + 10, to: crestG.x0 + 134, every: 16, h: 4, blades: 4 }), c: 'l4', w: 0.45 });
+  // The rock: weathered sandstone in tiers, like the pagoda rocks of these ridges, each tier
+  // standing a little out over the one below, rounded lobes on top, a broken cleft through it.
+  const baseY = 102;
+  const gapX = cxAt(baseY) + 4;
+  const r = rng(seed + 30);
+  const lobes = [
+    [136, 22, 15],
+    [158, 33, 18],
+    [188, 42, 17],
+    [220, 46, 19],
+    [248, 37, 15],
+    [268, 24, 12],
+  ] as const;
+  const tier = 8.5;
+  const raw = (x: number) => Math.max(...lobes.map(([lx, lh, lw]) => lh * Math.exp(-(((x - lx) / lw) ** 6))));
+  // Heights step into tiers, each edge rounded; the cleft cuts a narrow notch down to the floor.
+  const heightAt = (x: number) => {
+    const h = raw(x);
+    const k = Math.floor(h / tier);
+    const frac = h / tier - k;
+    const stepped = k * tier + tier * Math.min(1, frac * 5) ** 0.5 * (frac > 0.04 ? 1 : 0);
+    const cleft = 1 - Math.exp(-(((x - gapX) / 2.4) ** 2));
+    return Math.min(h + 2, stepped) * cleft;
   };
-  const base = (x: number) => yAt(ridge, x);
-  const courses: string[] = [];
-  const joints: string[] = [];
+  const rx0 = 120;
+  const rx1 = 284;
+  const prof = curve(rx0, rx1, (x) => baseY - heightAt(x) + 0.3 * Math.sin(x / 1.7), 0.5);
+  m.push({ d: `${linePath(prof)}L${rx1} ${baseY + 3}L${rx0} ${baseY + 3}Z`, c: 'pp' });
+  // Under each tier's edge the rock is cut back in shadow, with honeycomb hollows in it.
+  const ledges: string[] = [];
+  const under: string[] = [];
+  const pits: string[] = [];
   const shade: string[] = [];
-  for (const [x0, x1, lean0, lean1] of [
-    [wx0, gapX - 3.5, 4, 1],
-    [gapX + 3.5, wx1, 1, 5],
-  ] as const) {
-    // The outline: a leaning, broken side up to a rounded, ragged top and down the other side.
-    const outline: [number, number][] = [];
-    const sideL = (y: number) => x0 + lean0 * ((base(x0) - y) / (base(x0) - topAt(x0))) ** 1.6 + (n() - 0.5) * 0.8;
-    const sideR = (y: number) => x1 - lean1 * ((base(x1) - y) / (base(x1) - topAt(x1))) ** 1.6 + (n() - 0.5) * 0.8;
-    for (let y = base(x0); y > topAt(x0) + 3; y -= 2) outline.push([sideL(y), y]);
-    const xa = x0 + lean0;
-    const xb = x1 - lean1;
-    for (let x = xa; x <= xb; x += 1) {
-      const round = Math.min(1, (x - xa) / 4, (xb - x) / 4);
-      outline.push([x, topAt(x) + (1 - round) * 3]);
-    }
-    for (let y = topAt(x1) + 3; y < base(x1); y += 2) outline.push([sideR(y), y]);
-    m.push({ d: outline.map(([x, y], i) => `${i ? 'L' : 'M'}${f(x)} ${f(y)}`).join('') + 'Z', c: 'pp' });
-    m.push({ d: outline.map(([x, y], i) => `${i ? 'L' : 'M'}${f(x)} ${f(y)}`).join(''), c: 'l4', w: 0.95 });
-    // Scrub along the top.
-    const crest = curve(xa + 2, xb - 2, (x) => topAt(x) + 0.4, 1);
-    const scrubTop = canopy(crest, { seed: seed + 33 + x0, size: 3.4, sparse: 0.25 });
-    m.push({ d: bandPath(scrubTop, crest), c: 'f3' });
-    // Bedding: wavering, broken courses; a few upright joints; shade on the side away from the light.
-    for (let y = topAt((x0 + x1) / 2) + 6; y < base(x0) - 3; y += 5 + n() * 3) {
-      let x = x0 + lean0 + 1 + n() * 4;
-      while (x < x1 - lean1 - 2) {
-        const len = 5 + n() * 14;
-        const xe = Math.min(x1 - lean1 - 1, x + len);
-        if (y > topAt(x) + 3) courses.push(`M${f(x)} ${f(y)}Q${f((x + xe) / 2)} ${f(y + (n() - 0.5) * 2.2)} ${f(xe)} ${f(y + (n() - 0.5) * 1.2)}`);
-        x = xe + 2 + n() * 5;
+  for (let k = 1; k * tier < 48; k++) {
+    const y = baseY - k * tier;
+    let on = false;
+    let run: number[] = [];
+    const flush = () => {
+      if (run.length > 3) {
+        const x0 = run[0]!;
+        const x1 = run[run.length - 1]!;
+        ledges.push(`M${f(x0)} ${f(y + 0.3)}Q${f((x0 + x1) / 2)} ${f(y + (r() - 0.5) * 1.2)} ${f(x1)} ${f(y + 0.2)}`);
+        for (let x = x0 + 0.4; x < x1; x += 0.9 + r() * 0.5) under.push(`M${f(x)} ${f(y + 0.9)}V${f(y + 1.8 + r() * 2.2)}`);
+        for (let j = 0; j < (x1 - x0) / 11; j++) {
+          const px = x0 + 2 + r() * (x1 - x0 - 4);
+          const py = y + 2.6 + r() * 3;
+          const rr = 0.35 + r() * 0.6;
+          pits.push(`M${f(px - rr)} ${f(py)}A${f(rr)} ${f(rr * 0.8)} 0 1 0 ${f(px + rr)} ${f(py)}A${f(rr)} ${f(rr * 0.8)} 0 1 0 ${f(px - rr)} ${f(py)}Z`);
+        }
       }
+      run = [];
+    };
+    for (let x = rx0; x <= rx1; x += 0.5) {
+      const inside = heightAt(x) > k * tier + 1.2;
+      if (inside) run.push(x);
+      else if (on) flush();
+      on = inside;
     }
-    for (let x = x0 + 8 + n() * 8; x < x1 - 6; x += 12 + n() * 14) {
-      const y0 = topAt(x) + 4 + n() * 10;
-      joints.push(`M${f(x)} ${f(y0)}Q${f(x + (n() - 0.5) * 3)} ${f(y0 + 8)} ${f(x + (n() - 0.5) * 2)} ${f(Math.min(base(x) - 1, y0 + 10 + n() * 18))}`);
-    }
-    for (let x = x0 + (x1 - x0) * 0.55; x < x1 - lean1 * 0.5; x += 1 + n() * 0.9) {
-      for (let y = topAt(x) + 3; y < base(x) - 0.5; y += 2.4 + n() * 3.6) shade.push(`M${f(x)} ${f(y)}V${f(Math.min(base(x) - 0.5, y + 1.5 + n() * 3))}`);
-    }
+    flush();
   }
-  m.push({ d: courses.join(''), c: 'l3', w: 0.5 }, { d: joints.join(''), c: 'l4', w: 0.45 }, { d: shade.join(''), c: 'l3', w: 0.4 });
-  // The cleft between: dark, narrowing to the broken floor where the track goes through.
-  m.push({ d: `M${f(gapX - 3.6)} ${f(topAt(gapX - 3.6) + 4)}L${f(gapX - 1.4)} ${f(base(gapX) - 9)}L${f(gapX + 1.4)} ${f(base(gapX) - 9)}L${f(gapX + 3.6)} ${f(topAt(gapX + 3.6) + 4)}Z`, c: 'f4' });
-  // Rubble at the foot.
-  const rubble: string[] = [];
-  for (const x of [wx0 - 4, wx0 + 6, wx1 - 6, wx1 + 4, gapX - 12]) {
-    const y = base(x) + 0.2;
-    const sz = 1.2 + n() * 1.4;
-    rubble.push(`M${f(x - sz * 1.6)} ${f(y)}C${f(x - sz * 1.6)} ${f(y - sz * 1.6)} ${f(x + sz * 1.4)} ${f(y - sz * 1.8)} ${f(x + sz * 1.6)} ${f(y)}Z`);
+  // Each lobe shaded on the side away from the light, and lightly bedded between the tiers.
+  for (let x = rx0; x < rx1; x += 1.1 + r() * 0.5) {
+    const slope = heightAt(x + 2) - heightAt(x - 2);
+    const yt = baseY - heightAt(x);
+    if (yt > baseY - 2) continue;
+    const dark = slope < -1.5 || x > gapX + 30;
+    if (!dark && r() > 0.12) continue;
+    for (let y = yt + 2 + r() * 2; y < baseY; y += 2.6 + r() * 3.4) shade.push(`M${f(x)} ${f(y)}V${f(Math.min(baseY, y + 1.6 + r() * 3))}`);
   }
-  m.push({ d: rubble.join(''), c: 'pk', w: 0.45 });
-  // Stones moved out of the cleft, and a man lifting another.
-  for (const [i, x] of [264, 300, 310].entries()) {
-    const y = yAt(ridge, x) + 0.3;
-    const sz = 1 - i * 0.12;
-    m.push({ d: `M${f(x - 4 * sz)} ${f(y)}C${f(x - 4.4 * sz)} ${f(y - 5.6 * sz)} ${f(x + 3.4 * sz)} ${f(y - 6.2 * sz)} ${f(x + 4.2 * sz)} ${f(y)}Z`, c: 'pk', w: 0.5 });
+  m.push({ d: shade.join(''), c: 'l3', w: 0.38 }, { d: under.join(''), c: 'l4', w: 0.5 }, { d: ledges.join(''), c: 'l4', w: 0.6 }, { d: pits.join(''), c: 'f4' });
+  m.push({ d: linePath(prof), c: 'l4', w: 0.9 });
+  // Scrub in the cracks along the top.
+  for (const [lx, lh] of lobes) {
+    const g = curve(lx - 6, lx + 6, (x) => baseY - heightAt(x) + 0.4, 1);
+    const tp = canopy(g, { seed: seed + 32 + lx, size: 1.8 + lh * 0.03, sparse: 0.5 });
+    m.push({ d: bandPath(tp, g), c: 'f3' });
   }
+  // The cleft, dark, floored with broken stone.
+  m.push({ d: `M${f(gapX - 2.6)} ${f(baseY - heightAt(gapX - 6) + 3)}L${f(gapX - 1.2)} ${f(baseY)}L${f(gapX + 1.4)} ${f(baseY)}L${f(gapX + 2.8)} ${f(baseY - heightAt(gapX + 6) + 3)}Z`, c: 'f4' });
+  // Stones lifted out of the cleft, and a man heaving another.
+  const lifted: string[] = [];
+  const lshade: string[] = [];
+  for (const [i, [x, sz]] of ([
+    [gapX - 13, 1.2],
+    [gapX + 11, 1],
+    [gapX + 17, 0.75],
+    [gapX - 20, 0.65],
+  ] as const).entries()) {
+    const y = baseY + 2.4 + i * 0.5;
+    lifted.push(`M${f(x - 4 * sz)} ${f(y)}L${f(x - 3.6 * sz)} ${f(y - 2.6 * sz)}L${f(x - 1 * sz)} ${f(y - 3.8 * sz)}L${f(x + 3 * sz)} ${f(y - 3.2 * sz)}L${f(x + 4.2 * sz)} ${f(y - 1 * sz)}L${f(x + 4 * sz)} ${f(y)}Z`);
+    lshade.push(`M${f(x - 3.8 * sz)} ${f(y + 0.3)}H${f(x + 4.2 * sz)}L${f(x + 4.4 * sz)} ${f(y - 1 * sz)}`);
+  }
+  m.push({ d: lifted.join(''), c: 'pk', w: 0.45 }, { d: lshade.join(''), c: 'l4', w: 0.7 });
   const men = emptyFigure();
-  standing(men, gapX - 1, yAt(ridge, gapX), 0.78, { leader: false, arms: 'stone', lean: 0.3 });
+  standing(men, gapX - 3, baseY + 2, 0.44, { leader: false, arms: 'stone', lean: 0.3 });
   m.push(...figureMarks(men));
-  // The party waiting behind.
-  const { fig } = procession(counts, ridge, { from: 8, to: 196, maxScale: 0.62, seed: seed + 40, loads });
+  // The party waiting its turn on the ridge before the rock.
+  const wait = curve(60, 240, () => 110);
+  const { fig } = procession(counts, wait, { from: 112, to: gapX - 26, maxScale: 0.46, seed: seed + 40, loads });
   m.push(...figureMarks(fig));
   return { w: W, h: H, marks: m };
 }
@@ -695,7 +768,7 @@ export const CARD_PLATE_LABEL: Record<string, string> = {
   distanceByClock: 'An engraving: a pocket watch standing on a rock at two o’clock, its chain run out, the ridges beyond.',
   cairn: 'An engraving: a pile of stones on the ridge top, a leader pointing it out.',
   wombats: 'An engraving: a wombat’s track across the sand to its burrow under the prickly brush.',
-  rockWall: 'An engraving: a wall of rock across a narrow ridge above a precipice, a man shifting stones in its one gap, the party waiting.',
+  rockWall: 'An engraving: looking along a narrow ridge with precipices either side to a tiered mass of sandstone across its whole breadth, a man shifting stones in the one cleft through it, the party waiting.',
   gullyWater: 'An engraving: the camp on a narrow ridge, the gully far below, two men climbing the face with kettles.',
   kangarooDogs: 'An engraving: three kangaroo dogs running down a kangaroo through open forest.',
   frost: 'An engraving: dawn on a frosty camp, the men asleep under blankets, a kangaroo leg hanging frozen from a meat pole.',
@@ -712,7 +785,7 @@ export const CARD_FOCUS: Record<string, readonly [number, number, number, number
   distanceByClock: [70, 24, 200, 100],
   cairn: [96, 52, 200, 86],
   wombats: [180, 76, 200, 64],
-  rockWall: [140, 40, 240, 96],
+  rockWall: [84, 30, 240, 96],
   gullyWater: [10, 26, 240, 100],
   kangarooDogs: [120, 52, 240, 86],
   frost: [110, 54, 230, 82],
