@@ -582,31 +582,52 @@ function gullyWater(seed = 251): Scene {
   const fc = cliffFace(far, { seed: seed + 12, height: 26, cover: 2, gap: 2.2, cap: 1.5, grain: 0.2, grainScale: 30 });
   m.push({ d: fc.face, c: 'l1', w: 0.4 }, { d: fc.beds, c: 'l1', w: 0.34 });
   underCliff(m, fc.foot, H, 2, { seed: seed + 13, depth: 40, gap: 1.3, growth: 0.12, bias: 0.25 });
-  // The creek at the bottom of the gully.
-  const wh = waterHatch({ seed: seed + 14, from: 160, to: W + 4, top: 128, bottom: 136, gap: 1.6 });
-  m.push({ d: `M160 127.4H${W + 4}V${H + 2}H160Z`, c: 'pp' }, { d: wh.light, c: 'lw', w: 0.45 }, { d: wh.dark, c: 'lw', w: 0.5 });
-  // Our ridge: narrow, high on the left, its face falling sheer to the creek.
+  // Our ridge: narrow, high on the left, its face falling sheer out of the bottom of the plate.
   const top = curve(-4, 168, (x) => 50 + 0.8 * Math.sin(x / 11) + (x > 150 ? ((x - 150) / 18) ** 2 * 3 : 0));
   hills(m, top, H + 2, 3, { seed: seed + 21, depth: 60, gap: 1.3, growth: 0.08, bias: 0.25, step: 2.5 }, 1.6);
-  const face = curve(166, 198, (x) => yAt(top, 166) + ((x - 166) / 32) ** 0.6 * (130 - yAt(top, 166)));
-  m.push({ d: `${linePath(face)}L198 ${H + 2}L150 ${H + 2}L150 ${f(yAt(top, 150))}Z`, c: 'pp' });
+  const y0 = yAt(top, 166);
+  const face = curve(166, 206, (x) => y0 + ((x - 166) / 40) ** 0.6 * (H + 2 - y0));
+  m.push({ d: `${linePath(face)}L206 ${H + 2}L158 ${H + 2}L158 ${f(yAt(top, 158))}Z`, c: 'pp' });
+  // The rock of the face in upright strokes, thinning out to the west into the ridge's own
+  // hatching rather than stopping on a ruled edge.
   const r = rng(seed + 20);
   const strokes: string[] = [];
-  for (let x = 150; x < 198; x += 0.9 + r() * 0.8) {
-    const y0 = x < 166 ? yAt(top, x) + 2 + (166 - x) * 0.4 : yAt(face, x) + 0.5;
-    for (let y = y0; y < H + 2; y += 3 + r() * 6) strokes.push(`M${f(x)} ${f(y)}V${f(Math.min(H + 2, y + 2 + r() * 5))}`);
+  for (let x = 134; x < 206; x += 0.9 + r() * 0.8) {
+    const ys = x < 166 ? yAt(top, x) + 2 + Math.max(0, 166 - x) * 0.4 : yAt(face, x) + 0.5;
+    const keep = Math.min(1, (x - 134) / 26);
+    for (let y = ys; y < H + 2; y += 3 + r() * 6) if (r() < keep) strokes.push(`M${f(x)} ${f(y)}V${f(Math.min(H + 2, y + 2 + r() * 5))}`);
   }
   m.push({ d: strokes.join(''), c: 'l4', w: 0.5 });
   m.push({ d: linePath(top), c: 'l4', w: 0.9 }, { d: linePath(face), c: 'l4', w: 0.8 });
-  // The track down the face, zigzag, and two men on it with the kettles.
-  m.push({ d: `M164 54L176 72L168 84L184 102L176 114L192 128`, c: 'l4 o1', w: 0.5 });
+  // Far below at its foot, a glint of the creek.
+  const glint = `M204 133.2C220 132.6 244 132.8 262 133.6C246 136 220 136.2 205 135.6Z`;
+  m.push({ d: glint, c: 'pp' }, { d: 'M210 134.2H226M232 134.4H250M216 135.2H230', c: 'lw', w: 0.4 });
+  // The track zigzagging down the face, and two men on it with the kettles, small against it.
+  const track: [number, number][] = [
+    [160, 53],
+    [166, 63],
+    [158, 72],
+    [168, 82],
+    [160, 92],
+    [174, 102],
+    [166, 111],
+    [182, 121],
+  ];
+  // The path cut pale across the dark rock, its lower edge in shadow, the men in the clear on it.
+  const path = `M${track.map(([x, y]) => `${x} ${y}`).join('L')}`;
+  m.push({ d: path, c: 'lp', w: 2.4 }, { d: `M${track.map(([x, y]) => `${x} ${y + 1.2}`).join('L')}`, c: 'l4', w: 0.45 });
+  for (const [x, y] of [
+    [163, 66.4],
+    [170, 99.1],
+  ] as const)
+    m.push({ d: `M${x - 3.4} ${y - 4.5}a3.4 6 0 1 0 6.8 0a3.4 6 0 1 0 -6.8 0Z`, c: 'pp' });
   const men = emptyFigure();
-  standing(men, 175, 72, 0.5, { leader: false, arms: 'kettle', dir: 1, lean: 0.1 });
-  standing(men, 183, 102, 0.5, { leader: false, arms: 'kettle', dir: -1, lean: 0.1 });
+  standing(men, 163, 66.4, 0.22, { leader: false, arms: 'kettle', dir: -1, lean: 0.1 });
+  standing(men, 170, 99.1, 0.22, { leader: false, arms: 'kettle', dir: 1, lean: 0.1 });
   m.push(...figureMarks(men));
   // The camp on top: smoke, the packs, the horses standing dry.
-  campfire(m, { seed: seed + 30, x: 112, y: yAt(top, 112), s: 0.7, smoke: 26, drift: 0.5 });
-  const { fig } = procession({ servants: 1, horses: 2, dogs: 1 }, top, { from: 6, to: 96, maxScale: 0.52, seed: seed + 40, phase: 0 });
+  campfire(m, { seed: seed + 30, x: 118, y: yAt(top, 118), s: 0.45, smoke: 20, drift: 0.5 });
+  const { fig } = procession({ servants: 1, horses: 2, dogs: 1 }, top, { from: 30, to: 106, maxScale: 0.3, seed: seed + 40, phase: 0 });
   m.push(...figureMarks(fig));
   return { w: W, h: H, marks: m };
 }
