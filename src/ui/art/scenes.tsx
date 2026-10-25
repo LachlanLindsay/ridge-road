@@ -226,29 +226,37 @@ export function repulsed(counts: PartyCounts, seed = 41, loads?: Pack[]): Scene 
   const W = 400;
   const H = 180;
   const m: Mark[] = [];
-  sky(m, { seed, w: W, horizon: 70, clouds: [cloudBank(seed + 1, 250, 26, 220, 26, 9)], reach: 0.95 });
-  // The far wall: a tall cliff band under the plateau, dark forest below, mist in the gorge.
-  const wall = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 56, amp: 2.5, scale: 120, plateau: 0.85, gullies: 2, gullyDepth: 5 });
-  hills(m, wall, H, 1, { seed: seed + 11, depth: 2.5, gap: 1 }, 0.8);
-  const cliff = cliffFace(wall, { seed: seed + 12, height: 40, cover: 0.8, gap: 2, cap: 2 });
-  m.push({ d: cliff.face, c: 'l3', w: 0.5 }, { d: cliff.beds, c: 'l3', w: 0.42 });
-  hills(m, cliff.foot, H, 3, { seed: seed + 13, depth: 40, gap: 1.05, growth: 0.12, bias: 0.35 }, 1.1);
-  // The near ridge, ending in a sheer drop.
-  const edgeX = 236;
-  const ridge = curve(-4, edgeX, (x) => 116 + (x / edgeX) * 4 + 1.1 * Math.sin(x / 10));
+  sky(m, { seed, w: W, horizon: 64, clouds: [cloudBank(seed + 1, 250, 24, 220, 24, 9)], reach: 0.95 });
+  // The far wall: the plateau, then a cliff band that rises and breaks, buttresses standing out
+  // between wooded gullies, its bedding showing; forest falling from its foot into the gorge.
+  const wall = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 46, amp: 2.5, scale: 110, plateau: 0.85, gullies: 5, gullyDepth: 7, gullyWidth: 9 });
+  hills(m, wall, H, 1, { seed: seed + 11, depth: 3, gap: 1 }, 0.9);
+  const cliff = cliffFace(wall, { seed: seed + 12, height: 34, cover: 0.62, gap: 2.3, cap: 2.2 });
+  m.push({ d: cliff.face, c: 'l2', w: 0.46 }, { d: cliff.beds, c: 'l2', w: 0.44 });
+  hills(m, cliff.foot, H, 2, { seed: seed + 13, depth: 30, gap: 1.2, growth: 0.14, bias: 0.25 }, 1.2);
+  // Far below, under a lane of mist, the tops of the trees on the floor of the gorge.
+  const floor = [
+    { y: 141, crown: 1.7, tone: 2 },
+    { y: 156, crown: 2.4, tone: 3 },
+    { y: 172, crown: 3.2, tone: 3 },
+  ];
+  floor.forEach((t, i) => {
+    const g = curve(150, W + 4, (x) => t.y + 1.4 * Math.sin(x / (26 + i * 9) + i * 2) + 0.7 * Math.sin(x / 9 + i));
+    hills(m, g, H + 4, t.tone, { seed: seed + 14 + i * 3, depth: 8 + i * 4, gap: 1.1 + i * 0.1, growth: 0.2, bias: 0.2 }, t.crown);
+  });
+  // The near ridge, rounding over at its end and plunging: the steep flank hatched dark, the
+  // bedding of the brink showing under the lip.
+  const edgeX = 232;
+  const ridge = curve(-4, edgeX + 30, (x) => 114 + (x / edgeX) * 3 + 1.1 * Math.sin(x / 10) + fallAway(x, edgeX, 1, 14, 52));
   ledge(m, ridge, H + 2, seed + 20);
-  const near = cliffFace(ridge, { seed: seed + 21, height: 8, cover: 0.9, gap: 1.6, cap: 1.5, to: edgeX - 2 });
-  m.push({ d: near.beds, c: 'l4', w: 0.45 });
-  const drop: string[] = [];
-  for (let x = edgeX - 9; x <= edgeX + 0.01; x += 1.1) drop.push(`M${x.toFixed(1)} ${(yAt(ridge, x) + 1).toFixed(1)}V${H}`);
-  m.push({ d: drop.join(''), c: 'l4', w: 0.55 }, { d: `M${edgeX} ${yAt(ridge, edgeX).toFixed(1)}V${H}`, c: 'l4', w: 1 });
-  m.push({ d: tufts(ridge, { seed: seed + 22, from: 4, to: edgeX - 12, every: 10, h: 6 }), c: 'l4', w: 0.5 });
-  // A dead tree back from the edge.
-  const dead = gumTree({ seed: seed + 23, x: edgeX - 70, y: yAt(ridge, edgeX - 70) + 1, h: 70, lean: 0.12, spread: 1.1 });
+  brinkFace(m, { seed: seed + 21, top: ridge, edgeX: edgeX + 6, side: 1, depth: 46, bottom: H });
+  m.push({ d: tufts(ridge, { seed: seed + 22, from: 4, to: edgeX - 10, every: 10, h: 6 }), c: 'l4', w: 0.5 });
+  // A dead tree back along the ridge, framing the left.
+  const dead = gumTree({ seed: seed + 23, x: 14, y: yAt(ridge, 14) + 1, h: 92, lean: 0.1, spread: 1.1 });
   m.push({ d: dead.wood, c: 'f4' });
   // The party halted behind, and a leader at the brink, leaning to look down the drop.
-  const { fig, slots } = procession(counts, ridge, { from: 12, to: edgeX - 30, maxScale: 0.55, seed: seed + 3, loads });
-  standing(fig, edgeX - 7, yAt(ridge, edgeX - 7), 0.62, { leader: true, arms: 'down', lean: 0.28 });
+  const { fig, slots } = procession(counts, ridge, { from: 34, to: edgeX - 30, maxScale: 0.55, seed: seed + 3, loads });
+  standing(fig, edgeX - 9, yAt(ridge, edgeX - 9), 0.62, { leader: true, arms: 'down', lean: 0.28 });
   m.push(...figureMarks(fig));
   return { w: W, h: H, marks: m, slots };
 }
