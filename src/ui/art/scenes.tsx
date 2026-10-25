@@ -281,9 +281,12 @@ export function repulsed(counts: PartyCounts, seed = 41, loads?: Pack[]): Scene 
   // A dead tree back along the ridge, framing the left.
   const dead = gumTree({ seed: seed + 23, x: 14, y: yAt(ridge, 14) + 1, h: 92, lean: 0.1, spread: 1.1 });
   m.push({ d: dead.wood, c: 'f4' });
-  // The party halted behind, and a leader at the brink, leaning to look down the drop.
-  const { fig, slots } = procession(counts, ridge, { from: 34, to: edgeX - 30, maxScale: 0.55, seed: seed + 3, loads });
-  standing(fig, edgeX - 9, yAt(ridge, edgeX - 9), 0.62, { leader: true, arms: 'down', lean: 0.28 });
+  // The party halted behind, and Blaxland gone on to the brink, leaning to look down the drop, the
+  // same size as the rest of them.
+  const { fig, scale, slots } = procession(counts, ridge, { from: 34, to: edgeX - 30, maxScale: 0.55, seed: seed + 3, loads, omit: ['blaxland'] });
+  const bx = edgeX - 9;
+  standing(fig, bx, yAt(ridge, bx), scale, { leader: true, arms: 'down', lean: 0.28 });
+  slots.push({ who: { kind: 'man', id: 'blaxland' }, x: bx - 5 * scale, y: yAt(ridge, bx) - 41 * scale, w: 11 * scale, h: 42.5 * scale });
   m.push(...figureMarks(fig));
   return { w: W, h: H, marks: m, slots };
 }
