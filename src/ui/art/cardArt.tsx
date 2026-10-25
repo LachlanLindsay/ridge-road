@@ -38,7 +38,7 @@ const MILESTONE_HEAD: Record<string, readonly [number, number, number, number]> 
 const MILESTONE_FOCUS: Record<string, readonly [number, number, number, number]> = {
   viewBack: [0, 84, 260, 96],
   highHeath: [40, 96, 260, 64],
-  wayDown: [20, 52, 300, 116],
+  wayDown: [0, 36, 300, 120],
   sugarloaf: [20, 64, 300, 116],
 };
 
