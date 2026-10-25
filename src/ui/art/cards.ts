@@ -172,22 +172,26 @@ function distanceByClock(seed = 211): Scene {
   return { w: W, h: H, marks: m };
 }
 
-/** The old cairn: a pile of stones on the ridge top, two of the party looking it over. */
+/**
+ * The old cairn, 19 May: on the crest of the second ridge, the ground falling away on both sides
+ * into the valleys, a rough pile of flat stones, and two of the party looking it over.
+ */
 function cairn(seed = 221): Scene {
   const m: Mark[] = [];
-  sky(m, { seed, w: W, horizon: 78, clouds: [cloudBank(seed + 1, 120, 26, 170, 20, 7)], reach: 0.75 });
-  const far = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 74, amp: 3, scale: 110, plateau: 0.8, gullies: 4 });
+  sky(m, { seed, w: W, horizon: 70, clouds: [cloudBank(seed + 1, 120, 22, 170, 18, 7)], reach: 0.75 });
+  const far = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 66, amp: 3, scale: 110, plateau: 0.8, gullies: 4 });
   hills(m, far, H, 0, { seed: seed + 11, depth: 8, gap: 1.6, growth: 0.25 });
-  const mid = ridgeLine({ seed: seed + 20, x0: -4, x1: W + 4, base: 92, amp: 4, scale: 80, plateau: 0.6, gullies: 3 });
+  const mid = ridgeLine({ seed: seed + 20, x0: -4, x1: W + 4, base: 82, amp: 4, scale: 80, plateau: 0.6, gullies: 3 });
   hills(m, mid, H, 1, { seed: seed + 21, depth: 12, gap: 1.4, growth: 0.2 }, 1);
-  const g = flat(122, seed, 1.4);
-  hills(m, g, H + 2, 3, { seed: seed + 30, depth: 14, gap: 1.3, growth: 0.2, bias: 0.1 });
-  m.push({ d: tufts(g, { seed: seed + 31, from: 2, to: W - 2, every: 12, h: 5 }), c: 'l4', w: 0.48 });
-  gum(m, { seed: seed + 40, x: 340, y: yAt(g, 340) + 1, h: 104, lean: -0.06, spread: 0.9, density: 0.45, depth: 3 });
-  stonePile(m, { seed: seed + 50, x: 214, y: yAt(g, 214) + 0.5, w: 48, h: 34 });
+  // The ridge, end on: a narrow crest, the ground rounding over and falling away either side.
+  const g = curve(-4, W + 4, (x) => 104 + 40 * (Math.abs(x - 206) / 210) ** 2.2 + 0.9 * Math.sin(x / 13) + 0.4 * Math.sin(x / 4));
+  hills(m, g, H + 2, 3, { seed: seed + 30, depth: 26, gap: 1.3, growth: 0.12, bias: 0.15, light: 1.4 });
+  m.push({ d: tufts(g, { seed: seed + 31, from: 40, to: W - 30, every: 12, h: 5 }), c: 'l4', w: 0.48 });
+  gum(m, { seed: seed + 40, x: 352, y: yAt(g, 352) + 1, h: 98, lean: -0.08, spread: 0.9, density: 0.45, depth: 3 });
+  stonePile(m, { seed: seed + 50, x: 212, y: yAt(g, 212) + 1, w: 46, h: 31 });
   const fig = emptyFigure();
-  standing(fig, 158, yAt(g, 158), 1.05, { leader: true, arms: 'point' });
-  standing(fig, 128, yAt(g, 128), 1.05, { leader: false, arms: 'gunRest' });
+  standing(fig, 172, yAt(g, 172), 1.05, { leader: true, arms: 'point' });
+  standing(fig, 146, yAt(g, 146), 1.05, { leader: false, arms: 'gunRest' });
   m.push(...figureMarks(fig));
   return { w: W, h: H, marks: m };
 }
@@ -862,7 +866,7 @@ export const CARD_PLATES: Record<string, () => Scene> = {
 export const CARD_PLATE_LABEL: Record<string, string> = {
   ridgeMethod: 'An engraving: one ridge running away to the horizon between two misty valleys, its flanks falling to the forest on both sides; at its near end a man blazes a gum as the party follows.',
   distanceByClock: 'An engraving: a pocket watch standing on a rock at two o’clock, its chain run out, the ridges beyond.',
-  cairn: 'An engraving: a pile of stones on the ridge top, a leader pointing it out.',
+  cairn: 'An engraving: a rough pile of flat stones on the crest of a ridge that falls away on both sides, a leader pointing it out to a man resting on his gun.',
   wombats: 'An engraving: a wombat ambling across the sand to its burrow in a bank, its paired tracks behind it, prickly brush all round.',
   rockWall: 'An engraving: looking along a narrow ridge with precipices either side to a tiered mass of sandstone across its whole breadth, a man shifting stones in the one cleft through it, the party waiting.',
   gullyWater: 'An engraving: the camp on a narrow ridge, the gully far below, two men climbing the face with kettles.',

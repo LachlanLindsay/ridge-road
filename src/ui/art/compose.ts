@@ -277,32 +277,48 @@ export function bedroll(m: Mark[], x: number, y: number, s: number) {
 }
 
 /**
- * A heap of stones: rounded blocks stacked into a rough cone, each shaded on its lower right and
- * outlined, the way an engraver draws a cairn.
+ * A rough cairn of flat sandstone pieces: slabs of every size laid unevenly, tilted and overhanging,
+ * the pile narrowing raggedly to a top stone, dark crevices between them. Centred on x, standing on
+ * y, about w across the foot and h high.
  */
 export function stonePile(m: Mark[], o: { seed: number; x: number; y: number; w: number; h: number }) {
   const r = rng(o.seed);
-  const blocks: string[] = [];
-  const shade: string[] = [];
-  const rows = Math.max(3, Math.round(o.h / 3.2));
-  for (let k = 0; k < rows; k++) {
-    const t = k / rows;
-    const rowW = o.w * (1 - t * 0.82);
-    const yb = o.y - (k * o.h) / rows;
-    const sh = (o.h / rows) * (1.05 + r() * 0.2);
-    let x = o.x - rowW / 2;
-    while (x < o.x + rowW / 2 - 0.8) {
-      const bw = Math.min(o.x + rowW / 2 - x, 2.2 + r() * 3.2);
-      const x0 = x;
-      const x1 = x + bw;
-      const top = yb - sh;
-      blocks.push(`M${f(x0 + 0.3)} ${f(yb)}C${f(x0 - 0.3)} ${f(yb - sh * 0.5)} ${f(x0 + 0.2)} ${f(top + 0.4)} ${f(x0 + bw * 0.4)} ${f(top)}C${f(x1 - 0.4)} ${f(top - 0.2)} ${f(x1 + 0.2)} ${f(top + sh * 0.4)} ${f(x1)} ${f(yb)}Z`);
-      for (let hy = yb - sh * 0.45; hy < yb - 0.3; hy += 0.9) shade.push(`M${f(x0 + bw * 0.45)} ${f(hy)}L${f(x1 - 0.2)} ${f(hy - 0.2)}`);
-      x = x1 + 0.1 + r() * 0.3;
+  const slabs: string[] = [];
+  const under: string[] = [];
+  const back: [number, number][] = [];
+  let y = o.y;
+  let k = 0;
+  while (y > o.y - o.h + 1.5) {
+    const t = (o.y - y) / o.h;
+    const half = (o.w / 2) * Math.max(0.12, (1 - t ** 1.3) * (0.82 + r() * 0.3));
+    const sway = (r() - 0.5) * o.w * 0.06 + Math.sin(k * 1.7) * o.w * 0.02;
+    const th = 1.6 + r() * 2.2;
+    back.push([o.x + sway - half - 0.6, y], [o.x + sway + half + 0.6, y]);
+    let x = o.x + sway - half;
+    while (x < o.x + sway + half - 1) {
+      const sw = Math.min(o.x + sway + half - x, 3.5 + r() * 9);
+      const tilt = (r() - 0.5) * 1.6;
+      const lip = (r() - 0.3) * 1.2;
+      const x0 = x - lip;
+      const x1 = x + sw + (r() - 0.5) * 1.2;
+      const yb = y + (r() - 0.5) * 0.6;
+      const yt = yb - th * (0.7 + r() * 0.5);
+      slabs.push(`M${f(x0)} ${f(yb - tilt * 0.5)}L${f(x0 + 0.5)} ${f(yt - tilt * 0.5)}L${f(x1 - 0.4)} ${f(yt + tilt * 0.5)}L${f(x1)} ${f(yb + tilt * 0.5)}Z`);
+      under.push(`M${f(x0 + 0.3)} ${f(yb - tilt * 0.5 + 0.2)}L${f(x1)} ${f(yb + tilt * 0.5 + 0.2)}`);
+      x = x1 + 0.4 + r() * 0.8;
     }
+    y -= th * (0.78 + r() * 0.2);
+    k++;
   }
-  m.push({ d: blocks.join(''), c: 'pk', w: 0.45 });
-  m.push({ d: shade.join(''), c: 'l3', w: 0.3 });
+  // The pile in shadow behind the slabs, so the gaps between them read as crevices.
+  const left = back.filter((_, i) => i % 2 === 0);
+  const right = back.filter((_, i) => i % 2 === 1).reverse();
+  const top = o.y - o.h;
+  m.push({ d: `M${[...left, [o.x, top] as [number, number], ...right].map(([px, py]) => `${f(px)} ${f(py)}`).join('L')}Z`, c: 'f4' });
+  m.push({ d: slabs.join(''), c: 'pk', w: 0.4 });
+  m.push({ d: under.join(''), c: 'l4', w: 0.75 });
+  // The top stone, a single flat piece set on edge.
+  m.push({ d: `M${f(o.x - 3)} ${f(top + 2.2)}L${f(o.x - 1.6)} ${f(top - 2.4)}L${f(o.x + 2.2)} ${f(top - 1.6)}L${f(o.x + 3.2)} ${f(top + 2.4)}Z`, c: 'pk', w: 0.45 });
 }
 
 /** Tracks in soft ground: paired marks running along a line, a little apart, like a short-legged animal's. */
