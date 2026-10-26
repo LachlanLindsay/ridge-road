@@ -30,9 +30,11 @@ export interface Figure {
   front: { d: string; w: number }[];
   topInk: string[];
   rope: { d: string; w: number }[];
+  /** Cloth in a tone of its own, with its own markings (a blanket and its stripes), over the body. */
+  cloth: Mark[];
 }
 
-export const emptyFigure = (): Figure => ({ ink: [], far: [], limbs: [], farLimbs: [], back: [], paper: [], front: [], topInk: [], rope: [] });
+export const emptyFigure = (): Figure => ({ ink: [], far: [], limbs: [], farLimbs: [], back: [], paper: [], front: [], topInk: [], rope: [], cloth: [] });
 
 /** A leg as hip, joint and foot, the joint bent the way the animal's bends. */
 function leg(p: Pt, top: [number, number], joint: [number, number], foot: [number, number]) {
@@ -493,6 +495,7 @@ export function figureMarks(fig: Figure, tone = 'f4', legs?: { near: string; far
   join(fig.back, 'pk');
   join(fig.paper, 'pk');
   join(fig.front, 'pk');
+  out.push(...fig.cloth);
   if (fig.topInk.length) out.push({ d: fig.topInk.join(''), c: legs?.top ?? tone });
   join(fig.rope, 'l4');
   return out;
@@ -609,7 +612,8 @@ export function standing(fig: Figure, X: number, Y: number, s: number, o: { lead
 /**
  * A man sitting on the ground with his knees up, facing right (or left with dir -1). `arms`: hugging
  * his knees, holding his hands to a fire, folded on his knees, or his head in his hands. A blanket
- * wraps him, hooded, leaving the face and feet out.
+ * wraps him from the shoulders down over his knees, his head and hat out above it, his feet below:
+ * a mid-toned cloth with three pale bands, so it reads as a blanket round a man and not a hood.
  */
 export function sitting(fig: Figure, X: number, Y: number, s: number, o: { leader: boolean; dir?: 1 | -1; arms?: 'knees' | 'fire' | 'folded' | 'head'; blanket?: boolean; hunch?: number }) {
   const p = atD(X, Y, s, o.dir ?? 1);
@@ -633,17 +637,31 @@ export function sitting(fig: Figure, X: number, Y: number, s: number, o: { leade
     : `M${p(head[0] - 3.2, head[1] - 1.8)}C${p(head[0] - 3.1, head[1] - 5)} ${p(head[0] + 2.4, head[1] - 5.2)} ${p(head[0] + 2.7, head[1] - 1.8)}Z`;
   const brim = o.leader ? `M${p(head[0] - 4.6, head[1] - 2.1)}L${p(head[0] + 4.5, head[1] - 2.1)}` : `M${p(head[0] - 5.1, head[1] - 1.9)}L${p(head[0] + 4.8, head[1] - 1.9)}`;
   if (o.blanket) {
-    // The body under the blanket; the face shows at the front of the hood.
-    fig.ink.push(coat + neck);
-    fig.paper.push({
+    // Head and hat out above the blanket; the body, arms and knees under it.
+    fig.ink.push(coat + neck + face + hat);
+    fig.limbs.push({ d: brim, w: 1.1 * s });
+    const [s0, s1] = S;
+    const [k0, k1] = K;
+    const h0 = H[0];
+    fig.cloth.push({
       d:
-        `M${p(head[0] + 1.4, head[1] - 3.2)}C${p(head[0] - 1.6, head[1] - 4.2)} ${p(head[0] - 4.6, head[1] - 2.4)} ${p(head[0] - 4.2, head[1] + 1.6)}` +
-        `C${p(head[0] - 5.4, head[1] + 6)} ${p(H[0] - 6, -5)} ${p(H[0] - 6.4, 0)}L${p(K[0] + 2.2, 0)}C${p(K[0] + 2.6, -4)} ${p(K[0] + 2.4, K[1] - 0.4)} ${p(K[0] + 0.6, K[1] - 1.8)}` +
-        `C${p(K[0] - 1.6, K[1] - 2.6)} ${p(head[0] + 2.6, head[1] + 4.2)} ${p(head[0] + 1.2, head[1] + 2.6)}C${p(head[0] - 0.2, head[1] + 1.2)} ${p(head[0] - 0.2, head[1] - 1.6)} ${p(head[0] + 1.4, head[1] - 3.2)}Z`,
-      w: 0.6 * s,
+        `M${p(s0 - 1.4, s1 - 1.3)}C${p(s0 + 0.6, s1 - 1.9)} ${p(s0 + 2.6, s1 - 1.2)} ${p(s0 + 3, s1 + 0.4)}` +
+        `C${p(s0 + 3.6, s1 + 2.4)} ${p(k0 - 1.2, k1 - 1.6)} ${p(k0 + 0.8, k1 - 1.4)}` +
+        `C${p(k0 + 2.4, k1 - 1)} ${p(k0 + 2.8, k1 + 1.2)} ${p(k0 + 2.4, -4)}L${p(k0 + 2.6, 0)}L${p(h0 - 6, 0)}` +
+        `C${p(h0 - 6.6, -4)} ${p(s0 - 5.2, s1 + 3.2)} ${p(s0 - 3.6, s1 + 0.4)}C${p(s0 - 3, s1 - 0.6)} ${p(s0 - 2.4, s1 - 1.1)} ${p(s0 - 1.4, s1 - 1.3)}Z`,
+      c: 'f2',
     });
-    fig.rope.push({ d: `M${p(head[0] - 2.6, head[1] + 3.6)}Q${p(H[0] - 2.6, -6)} ${p(H[0] - 3.4, -0.8)}M${p(head[0] + 0.6, head[1] + 5.4)}Q${p(2.6, -5)} ${p(2.4, -0.6)}M${p(K[0] - 1.6, K[1] + 0.2)}Q${p(K[0] + 0.6, -4)} ${p(K[0] - 0.4, -0.6)}`, w: 0.35 * s });
-    fig.topInk.push(face);
+    // Three bands woven across it, following the drape: over the shoulders, across the lap, near the hem.
+    fig.cloth.push({
+      d:
+        `M${p(s0 - 3.6, s1 + 1.8)}Q${p(s0, s1 + 0.6)} ${p(s0 + 3.2, s1 + 1.4)}` +
+        `M${p(h0 - 5.4, -6.4)}Q${p(1, k1 + 0.8)} ${p(k0 + 1.4, k1 + 0.2)}` +
+        `M${p(h0 - 5.8, -2)}Q${p(2, -2.6)} ${p(k0 + 2.5, -2.2)}`,
+      c: 'lp',
+      w: 0.8 * s,
+    });
+    // A fold falling from the knee.
+    fig.rope.push({ d: `M${p(k0 + 0.4, k1 + 0.6)}Q${p(k0 + 1.2, -5)} ${p(k0 + 0.6, -0.6)}`, w: 0.35 * s });
     return;
   }
   fig.ink.push(coat + neck + face + hat);
