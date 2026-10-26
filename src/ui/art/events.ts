@@ -163,40 +163,139 @@ function horseExhausted(seed = 121): Scene {
   return { w: W, h: H, marks: m };
 }
 
-/** Dry camp: two men take the kettles over the edge, down to the water in the gully. */
+/**
+ * Dry camp, 17 May: the camp on a narrow ridge with no water, and the water "up the side of the
+ * precipice, about six hundred feet high". From the camp on the left the eye goes over the brink and
+ * down the flank of the ridge, a foot track worked down it in switchbacks, to a pool in the gully
+ * floor far below, at the foot of the far wall. The two men with the kettles are strung along the
+ * track, one just over the edge and one at the water, much smaller: the drop is told by how far the
+ * track runs, how small the far man and the trees on the floor are, and the haze, since men at true
+ * scale cannot fit in a strip.
+ */
 function dryCamp(seed = 131): Scene {
   const m: Mark[] = [];
-  sky(m, { seed, w: W, horizon: 40, clouds: [cloudBank(seed + 1, 320, 14, 160, 12, 6)], reach: 0.85 });
-  // Across the gully, the far wall: plateau, a pale cliff band, then shadow down into the depths.
-  const wall = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 30, amp: 2, scale: 120, plateau: 0.9 });
-  hills(m, wall, H, 0, { seed: seed + 11, depth: 3, gap: 1.2 });
-  const cl = cliffFace(wall, { seed: seed + 12, height: 14, cover: 0.9, gap: 3.4, cap: 1.5 });
-  m.push({ d: cl.face, c: 'l0', w: 0.4 }, { d: cl.beds, c: 'l0', w: 0.34 });
-  hills(m, cl.foot, H, 1, { seed: seed + 13, depth: 22, gap: 1.6, growth: 0.15, bias: 0.1 });
-  // Our ridge, ending at the brink; below it, the face the men go down.
-  const edgeX = 246;
-  const top = curve(-4, edgeX, (x) => 58 + 0.8 * Math.sin(x / 13) + (x > edgeX - 8 ? ((x - edgeX + 8) / 8) ** 2 * 2 : 0));
-  m.push({ d: areaPath(top, H + 4), c: 'pp' });
-  m.push({ d: linePath(top), c: 'l4', w: 0.9 });
-  m.push({ d: tufts(top, { seed: seed + 21, from: 4, to: edgeX - 6, every: 13, h: 4.5 }), c: 'l3', w: 0.45 });
-  // The face: dark rock falling away, split by the ledges the men climb on.
-  const face = curve(edgeX, 290, (x) => yAt(top, edgeX) + ((x - edgeX) / 44) ** 0.55 * 40);
-  m.push({ d: `${linePath(face)}L290 ${H + 4}L${edgeX - 1} ${H + 4}Z`, c: 'pp' });
   const r = rng(seed + 22);
-  const strokes: string[] = [];
-  for (let x = edgeX - 0.5; x < 290; x += 1 + r() * 0.7) {
-    const y0 = yAt(face, x) + 0.6;
-    for (let y = y0; y < H + 4; y += 3 + r() * 5) strokes.push(`M${f(x)} ${f(y)}V${f(Math.min(H + 4, y + 2 + r() * 4))}`);
+  const floorY = 80;
+  const pool = { x0: 208, x1: 278, y: floorY + 0.6 };
+  // Our ridge: the camp along its top, and under it the end of the ridge, a precipice facing us,
+  // sheer under the brink and easing a little toward its foot at the pool.
+  const brink = 156;
+  const ridgeY = 30;
+  const span = pool.x0 + 4 - brink;
+  // Broken rock along the edge: small steps and bulges on the way down.
+  const rough = (x: number) => Math.max(0, Math.min(1, (x - brink) / 6)) * (1 - Math.max(0, (x - brink - span + 10) / 10)) * (1.1 * Math.sin(x / 3.1) + 0.7 * Math.sin(x / 1.7 + 1));
+  const P = (x: number) => (x <= brink ? ridgeY + 0.6 * Math.sin(x / 13) - 0.6 * Math.sin(brink / 13) : ridgeY + (floorY - ridgeY) * Math.min(1, (x - brink) / span) ** 0.8 + rough(x));
+  const top = curve(-4, brink + span, P, 0.5);
+  sky(m, { seed, w: W, horizon: 9, clouds: [], reach: 0.9 });
+  // Across the gully, the far wall, its rim about level with our camp: one cliff from the rim down to
+  // the forest on the gully floor, pale with distance, its beds showing and scrub on a few ledges.
+  const rim = ridgeLine({ seed: seed + 10, x0: -4, x1: W + 4, base: 8, amp: 1, scale: 120, plateau: 0.9, gullies: 3, gullyDepth: 2, gullyWidth: 9 });
+  m.push({ d: areaPath(rim, H + 4), c: 'pp' });
+  const wall = cliffFace(rim, { seed: seed + 12, height: 72, cover: 2, gap: 3, cap: 0.8, grain: 0.08, grainScale: 40 });
+  // Only the strokes that show above our ridge, which stands in front of the wall's lower part.
+  const hidden = (x: number, y: number) => x < brink + span && y > yAt(top, x) + 0.5;
+  const face = wall.face.split('M').filter((seg) => {
+    const [x, y] = seg.split('L')[0]!.split(' ').map(Number);
+    return seg && !hidden(x!, y!);
+  });
+  m.push({ d: face.map((seg) => `M${seg}`).join(''), c: 'l0', w: 0.38 }, { d: linePath(rim), c: 'l1', w: 0.45 });
+  const ledges: string[] = [];
+  for (const [k, y0] of [21, 36, 52, 66].entries()) {
+    let x = 150 + r() * 20;
+    while (x < W + 4) {
+      const len = 16 + r() * 40;
+      const ly = (xx: number) => y0 + 1.2 * Math.sin(xx / (23 + k * 7) + k) + 0.4 * Math.sin(xx / 6 + k * 2);
+      const pts: string[] = [];
+      for (let xx = x; xx <= Math.min(W + 4, x + len); xx += 2) pts.push(`${pts.length ? 'L' : 'M'}${f(xx)} ${f(ly(xx))}`);
+      ledges.push(pts.join(''));
+      if (r() < 0.45) {
+        const a = x + r() * len * 0.5;
+        const b = Math.min(W + 4, a + 4 + r() * 8);
+        const g = curve(a, b, (xx) => ly(xx) - 0.1, 0.4);
+        m.push({ d: bandPath(taperEnds(canopy(g, { seed: seed + 40 + Math.round(a), size: 1.1, tall: 0.2 }), g, a, b, 1.5), g), c: 'f1' });
+      }
+      x += len + 6 + r() * 20;
+    }
   }
-  m.push({ d: strokes.join(''), c: 'l4', w: 0.5 }, { d: linePath(face), c: 'l4', w: 0.9 });
-  // The camp behind them: a fire and the packs, a man resting.
-  campfire(m, { seed: seed + 30, x: 104, y: yAt(top, 104), s: 1.2, smoke: 30, drift: 0.4 });
-  bedroll(m, 140, yAt(top, 140), 1.2);
+  m.push({ d: ledges.join(''), c: 'l1', w: 0.4 });
+  // The gully floor, far below: forest along it, and the pool in a gap among the trees.
+  const fl = curve(-4, W + 4, (x) => floorY + 0.5 * Math.sin(x / 9));
+  // The floor: a dark ribbon of forest along it, so the water shows bright in a gap among the trees.
+  // (The near ridge hides it left of the pool.)
+  const fl0 = 196;
+  const flR = curve(fl0, W + 4, (x) => yAt(fl, x));
+  m.push({ d: areaPath(shift(flR, -2.5), H + 4), c: 'pp' });
+  const treeTop = canopy(shift(flR, -2.4), { seed: seed + 14, size: 2, tall: 0.3 });
+  const treeFoot = curve(fl0, W + 4, (x) => floorY + 5 + 0.5 * Math.sin(x / 7) + 0.6 * Math.sin(x / 2.3) + 0.4 * Math.sin(x / 1.1));
+  m.push({ d: bandPath(treeTop, treeFoot), c: 'f1' });
+  const poolD = `M${pool.x0} ${pool.y}C${pool.x0 + 12} ${pool.y - 3.8} ${pool.x1 - 18} ${pool.y - 4} ${pool.x1} ${pool.y - 1.2}C${pool.x1 - 12} ${pool.y + 2.6} ${pool.x0 + 16} ${pool.y + 2.8} ${pool.x0} ${pool.y}Z`;
+  m.push({ d: poolD, c: 'pp' });
+  // The water: the trees on the far bank mirrored dark under it, then ruled water and a bright glint.
+  m.push({ d: `M${pool.x0 + 9} ${f(pool.y - 2.4)}H${pool.x1 - 10}M${pool.x0 + 14} ${f(pool.y - 1.6)}h12M${pool.x0 + 34} ${f(pool.y - 1.7)}h8M${pool.x0 + 48} ${f(pool.y - 1.5)}h10`, c: 'l1', w: 0.7 });
+  m.push({ d: `M${pool.x0 + 6} ${f(pool.y + 0.1)}h10M${pool.x0 + 22} ${f(pool.y + 0.2)}h6M${pool.x0 + 44} ${f(pool.y)}h14M${pool.x0 + 14} ${f(pool.y + 1.3)}h18M${pool.x0 + 40} ${f(pool.y + 1.4)}h8`, c: 'lw', w: 0.5 });
+  // Our ridge, drawn after the far side.
+  m.push({ d: areaPath(top, H + 4), c: 'pp' });
+  // The face in upright strokes broken by its beds, darkest under the rim, paling downward into the
+  // haze of the gully.
+  const rock: string[][] = [[], [], []];
+  const beds = [41, 50, 59, 67, 74];
+  for (let x = -4; x < brink + span; x += 0.8 + r() * 0.6) {
+    for (let y = yAt(top, x) + 0.8 + r() * 1.2; y < H + 4; y += 2.2 + r() * 3) {
+      const y2 = Math.min(H + 4, y + 1.5 + r() * 3);
+      if (beds.some((b) => b > y - 0.6 && b < y2 + 0.6)) continue;
+      const depth = Math.max(0, Math.min(1, (y - ridgeY) / 50));
+      if (r() < 0.95 - depth * 0.3) rock[Math.min(2, Math.floor(depth * 3))]!.push(`M${f(x)} ${f(y)}V${f(y2)}`);
+    }
+  }
+  rock.forEach((d, i) => d.length && m.push({ d: d.join(''), c: `l${4 - i}`, w: 0.5 - i * 0.06 }));
+  // The beds themselves: ledges running across the face, breaking off here and there.
+  const ledgeLines: string[][] = [[], [], []];
+  for (const [k, by] of beds.entries()) {
+    let x = -4 + r() * 10;
+    while (x < brink + span) {
+      const len = 18 + r() * 46;
+      const pts: string[] = [];
+      for (let xx = x; xx <= x + len; xx += 1.5) {
+        const y = by + 0.5 * Math.sin(xx / 7 + k * 1.3) + (xx - x) * 0.015;
+        if (y > yAt(top, xx) + 1.2) pts.push(`${pts.length ? 'L' : 'M'}${f(xx)} ${f(y)}`);
+      }
+      if (pts.length > 2) ledgeLines[Math.min(2, Math.floor((by - ridgeY) / 17))]!.push(pts.join(''));
+      x += len + 2 + r() * 8;
+    }
+  }
+  ledgeLines.forEach((d, i) => d.length && m.push({ d: d.join(''), c: `l${4 - i}`, w: 0.6 - i * 0.08 }));
+  m.push({ d: linePath(top), c: 'l4', w: 0.9 });
+  m.push({ d: tufts(top, { seed: seed + 21, from: 4, to: brink - 6, every: 13, h: 3.4 }), c: 'l3', w: 0.42 });
+  // The foot track worked down the face in switchbacks from the camp to the water, pale on the dark
+  // rock, its lower edge in shadow, the legs shortening as they go down and away.
+  const track: [number, number][] = [
+    [150, ridgeY + 0.4],
+    [118, 41],
+    [150, 47],
+    [122, 52.5],
+    [156, 58],
+    [132, 62.5],
+    [166, 67],
+    [148, 70.5],
+    [180, 74],
+    [166, 76.8],
+    [198, 79.2],
+    [pool.x0 + 3, floorY - 0.3],
+  ];
+  const tpath = (dy: number) => `M${track.map(([x, y]) => `${f(x)} ${f(y + dy)}`).join('L')}`;
+  m.push({ d: tpath(0), c: 'lp', w: 2 }, { d: tpath(1.05), c: 'l4', w: 0.4 });
+  // The camp: the fire, the packs, a horse standing dry, a leader sitting by.
+  campfire(m, { seed: seed + 30, x: 44, y: yAt(top, 44), s: 0.8, smoke: 20, drift: 0.4 });
+  sack(m, 62, yAt(top, 62), 0.8);
+  bedroll(m, 77, yAt(top, 77), 0.8);
   const fig = emptyFigure();
-  sitting(fig, 60, yAt(top, 60), 1.35, { leader: true, arms: 'knees' });
-  standing(fig, 226, yAt(top, 226), 1.35, { leader: false, arms: 'kettle' });
-  // The second man already over the edge, climbing down facing the rock.
-  standing(fig, 270, yAt(face, 270) + 1, 1.25, { leader: false, arms: 'kettle', dir: -1, lean: 0.12 });
+  horse(fig, 103, yAt(top, 103), 0.72, 0.3, null, null, { droopDeg: 26 });
+  sitting(fig, 20, yAt(top, 20), 0.85, { leader: true, arms: 'knees' });
+  // The two men with the kettles: one just over the edge, one far below at the water.
+  const along = (i: number, t: number) => [track[i]![0] + (track[i + 1]![0] - track[i]![0]) * t, track[i]![1] + (track[i + 1]![1] - track[i]![1]) * t] as const;
+  const [m1x, m1y] = along(0, 0.4);
+  standing(fig, m1x, m1y + 0.4, 0.56, { leader: false, arms: 'kettle', dir: -1, lean: 0.14 });
+  standing(fig, pool.x0 + 2, floorY - 0.2, 0.22, { leader: false, arms: 'kettle', lean: 0.4 });
   ink(m, fig);
   return { w: W, h: H, marks: m };
 }
@@ -346,7 +445,7 @@ export const EVENT_ART_LABEL: Record<EventId, string> = {
   dew: 'An engraving: men waiting by a fire beside scrub beaded with dew.',
   horseFall: 'An engraving: a pack horse down on the track, its load spilled, a man hauling at its halter.',
   horseExhausted: 'An engraving: a pack horse that can barely stand under its load, legs braced out and head hanging to its knees, a man looking it over.',
-  dryCamp: 'An engraving: two men carrying the kettles over the edge of the ridge, down toward the gully.',
+  dryCamp: 'An engraving: the camp on a ridge top with a horse standing dry, and a foot track zigzagging all the way down the precipice to a pool on the gully floor far below, one man with a kettle starting down and another, tiny, at the water.',
   chill: 'An engraving: a man wrapped in a blanket by the fire while two others set off to work.',
   bowel: 'An engraving: a man lying ill under his blanket, another bringing the kettle, the salt-meat cask by the fire.',
   hunterStrays: 'An engraving: men calling from the ridge; far off across the gully, one man follows a kangaroo among the trees.',
