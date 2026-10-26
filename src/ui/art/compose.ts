@@ -179,16 +179,41 @@ export function ledge(m: Mark[], top: Curve, bottom: number, seed: number) {
 /**
  * A night sky: ruled lines close together from the top of the plate down to `bottom`, opening a
  * little toward it, and broken around each glow (the light of a fire), so the fire lights its own
- * patch of the dark.
+ * patch of the dark. Each line stops short of the glow or runs on into it by a random share of its
+ * width, so the light frays into the dark instead of making a clean dome like a rising moon; the
+ * lines are long, with few and short breaks, so the dark doesn't read as falling snow. On dark paper
+ * the bare glow would be darker than the ruled sky, so a soft light (`gl`, only shown in the dark
+ * theme) is laid under it, brightest at the fire.
  */
 export function nightSky(m: Mark[], o: { seed: number; w: number; bottom: number; glows?: Ellipse[]; gap?: number }) {
   const r = rng(o.seed);
+  const glows = o.glows ?? [];
+  for (const e of glows) {
+    const rings: string[] = [];
+    for (const k of [1, 0.86, 0.73, 0.61, 0.5, 0.4, 0.31, 0.22]) {
+      const pts: string[] = [];
+      for (let i = 0; i < 28; i++) {
+        const a = (i / 28) * Math.PI * 2;
+        const j = 0.86 + r() * 0.2;
+        pts.push(`${f(e.x + Math.cos(a) * e.rx * k * j)} ${f(e.y + Math.sin(a) * e.ry * k * (0.9 + 0.2 * j))}`);
+      }
+      rings.push(`M${pts.join('L')}Z`);
+    }
+    rings.forEach((d) => m.push({ d, c: 'gl' }));
+  }
   const bands: string[][] = [[], []];
   let y = 0.8;
   const gap = o.gap ?? 1.15;
   while (y < o.bottom) {
     const t = y / o.bottom;
-    bands[t < 0.6 ? 0 : 1]!.push(dashes(r, y, 0, o.w, gapsAt(y, o.glows ?? []), [30, 140], [0.8, 2.4]));
+    const cut = gapsAt(y, glows)
+      .map(([a, b]): [number, number] => {
+        const rx = glows[0]!.rx;
+        const fray = () => (r() < 0.5 ? -1 : 1) * rx * (0.15 + r() * 0.15);
+        return [a + fray(), b + fray()];
+      })
+      .filter(([a, b]) => b > a);
+    bands[t < 0.6 ? 0 : 1]!.push(dashes(r, y, 0, o.w, cut, [60, 220], [0.5, 1.1]));
     y += gap * (1 + 0.5 * t);
   }
   bands.forEach((b, i) => b.length && m.push({ d: b.join(''), c: i === 0 ? 'ln' : 'ln o1', w: 0.42 }));
