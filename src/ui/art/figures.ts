@@ -30,9 +30,11 @@ export interface Figure {
   front: { d: string; w: number }[];
   topInk: string[];
   rope: { d: string; w: number }[];
+  /** Cloth in a tone of its own, with its own markings (a blanket and its stripes), over the body. */
+  cloth: Mark[];
 }
 
-export const emptyFigure = (): Figure => ({ ink: [], far: [], limbs: [], farLimbs: [], back: [], paper: [], front: [], topInk: [], rope: [] });
+export const emptyFigure = (): Figure => ({ ink: [], far: [], limbs: [], farLimbs: [], back: [], paper: [], front: [], topInk: [], rope: [], cloth: [] });
 
 /** A leg as hip, joint and foot, the joint bent the way the animal's bends. */
 function leg(p: Pt, top: [number, number], joint: [number, number], foot: [number, number]) {
@@ -68,7 +70,7 @@ function turn(x: number, y: number, px: number, py: number, a: number): [number,
  * what it carries: the panniers fill and the pile on top grows with the load, and past an easy
  * load the horse hangs its head. Null draws it bare.
  */
-export function horse(fig: Figure, X: number, Y: number, s: number, step: number, lead: [number, number] | null = null, pack: Pack | null = PLAIN_PACK, o?: { droopDeg?: number }) {
+export function horse(fig: Figure, X: number, Y: number, s: number, step: number, lead: [number, number] | null = null, pack: Pack | null = PLAIN_PACK, o?: { droopDeg?: number; spent?: boolean }) {
   const p = at(X, Y, s);
   const a = Math.sin(step);
   const b = Math.sin(step + Math.PI);
@@ -86,11 +88,20 @@ export function horse(fig: Figure, X: number, Y: number, s: number, step: number
       // Tail
       `M${p(-15.2, -23.4)}C${p(-18.6, -22.6)} ${p(-19.8, -19)} ${p(-19.4, -15.5)}C${p(-19.2, -13)} ${p(-18.6, -11.2)} ${p(-17.7, -9.8)}C${p(-17.4, -12.6)} ${p(-17.5, -15.5)} ${p(-17.2, -18)}C${p(-17, -20.2)} ${p(-16.4, -21.6)} ${p(-15, -22)}Z`,
   );
+  if (o?.spent) {
+    // Spent: the forelegs braced out in front, the hind legs propped out behind, the knees not quite
+    // straight, the way a horse stands when it can barely stay on its feet.
+    fig.limbs.push({ d: leg(p, [11.4, -14], [13.4, -7.4], [16.4, -0.4]), w: 2.3 * s });
+    fig.limbs.push({ d: leg(p, [-10.4, -14.6], [-14.6, -7.8], [-16.4, -0.4]), w: 2.5 * s });
+    fig.farLimbs.push({ d: leg(p, [9.8, -14], [12.4, -7.6], [14.2, -0.4]), w: 2.1 * s });
+    fig.farLimbs.push({ d: leg(p, [-8.8, -14.6], [-12.4, -7.4], [-13.2, -0.4]), w: 2.3 * s });
+  } else {
   // Near legs in ink, far legs a shade lighter, so the walk reads.
   fig.limbs.push({ d: leg(p, [11.4, -14], [11.8 + 2.2 * a, -7.2], [12.2 + 4 * a, -0.4]), w: 2.3 * s });
   fig.limbs.push({ d: leg(p, [-10.4, -14.6], [-12.8 + 1.2 * b, -7.4], [-11 + 3.8 * b, -0.4]), w: 2.5 * s });
   fig.farLimbs.push({ d: leg(p, [9.8, -14], [10.2 + 2.2 * b, -7.2], [10.6 + 4 * b, -0.4]), w: 2.1 * s });
   fig.farLimbs.push({ d: leg(p, [-8.8, -14.6], [-11.2 + 1.2 * a, -7.4], [-9.4 + 3.8 * a, -0.4]), w: 2.3 * s });
+  }
   // Halter.
   fig.rope.push({ d: `M${h(20.6, -35)}L${h(24.6, -29.4)}M${h(23.2, -30.6)}L${h(26.9, -28.1)}`, w: 0.7 * s });
   if (pack && total >= 3) packOn(fig, p, s, pack);
@@ -237,9 +248,17 @@ export type Tool = 'axe' | 'gun' | 'none';
  * A man walking right, feet on y = 0, about 34 tall bareheaded. Leaders wear tall hats and
  * tailcoats; servants short jackets and low hats. Returns where his trailing hand is, for a lead rope.
  */
-export function man(fig: Figure, X: number, Y: number, s: number, step: number, leader: boolean, tool: Tool, leading = false): [number, number] {
+export function man(fig: Figure, X: number, Y: number, s: number, step: number, leader: boolean, tool: Tool, leading = false, swag = false): [number, number] {
   const p = at(X, Y, s);
   const a = Math.sin(step);
+  if (swag) {
+    // A pack on his back, tied round twice: the load a horse could not take down the pass.
+    fig.paper.push({
+      d: `M${p(-2.6, -28.6)}C${p(-5, -30)} ${p(-8, -29)} ${p(-8.3, -25.4)}L${p(-8.5, -21)}C${p(-8.5, -18.6)} ${p(-6.5, -17.8)} ${p(-4.4, -18)}L${p(-2.8, -18.4)}Z`,
+      w: 0.8 * s,
+    });
+    fig.rope.push({ d: `M${p(-8.3, -25)}L${p(-2.7, -25.3)}M${p(-8.5, -21.4)}L${p(-2.8, -21.7)}`, w: 0.55 * s });
+  }
   fig.ink.push(
     // Head and nose.
     `M${p(-2.15, -30.2)}a${f(2.55 * s)} ${f(2.55 * s)} 0 1 0 ${f(5.1 * s)} 0a${f(2.55 * s)} ${f(2.55 * s)} 0 1 0 ${f(-5.1 * s)} 0Z` +
@@ -340,14 +359,18 @@ const TALL = { man: 41, horse: 46, dog: 20 };
 const LEADER_IDS: MemberId[] = ['blaxland', 'lawson', 'wentworth'];
 const SERVANT_IDS: MemberId[] = ['burne', 'fairs', 'servant3', 'servant4', 'servant5', 'servant6'];
 
-/** Who walks where, front first: a dog out ahead, the guide, then each horse led by a man. */
-function order(c: PartyCounts, seed: number): Unit[] {
+/**
+ * Who walks where, front first: a dog out ahead, the guide, then each horse led by a man. `omit`
+ * leaves those men out, for a plate that draws them elsewhere in the scene. `horsesLast` puts the
+ * men on foot and the dogs in front and every horse, with the man leading it, at the back.
+ */
+function order(c: PartyCounts, seed: number, omit: readonly MemberId[] = [], horsesLast = false): Unit[] {
   const r = rng(seed);
   const men: { id: MemberId; leader: boolean; tool: Tool }[] = [];
   // Burne, the guide and hunter, goes first with a gun when he comes; then leaders and servants
   // take turns, the servants with axes.
-  const servants = Array.from({ length: Math.min(c.servants, SERVANT_IDS.length) }, (_, i) => ({ id: SERVANT_IDS[i]!, leader: false, tool: (i === 0 ? 'gun' : 'axe') as Tool }));
-  const leaders = LEADER_IDS.map((id) => ({ id, leader: true, tool: 'gun' as Tool }));
+  const servants = Array.from({ length: Math.min(c.servants, SERVANT_IDS.length) }, (_, i) => ({ id: SERVANT_IDS[i]!, leader: false, tool: (i === 0 ? 'gun' : 'axe') as Tool })).filter((u) => !omit.includes(u.id));
+  const leaders = LEADER_IDS.filter((id) => !omit.includes(id)).map((id) => ({ id, leader: true, tool: 'gun' as Tool }));
   if (servants.length) men.push(servants.shift()!);
   while (leaders.length || servants.length) {
     if (leaders.length) men.push(leaders.shift()!);
@@ -360,7 +383,7 @@ function order(c: PartyCounts, seed: number): Unit[] {
     dogs--;
   }
   let m = 0;
-  units.push({ kind: 'man', ...men[m++]!, leading: false });
+  if (men.length) units.push({ kind: 'man', ...men[m++]!, leading: false });
   for (let h = 0; h < c.horses; h++) {
     if (m < men.length) {
       const who = men[m++]!;
@@ -387,7 +410,23 @@ function order(c: PartyCounts, seed: number): Unit[] {
     } else units.splice(at, 0, { kind: 'dog' });
     dogs--;
   }
-  return units;
+  if (!horsesLast) return units;
+  const front: Unit[] = [];
+  const back: Unit[] = [];
+  for (let i = 0; i < units.length; i++) {
+    const u = units[i]!;
+    if (u.kind === 'horse') back.push(u);
+    else if (u.kind === 'man' && u.leading) {
+      // The man and the horse he leads go back together; a dog that ran in between goes forward.
+      let j = i + 1;
+      while (units[j]?.kind === 'dog') front.push(units[j++]!);
+      back.push(u);
+      if (units[j]?.kind === 'horse') back.push(units[j]!);
+      else j--;
+      i = j;
+    } else front.push(u);
+  }
+  return [...front, ...back];
 }
 
 /** Length of the procession at scale 1. */
@@ -397,15 +436,16 @@ function span(units: Unit[]): number {
 
 /**
  * Lay the party out along `ground`, heading right, centred in [from, to], no larger than `maxScale`.
- * `loads` is what each horse carries, first horse first. Returns the figure, the scale used and
- * where each figure stands.
+ * `loads` is what each horse carries, first horse first; `omit` leaves out men the plate draws
+ * elsewhere (a leader at the brink, two standing over a blaze). Returns the figure, the scale used
+ * and where each figure stands.
  */
 export function procession(
   c: PartyCounts,
   ground: Curve,
-  o: { from: number; to: number; maxScale: number; seed: number; phase?: number; loads?: Pack[] },
+  o: { from: number; to: number; maxScale: number; seed: number; phase?: number; loads?: Pack[]; swags?: boolean; omit?: readonly MemberId[]; horsesLast?: boolean },
 ): { fig: Figure; scale: number; slots: Slot[] } {
-  const units = order(c, o.seed);
+  const units = order(c, o.seed, o.omit, o.horsesLast);
   const len = span(units);
   const s = Math.min(o.maxScale, (o.to - o.from) / len);
   const fig = emptyFigure();
@@ -422,7 +462,7 @@ export function procession(
     const ox = x - right * s;
     const y = yAt(ground, ox);
     step += 1.7;
-    if (u.kind === 'man') lastHand = man(fig, ox, y, s, step, u.leader, u.tool, u.leading);
+    if (u.kind === 'man') lastHand = man(fig, ox, y, s, step, u.leader, u.tool, u.leading, o.swags);
     else if (u.kind === 'dog') dog(fig, ox, y, s, step * 1.6);
     else {
       const prev = units[i - 1];
@@ -455,6 +495,7 @@ export function figureMarks(fig: Figure, tone = 'f4', legs?: { near: string; far
   join(fig.back, 'pk');
   join(fig.paper, 'pk');
   join(fig.front, 'pk');
+  out.push(...fig.cloth);
   if (fig.topInk.length) out.push({ d: fig.topInk.join(''), c: legs?.top ?? tone });
   join(fig.rope, 'l4');
   return out;
@@ -571,7 +612,8 @@ export function standing(fig: Figure, X: number, Y: number, s: number, o: { lead
 /**
  * A man sitting on the ground with his knees up, facing right (or left with dir -1). `arms`: hugging
  * his knees, holding his hands to a fire, folded on his knees, or his head in his hands. A blanket
- * wraps him, hooded, leaving the face and feet out.
+ * wraps him from the shoulders down over his knees, his head and hat out above it, his feet below:
+ * a mid-toned cloth with three pale bands, so it reads as a blanket round a man and not a hood.
  */
 export function sitting(fig: Figure, X: number, Y: number, s: number, o: { leader: boolean; dir?: 1 | -1; arms?: 'knees' | 'fire' | 'folded' | 'head'; blanket?: boolean; hunch?: number }) {
   const p = atD(X, Y, s, o.dir ?? 1);
@@ -595,17 +637,31 @@ export function sitting(fig: Figure, X: number, Y: number, s: number, o: { leade
     : `M${p(head[0] - 3.2, head[1] - 1.8)}C${p(head[0] - 3.1, head[1] - 5)} ${p(head[0] + 2.4, head[1] - 5.2)} ${p(head[0] + 2.7, head[1] - 1.8)}Z`;
   const brim = o.leader ? `M${p(head[0] - 4.6, head[1] - 2.1)}L${p(head[0] + 4.5, head[1] - 2.1)}` : `M${p(head[0] - 5.1, head[1] - 1.9)}L${p(head[0] + 4.8, head[1] - 1.9)}`;
   if (o.blanket) {
-    // The body under the blanket; the face shows at the front of the hood.
-    fig.ink.push(coat + neck);
-    fig.paper.push({
+    // Head and hat out above the blanket; the body, arms and knees under it.
+    fig.ink.push(coat + neck + face + hat);
+    fig.limbs.push({ d: brim, w: 1.1 * s });
+    const [s0, s1] = S;
+    const [k0, k1] = K;
+    const h0 = H[0];
+    fig.cloth.push({
       d:
-        `M${p(head[0] + 1.4, head[1] - 3.2)}C${p(head[0] - 1.6, head[1] - 4.2)} ${p(head[0] - 4.6, head[1] - 2.4)} ${p(head[0] - 4.2, head[1] + 1.6)}` +
-        `C${p(head[0] - 5.4, head[1] + 6)} ${p(H[0] - 6, -5)} ${p(H[0] - 6.4, 0)}L${p(K[0] + 2.2, 0)}C${p(K[0] + 2.6, -4)} ${p(K[0] + 2.4, K[1] - 0.4)} ${p(K[0] + 0.6, K[1] - 1.8)}` +
-        `C${p(K[0] - 1.6, K[1] - 2.6)} ${p(head[0] + 2.6, head[1] + 4.2)} ${p(head[0] + 1.2, head[1] + 2.6)}C${p(head[0] - 0.2, head[1] + 1.2)} ${p(head[0] - 0.2, head[1] - 1.6)} ${p(head[0] + 1.4, head[1] - 3.2)}Z`,
-      w: 0.6 * s,
+        `M${p(s0 - 1.4, s1 - 1.3)}C${p(s0 + 0.6, s1 - 1.9)} ${p(s0 + 2.6, s1 - 1.2)} ${p(s0 + 3, s1 + 0.4)}` +
+        `C${p(s0 + 3.6, s1 + 2.4)} ${p(k0 - 1.2, k1 - 1.6)} ${p(k0 + 0.8, k1 - 1.4)}` +
+        `C${p(k0 + 2.4, k1 - 1)} ${p(k0 + 2.8, k1 + 1.2)} ${p(k0 + 2.4, -4)}L${p(k0 + 2.6, 0)}L${p(h0 - 6, 0)}` +
+        `C${p(h0 - 6.6, -4)} ${p(s0 - 5.2, s1 + 3.2)} ${p(s0 - 3.6, s1 + 0.4)}C${p(s0 - 3, s1 - 0.6)} ${p(s0 - 2.4, s1 - 1.1)} ${p(s0 - 1.4, s1 - 1.3)}Z`,
+      c: 'f2',
     });
-    fig.rope.push({ d: `M${p(head[0] - 2.6, head[1] + 3.6)}Q${p(H[0] - 2.6, -6)} ${p(H[0] - 3.4, -0.8)}M${p(head[0] + 0.6, head[1] + 5.4)}Q${p(2.6, -5)} ${p(2.4, -0.6)}M${p(K[0] - 1.6, K[1] + 0.2)}Q${p(K[0] + 0.6, -4)} ${p(K[0] - 0.4, -0.6)}`, w: 0.35 * s });
-    fig.topInk.push(face);
+    // Three bands woven across it, following the drape: over the shoulders, across the lap, near the hem.
+    fig.cloth.push({
+      d:
+        `M${p(s0 - 3.6, s1 + 1.8)}Q${p(s0, s1 + 0.6)} ${p(s0 + 3.2, s1 + 1.4)}` +
+        `M${p(h0 - 5.4, -6.4)}Q${p(1, k1 + 0.8)} ${p(k0 + 1.4, k1 + 0.2)}` +
+        `M${p(h0 - 5.8, -2)}Q${p(2, -2.6)} ${p(k0 + 2.5, -2.2)}`,
+      c: 'lp',
+      w: 0.8 * s,
+    });
+    // A fold falling from the knee.
+    fig.rope.push({ d: `M${p(k0 + 0.4, k1 + 0.6)}Q${p(k0 + 1.2, -5)} ${p(k0 + 0.6, -0.6)}`, w: 0.35 * s });
     return;
   }
   fig.ink.push(coat + neck + face + hat);
@@ -727,15 +783,28 @@ export function kangaroo(fig: Figure, X: number, Y: number, s: number, o: { dir?
   fig.limbs.push({ d: `M${p(3, -21)}L${p(5.6, -18.4)}L${p(6.8, -18.8)}`, w: 0.9 * s });
 }
 
-/** A wombat ambling right (or left): low, round and heavy, with short legs and small ears. */
+/**
+ * A wombat walking right, feet on y = 0, about 26 long and 12 high: a low barrel of a body, round
+ * rump with no tail to speak of, a broad flat head with a blunt square snout, small rounded ears,
+ * and short thick legs.
+ */
 export function wombat(fig: Figure, X: number, Y: number, s: number, o: { dir?: 1 | -1; step?: number } = {}) {
   const p = atD(X, Y, s, o.dir ?? 1);
   const a = Math.sin(o.step ?? 0.8);
   fig.ink.push(
-    `M${p(-9.6, -3.4)}C${p(-10.6, -8.6)} ${p(-6, -12.2)} ${p(0, -12)}C${p(4.6, -11.8)} ${p(7.6, -10.4)} ${p(9.4, -8.2)}` +
-      `C${p(10.8, -7.6)} ${p(12, -6.4)} ${p(12, -5)}C${p(11, -4.2)} ${p(9.6, -4)} ${p(8.4, -4.2)}C${p(5, -2.6)} ${p(-1, -2.4)} ${p(-6, -2.6)}C${p(-8, -2.6)} ${p(-9.2, -2.8)} ${p(-9.6, -3.4)}Z` +
-      `M${p(6.6, -10.8)}C${p(6.4, -12.6)} ${p(7.6, -13.4)} ${p(8.6, -12.4)}C${p(8.6, -11.4)} ${p(8, -10.8)} ${p(7.4, -10.4)}Z`,
+    // Round rump down almost to the ground, the back highest over the hips, sloping to a short
+    // neck; a big flat-topped head, deep in the jaw, ending in a broad square snout; a low belly.
+    `M${p(-12, -2.2)}C${p(-13.4, -5.6)} ${p(-12, -10.6)} ${p(-7, -12.2)}C${p(-2, -13.4)} ${p(3.6, -12.2)} ${p(6.6, -10.4)}` +
+      `C${p(7.8, -10.2)} ${p(9.4, -10.4)} ${p(11, -10.2)}C${p(13, -10)} ${p(14.8, -9.2)} ${p(15.8, -7.8)}` +
+      `C${p(16.6, -6.8)} ${p(16.6, -5.2)} ${p(16, -4.4)}C${p(15.2, -3.6)} ${p(13.4, -3.4)} ${p(11.6, -3.6)}` +
+      `C${p(10, -3.8)} ${p(8.8, -2.6)} ${p(7.6, -2.2)}C${p(3, -1.6)} ${p(-4, -1.6)} ${p(-8, -1.8)}C${p(-10.4, -1.8)} ${p(-11.6, -1.8)} ${p(-12, -2.2)}Z` +
+      // Small ears, pricked, at the back of the head.
+      `M${p(9.6, -10.2)}L${p(9.8, -12.8)}L${p(11.4, -10.4)}Z` +
+      `M${p(11.2, -10.2)}L${p(12, -12.4)}L${p(12.8, -10)}Z`,
   );
-  fig.limbs.push({ d: `M${p(5.6, -4)}L${p(6 + 1.2 * a, -0.2)}M${p(-5.6, -3.4)}L${p(-6 - 1.2 * a, -0.2)}`, w: 2.2 * s });
-  fig.farLimbs.push({ d: `M${p(4.2, -4)}L${p(4.4 - 1.2 * a, -0.2)}M${p(-4.2, -3.4)}L${p(-4.4 + 1.2 * a, -0.2)}`, w: 2 * s });
+  // The eye, a glint of paper.
+  fig.paper.push({ d: `M${p(12, -7.8)}a${f(0.45 * s)} ${f(0.45 * s)} 0 1 0 ${f(0.9 * s)} 0a${f(0.45 * s)} ${f(0.45 * s)} 0 1 0 ${f(-0.9 * s)} 0Z`, w: 0.1 * s });
+  // Legs so short they barely show below the belly, broad feet turned in.
+  fig.limbs.push({ d: `M${p(8.6, -3)}L${p(8.9 + 0.6 * a, -0.5)}M${p(7.9 + 0.6 * a, -0.5)}L${p(10.8 + 0.6 * a, -0.5)}M${p(-7.6, -2.6)}L${p(-7.9 - 0.6 * a, -0.5)}M${p(-8.8 - 0.6 * a, -0.5)}L${p(-6 - 0.6 * a, -0.5)}`, w: 2.8 * s });
+  fig.farLimbs.push({ d: `M${p(6.6, -2.8)}L${p(6.8 - 0.6 * a, -0.5)}M${p(6 - 0.6 * a, -0.5)}L${p(8.4 - 0.6 * a, -0.5)}M${p(-5.4, -2.4)}L${p(-5.6 + 0.6 * a, -0.5)}M${p(-6.4 + 0.6 * a, -0.5)}L${p(-4 + 0.6 * a, -0.5)}`, w: 2.6 * s });
 }

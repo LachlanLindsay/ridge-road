@@ -17,6 +17,7 @@ import {
   shift,
   skyHatch,
   smoke,
+  yAt,
   type Curve,
   type Ellipse,
   type HatchOpts,
@@ -60,12 +61,27 @@ export function hills(m: Mark[], ground: Curve, bottom: number, tone: number, h:
   return ground;
 }
 
-/** Smoke rising from a fire in the trees: a white plume over the hatching, a dark smudge at its foot. */
+/**
+ * The slope under a far cliff band, from its foot down: paper to hide what lies behind, and contour
+ * hatching that follows the foot down into the depths. No treetops along it and no crest line, so
+ * the cliff above reads as one wall with its foot in shadow, not a second range of hills (or a sea
+ * swell) in front of it. Give the cliff a `cover` high enough that it never runs out along the rim.
+ */
+export function underCliff(m: Mark[], foot: Curve, bottom: number, tone: number, h: HatchOpts) {
+  const w = TONE_W[tone]!;
+  m.push({ d: areaPath(foot, bottom), c: 'pp' });
+  contourHatch(foot, h).forEach((d, i) => d && m.push({ d, c: `l${tone} o${i}`, w: w * (1 - i * 0.15) }));
+}
+
+/**
+ * Smoke rising from a fire in the trees: a billowing plume over the hatching, pale in both themes
+ * (`ps`), a few broken strokes on its shaded side, a dark smudge at its foot.
+ */
 export function smokePlume(m: Mark[], o: { seed: number; x: number; y: number; h: number; drift?: number; tone?: number }) {
   const p = plume({ seed: o.seed, x: o.x, y: o.y, h: o.h, drift: o.drift });
   const tone = o.tone ?? 2;
-  m.push({ d: p.body, c: 'pp' });
-  m.push({ d: p.edge, c: `l${tone}`, w: 0.45 }, { d: p.curls, c: `l${Math.max(1, tone - 1)}`, w: 0.35 });
+  p.body.forEach((d, i) => d && m.push({ d, c: i ? `ps o${i}` : 'ps' }));
+  m.push({ d: p.edge, c: `l${tone}`, w: 0.42 });
   const s = o.h * 0.05;
   m.push({ d: `M${f(o.x - s * 1.4)} ${f(o.y + s * 0.3)}Q${f(o.x)} ${f(o.y - s * 1.1)} ${f(o.x + s * 1.4)} ${f(o.y + s * 0.3)}Z`, c: `f${Math.min(4, tone + 1)}` });
 }
@@ -73,6 +89,82 @@ export function smokePlume(m: Mark[], o: { seed: number; x: number; y: number; h
 export function gum(m: Mark[], o: Parameters<typeof gumTree>[0], tone = 4) {
   const g = gumTree(o);
   m.push({ d: g.wood, c: `f${tone}` }, { d: g.leaves, c: `f${tone}` });
+}
+
+/**
+ * How far a ledge's top falls away near the edge it ends at, for a skyline that runs to `edgeX` and
+ * a little past: nothing until `width` short of the edge, then the lip rounding over into a drop of
+ * `height`. `side` 1 when the drop is on the ledge's right. Added to the skyline, it ends a ledge
+ * in a shoulder of rock instead of a ruled vertical.
+ */
+export function fallAway(x: number, edgeX: number, side: 1 | -1, width: number, height: number): number {
+  const t = side > 0 ? (x - (edgeX - width)) / width : (edgeX + width - x) / width;
+  return t <= 0 ? 0 : Math.min(t, 1.6) ** 2.6 * height;
+}
+
+/**
+ * The face under a ledge's rounded lip: broken, bedded sandstone falling away and leaning back under
+ * the lip, darkest at the top and fading into the haze below. Draw after the ledge.
+ */
+export function brinkFace(m: Mark[], o: { seed: number; top: Curve; edgeX: number; side: 1 | -1; depth: number; bottom: number }) {
+  const r = rng(o.seed);
+  const { top, edgeX, side } = o;
+  const strokes: string[][] = [[], [], []];
+  const beds: string[] = [];
+  // Vertical strokes along the shoulder, where the ground has turned steep, broken where beds run.
+  for (let k = 0; k < 26; k++) {
+    const x = edgeX - side * (k * 0.75 + r() * 0.4);
+    const y0 = yAt(top, x) + 0.8;
+    if (y0 > o.bottom - 2) continue;
+    let y = y0;
+    while (y < Math.min(o.bottom, y0 + o.depth)) {
+      const len = 2 + r() * 5;
+      const band = Math.min(2, Math.floor(((y - y0) / o.depth) * 3));
+      if (r() > 0.18 + band * 0.18) strokes[band]!.push(`M${f(x)} ${f(y)}V${f(y + len)}`);
+      y += len + 0.6 + r() * 1.6;
+    }
+  }
+  // Bedding: short level ledges stepping back under the lip.
+  for (let k = 0; k < 6; k++) {
+    const y = yAt(top, edgeX - side * 8) + 3 + k * (o.depth / 7) + r() * 2;
+    const x0 = edgeX - side * (14 + r() * 6);
+    const x1 = edgeX - side * (1 + k * 0.6 + r() * 2);
+    beds.push(`M${f(x0)} ${f(y)}L${f(x1)} ${f(y + 0.4)}`);
+  }
+  strokes.forEach((s, i) => s.length && m.push({ d: s.join(''), c: `l${4 - i} o${i}`, w: 0.5 - i * 0.06 }));
+  m.push({ d: beds.join(''), c: 'l4 o1', w: 0.45 });
+}
+
+/**
+ * Loose stones lying on open ground, from just under its skyline `ground` down to `bottom`: small
+ * and close far off, larger near. Each is bare paper with a fine outline and a heavier stroke along
+ * its shaded underside, so it sits on the hatching.
+ */
+export function stones(m: Mark[], o: { seed: number; ground: Curve; from: number; to: number; bottom: number; count: number; size: number }) {
+  const r = rng(o.seed);
+  const fill: string[] = [];
+  const shade: string[] = [];
+  for (let i = 0; i < o.count; i++) {
+    const x = o.from + r() * (o.to - o.from);
+    const t = r() ** 1.5;
+    const g = yAt(o.ground, x) + 2.5;
+    if (g > o.bottom - 2) continue;
+    const y = g + t * (o.bottom - g);
+    const s = (0.45 + t * 1.2) * o.size * (0.6 + r() * 0.8);
+    const flat = 0.42 + r() * 0.22;
+    const n = 6;
+    const pts: [number, number][] = [];
+    for (let k = 0; k < n; k++) {
+      const a = Math.PI + (k / (n - 1)) * Math.PI;
+      const rr = s * (0.75 + r() * 0.4);
+      pts.push([x + Math.cos(a) * rr, y + Math.sin(a) * rr * flat]);
+    }
+    // The flat underside the stone rests on.
+    const base = `${f(pts[n - 1]![0])} ${f(y + s * 0.12)}L${f(pts[0]![0])} ${f(y + s * 0.12)}`;
+    fill.push(`M${pts.map(([px, py]) => `${f(px)} ${f(py)}`).join('L')}L${base}Z`);
+    shade.push(`M${f(pts[0]![0] + s * 0.1)} ${f(y + s * 0.14)}L${f(pts[n - 1]![0] + s * 0.1)} ${f(y + s * 0.14)}L${f(pts[n - 2]![0])} ${f(pts[n - 2]![1])}`);
+  }
+  m.push({ d: fill.join(''), c: 'pk', w: 0.35 }, { d: shade.join(''), c: 'l4', w: 0.6 });
 }
 
 /** A rock ledge in the foreground: dark, hatched across, with grass along its lip. */
@@ -87,16 +179,41 @@ export function ledge(m: Mark[], top: Curve, bottom: number, seed: number) {
 /**
  * A night sky: ruled lines close together from the top of the plate down to `bottom`, opening a
  * little toward it, and broken around each glow (the light of a fire), so the fire lights its own
- * patch of the dark.
+ * patch of the dark. Each line stops short of the glow or runs on into it by a random share of its
+ * width, so the light frays into the dark instead of making a clean dome like a rising moon; the
+ * lines are long, with few and short breaks, so the dark doesn't read as falling snow. On dark paper
+ * the bare glow would be darker than the ruled sky, so a soft light (`gl`, only shown in the dark
+ * theme) is laid under it, brightest at the fire.
  */
 export function nightSky(m: Mark[], o: { seed: number; w: number; bottom: number; glows?: Ellipse[]; gap?: number }) {
   const r = rng(o.seed);
+  const glows = o.glows ?? [];
+  for (const e of glows) {
+    const rings: string[] = [];
+    for (const k of [1, 0.86, 0.73, 0.61, 0.5, 0.4, 0.31, 0.22]) {
+      const pts: string[] = [];
+      for (let i = 0; i < 28; i++) {
+        const a = (i / 28) * Math.PI * 2;
+        const j = 0.86 + r() * 0.2;
+        pts.push(`${f(e.x + Math.cos(a) * e.rx * k * j)} ${f(e.y + Math.sin(a) * e.ry * k * (0.9 + 0.2 * j))}`);
+      }
+      rings.push(`M${pts.join('L')}Z`);
+    }
+    rings.forEach((d) => m.push({ d, c: 'gl' }));
+  }
   const bands: string[][] = [[], []];
   let y = 0.8;
   const gap = o.gap ?? 1.15;
   while (y < o.bottom) {
     const t = y / o.bottom;
-    bands[t < 0.6 ? 0 : 1]!.push(dashes(r, y, 0, o.w, gapsAt(y, o.glows ?? []), [30, 140], [0.8, 2.4]));
+    const cut = gapsAt(y, glows)
+      .map(([a, b]): [number, number] => {
+        const rx = glows[0]!.rx;
+        const fray = () => (r() < 0.5 ? -1 : 1) * rx * (0.15 + r() * 0.15);
+        return [a + fray(), b + fray()];
+      })
+      .filter(([a, b]) => b > a);
+    bands[t < 0.6 ? 0 : 1]!.push(dashes(r, y, 0, o.w, cut, [60, 220], [0.5, 1.1]));
     y += gap * (1 + 0.5 * t);
   }
   bands.forEach((b, i) => b.length && m.push({ d: b.join(''), c: i === 0 ? 'ln' : 'ln o1', w: 0.42 }));
@@ -200,32 +317,49 @@ export function bedroll(m: Mark[], x: number, y: number, s: number) {
 }
 
 /**
- * A heap of stones: rounded blocks stacked into a rough cone, each shaded on its lower right and
- * outlined, the way an engraver draws a cairn.
+ * A cairn of flat sandstone pieces, "a pyramidical heap of stones" as Blaxland has it: slabs of
+ * every size laid unevenly, tilted and overhanging, the sides running straight in to a top stone,
+ * dark crevices between them. Centred on x, standing on
+ * y, about w across the foot and h high.
  */
 export function stonePile(m: Mark[], o: { seed: number; x: number; y: number; w: number; h: number }) {
   const r = rng(o.seed);
-  const blocks: string[] = [];
-  const shade: string[] = [];
-  const rows = Math.max(3, Math.round(o.h / 3.2));
-  for (let k = 0; k < rows; k++) {
-    const t = k / rows;
-    const rowW = o.w * (1 - t * 0.82);
-    const yb = o.y - (k * o.h) / rows;
-    const sh = (o.h / rows) * (1.05 + r() * 0.2);
-    let x = o.x - rowW / 2;
-    while (x < o.x + rowW / 2 - 0.8) {
-      const bw = Math.min(o.x + rowW / 2 - x, 2.2 + r() * 3.2);
-      const x0 = x;
-      const x1 = x + bw;
-      const top = yb - sh;
-      blocks.push(`M${f(x0 + 0.3)} ${f(yb)}C${f(x0 - 0.3)} ${f(yb - sh * 0.5)} ${f(x0 + 0.2)} ${f(top + 0.4)} ${f(x0 + bw * 0.4)} ${f(top)}C${f(x1 - 0.4)} ${f(top - 0.2)} ${f(x1 + 0.2)} ${f(top + sh * 0.4)} ${f(x1)} ${f(yb)}Z`);
-      for (let hy = yb - sh * 0.45; hy < yb - 0.3; hy += 0.9) shade.push(`M${f(x0 + bw * 0.45)} ${f(hy)}L${f(x1 - 0.2)} ${f(hy - 0.2)}`);
-      x = x1 + 0.1 + r() * 0.3;
+  const slabs: string[] = [];
+  const under: string[] = [];
+  const back: [number, number][] = [];
+  let y = o.y;
+  let k = 0;
+  while (y > o.y - o.h + 1.5) {
+    const t = (o.y - y) / o.h;
+    const half = (o.w / 2) * Math.max(0.1, (1 - t) * (0.92 + r() * 0.14));
+    const sway = (r() - 0.5) * o.w * 0.06 + Math.sin(k * 1.7) * o.w * 0.02;
+    const th = 1.6 + r() * 2.2;
+    back.push([o.x + sway - half - 0.6, y], [o.x + sway + half + 0.6, y]);
+    let x = o.x + sway - half;
+    while (x < o.x + sway + half - 1) {
+      const sw = Math.min(o.x + sway + half - x, 3.5 + r() * 9);
+      const tilt = (r() - 0.5) * 1.6;
+      const lip = (r() - 0.3) * 1.2;
+      const x0 = x - lip;
+      const x1 = x + sw + (r() - 0.5) * 1.2;
+      const yb = y + (r() - 0.5) * 0.6;
+      const yt = yb - th * (0.7 + r() * 0.5);
+      slabs.push(`M${f(x0)} ${f(yb - tilt * 0.5)}L${f(x0 + 0.5)} ${f(yt - tilt * 0.5)}L${f(x1 - 0.4)} ${f(yt + tilt * 0.5)}L${f(x1)} ${f(yb + tilt * 0.5)}Z`);
+      under.push(`M${f(x0 + 0.3)} ${f(yb - tilt * 0.5 + 0.2)}L${f(x1)} ${f(yb + tilt * 0.5 + 0.2)}`);
+      x = x1 + 0.4 + r() * 0.8;
     }
+    y -= th * (0.78 + r() * 0.2);
+    k++;
   }
-  m.push({ d: blocks.join(''), c: 'pk', w: 0.45 });
-  m.push({ d: shade.join(''), c: 'l3', w: 0.3 });
+  // The pile in shadow behind the slabs, so the gaps between them read as crevices.
+  const left = back.filter((_, i) => i % 2 === 0);
+  const right = back.filter((_, i) => i % 2 === 1).reverse();
+  const top = o.y - o.h;
+  m.push({ d: `M${[...left, [o.x, top] as [number, number], ...right].map(([px, py]) => `${f(px)} ${f(py)}`).join('L')}Z`, c: 'f4' });
+  m.push({ d: slabs.join(''), c: 'pk', w: 0.4 });
+  m.push({ d: under.join(''), c: 'l4', w: 0.75 });
+  // The top stone, a single flat piece set on edge.
+  m.push({ d: `M${f(o.x - 3)} ${f(top + 2.2)}L${f(o.x - 1.6)} ${f(top - 2.4)}L${f(o.x + 2.2)} ${f(top - 1.6)}L${f(o.x + 3.2)} ${f(top + 2.4)}Z`, c: 'pk', w: 0.45 });
 }
 
 /** Tracks in soft ground: paired marks running along a line, a little apart, like a short-legged animal's. */

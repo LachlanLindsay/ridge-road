@@ -163,6 +163,24 @@ export function canopy(g: Curve, o: { seed: number; size: number; sparse?: numbe
   return { ...base, y };
 }
 
+/**
+ * Bring a band's top down to its base over `span` at each end that falls inside the plate, so brush
+ * or forest thins out into the ground instead of stopping on a ruled vertical. Ends at or beyond the
+ * plate's edges are left alone.
+ */
+export function taperEnds(top: Curve, base: Curve, from: number, to: number, span: number, w = 400): Curve {
+  const y = top.y.map((ty, i) => {
+    const x = top.x0 + i * top.dx;
+    const dl = from > 2 ? (x - from) / span : Infinity;
+    const dr = to < w - 2 ? (to - x) / span : Infinity;
+    const t = Math.max(0, Math.min(1, dl, dr));
+    const s = t * t * (3 - 2 * t);
+    const by = yAt(base, x);
+    return by + (ty - by) * s;
+  });
+  return { ...top, y };
+}
+
 export function linePath(c: Curve, from = c.x0, to = xEnd(c), step = c.dx): string {
   const out: string[] = [];
   for (let x = from; x <= to + 1e-6; x += step) out.push(`${out.length ? 'L' : 'M'}${f(x)} ${f(yAt(c, x))}`);
@@ -295,6 +313,10 @@ export interface CliffOpts {
   gap?: number;
   /** Wooded ground left on top before the cliff begins. */
   cap?: number;
+  /** How much the band's height wanders along its length: from `height` down to (1 - 2 × grain) of it. */
+  grain?: number;
+  /** How long those wanderings are: short ones read as a rippled foot, long ones as bays and buttresses. */
+  grainScale?: number;
   from?: number;
   to?: number;
 }
@@ -311,7 +333,8 @@ export function cliffFace(top: Curve, o: CliffOpts): { face: string; beds: strin
   const cap = o.cap ?? 1.5;
   const hAt = (x: number) => {
     const v = body(x / 70) + (o.cover ?? 0.15);
-    return v <= 0 ? 0 : o.height * Math.min(1, v * 2.4) * (0.78 + 0.22 * grain(x / 8));
+    const wander = o.grain === undefined ? 0.78 + 0.22 * grain(x / (o.grainScale ?? 8)) : 1 - o.grain + o.grain * grain(x / (o.grainScale ?? 8));
+    return v <= 0 ? 0 : o.height * Math.min(1, v * 2.4) * wander;
   };
   const foot = curve(top.x0, xEnd(top), (x) => yAt(top, x) + cap + hAt(x), top.dx);
   const from = o.from ?? top.x0;
@@ -605,56 +628,66 @@ export function smoke(o: { seed: number; x: number; y: number; h: number; drift?
 }
 
 /**
- * A plume of smoke as an engraver leaves it: a column of bare paper rising from a fire, widening and
- * billowing as it climbs and leans with the wind, rounded off at the top, with broken strokes along
- * its shaded (right) side and a curl or two inside. Laid over hatched ground or sky, the paper is the
- * smoke; drawn in ink lines alone, smoke at this size reads as hooks.
+ * A plume of smoke as an engraver leaves it: no outline, a body of rounded puffs, filled pale (see
+ * the `ps` class), rising from a fire and leaning further with the wind as it climbs. The puffs swell
+ * and pinch so the column billows; toward the top they shrink, part and drift off downwind, so the
+ * smoke thins and breaks up instead of ending in a cap. A few broken strokes lie only along the
+ * shaded (right) side of the billows, where the edge is open to the air. Drawn in ink lines alone,
+ * smoke at this size reads as hooks; drawn as one hard-edged column, it reads as a waterfall.
  */
-export function plume(o: { seed: number; x: number; y: number; h: number; w0?: number; w1?: number; drift?: number }): { body: string; edge: string; curls: string } {
+export function plume(o: { seed: number; x: number; y: number; h: number; w0?: number; w1?: number; drift?: number }): { body: string[]; edge: string } {
   const r = rng(o.seed);
-  const n = 30;
-  const w0 = o.w0 ?? o.h * 0.04;
-  const w1 = o.w1 ?? o.h * 0.17;
+  const w0 = o.w0 ?? o.h * 0.03;
+  const w1 = o.w1 ?? o.h * 0.15;
   const drift = (o.drift ?? 0.15) * o.h;
   const ph = r() * 6;
-  const cx = (t: number) => o.x + drift * t ** 1.5 + Math.sin(t * 4.5 + ph) * o.h * 0.03 * t;
+  const cx = (t: number) => o.x + drift * t ** 1.6 + Math.sin(t * 4 + ph) * o.h * 0.025 * t;
   const cy = (t: number) => o.y - o.h * t;
-  // Wide billows on each side, out of step, so the column swells and pinches as it climbs; at the
-  // top it thins raggedly away rather than ending in a cap.
-  const lw = (t: number) => (w0 + (w1 - w0) * t ** 0.8) * (1 + 0.17 * Math.sin(t * 14 + ph * 2) + 0.08 * Math.sin(t * 29 + ph)) * fade(t);
-  const rw = (t: number) => (w0 + (w1 - w0) * t ** 0.8) * (1 + 0.17 * Math.sin(t * 14 + ph * 2 + 1.7) + 0.08 * Math.sin(t * 27 + ph * 3)) * fade(t);
-  const fade = (t: number) => (t > 0.72 ? Math.max(0, 1 - ((t - 0.72) / 0.28) ** 1.4) ** 0.6 : 1);
-  const hw = (t: number) => (lw(t) + rw(t)) / 2;
-  const left: [number, number][] = [];
-  const right: [number, number][] = [];
-  for (let i = 0; i <= n; i++) {
-    const t = i / n;
-    left.push([cx(t) - lw(t), cy(t)]);
-    right.push([cx(t) + rw(t), cy(t)]);
+  // Swelling and pinching as it climbs.
+  const hw = (t: number) => (w0 + (w1 - w0) * t ** 0.75) * (1 + 0.24 * Math.sin(t * 11 + ph * 2));
+  const puffs: Ellipse[] = [];
+  // Which of three layers each puff prints in: solid, then fading as the smoke thins away.
+  const layer: number[] = [];
+  let t = 0;
+  while (t < 1.04) {
+    const top = t > 0.6 ? (t - 0.6) / 0.44 : 0;
+    // Up high the wind takes the smoke: puffs smaller, drawn out flat downwind, scattered, some gone.
+    const rr = hw(t) * (0.85 + r() * 0.35) * (1 - top * 0.45);
+    const side = (r() - 0.5) * hw(t) * (0.5 + top) + top * top * drift * 0.3;
+    if (top === 0 || r() > top * 0.35) {
+      puffs.push({ x: cx(t) + side, y: cy(t), rx: rr * (1 + r() * 0.2 + top * 0.9), ry: rr * (0.78 + r() * 0.14) * (1 - top * 0.35) });
+      layer.push(top < 0.2 ? 0 : top < 0.6 ? 1 : 2);
+    }
+    t += Math.max(0.012, (rr * (0.55 + top * 0.5)) / o.h);
   }
-  const pt = ([x, y]: [number, number]) => `${f(x)} ${f(y)}`;
-  const body = `M${left.map(pt).join('L')}L${[...right].reverse().map(pt).join('L')}Z`;
-  // Broken strokes along the shaded side, thinning out toward the top; a few on the lit side low down.
+  const ell = (e: Ellipse) => `M${f(e.x - e.rx)} ${f(e.y)}A${f(e.rx)} ${f(e.ry)} 0 1 0 ${f(e.x + e.rx)} ${f(e.y)}A${f(e.rx)} ${f(e.ry)} 0 1 0 ${f(e.x - e.rx)} ${f(e.y)}Z`;
+  const body = [0, 1, 2].map((k) => puffs.filter((_, i) => layer[i] === k).map(ell).join(''));
+  // Shading: arcs along the lower right of the billows, kept only where they lie on the outside of
+  // the plume, broken, and none up where it thins away.
+  const inside = (x: number, y: number, skip: number) => puffs.some((e, j) => j !== skip && ((x - e.x) / e.rx) ** 2 + ((y - e.y) / e.ry) ** 2 < 0.94);
   const edge: string[] = [];
-  for (let i = 0; i < n; i++) {
-    const t = i / n;
-    if (r() < 0.25 + t * 0.55) continue;
-    edge.push(`M${pt(right[i]!)}L${pt(right[i + 1]!)}`);
-    if (t < 0.35 && r() < 0.5) edge.push(`M${pt(left[i]!)}L${pt(left[i + 1]!)}`);
-  }
-  // Curls inside: short arcs set off from the middle, where the smoke turns over.
-  const curls: string[] = [];
-  for (const t of [0.42 + r() * 0.1, 0.66 + r() * 0.1]) {
-    const x = cx(t) + hw(t) * 0.15;
-    const y = cy(t);
-    const rr = hw(t) * 0.55;
-    curls.push(`M${f(x - rr)} ${f(y + rr * 0.2)}Q${f(x)} ${f(y - rr * 0.9)} ${f(x + rr)} ${f(y - rr * 0.1)}`);
-  }
-  return { body, edge: edge.join(''), curls: curls.join('') };
+  puffs.forEach((e, i) => {
+    const ty = (o.y - e.y) / o.h;
+    if (ty < 0.12 || ty > 0.7 || r() < 0.35) return;
+    let on = false;
+    for (let a = -1.3; a <= 1.5; a += 0.16) {
+      const x = e.x + Math.cos(a) * e.rx;
+      const y = e.y + Math.sin(a) * e.ry;
+      if (!inside(x, y, i) && r() > 0.12) {
+        edge.push(`${on ? 'L' : 'M'}${f(x)} ${f(y)}`);
+        on = true;
+      } else on = false;
+    }
+  });
+  return { body, edge: edge.join('') };
 }
 
-/** A grass tree: a short black trunk, a fountain of fine leaves, and a tall flower spike. */
-export function grassTree(o: { seed: number; x: number; y: number; h: number; spike?: boolean }): { trunk: string; leaves: string; spike: string } {
+/**
+ * A grass tree: a short black trunk, a fountain of fine leaves, and a tall flower spike. With
+ * `spikeLen` (a share of `h`) the spike is drawn as a stalk carrying a thicker flowering head
+ * (`flower`, stroked wider by the caller) instead of one thin line.
+ */
+export function grassTree(o: { seed: number; x: number; y: number; h: number; spike?: boolean; spikeLen?: number }): { trunk: string; leaves: string; spike: string; flower: string } {
   const r = rng(o.seed);
   const th = o.h * 0.38;
   const tw = o.h * 0.07;
@@ -672,6 +705,18 @@ export function grassTree(o: { seed: number; x: number; y: number; h: number; sp
     const cy = top + Math.sin(a) * len * 0.8 - len * 0.18;
     leaves.push(`M${f(o.x + (r() - 0.5) * tw)} ${f(top + 0.5)}Q${f(cx)} ${f(cy)} ${f(ex)} ${f(ey + len * 0.22)}`);
   }
+  if (o.spikeLen !== undefined && o.spike !== false) {
+    const y0 = top - o.h * 0.1;
+    const y1 = y0 - o.h * o.spikeLen;
+    const lean = o.h * 0.02;
+    const ym = y0 + (y1 - y0) * 0.4;
+    return {
+      trunk,
+      leaves: leaves.join(''),
+      spike: `M${f(o.x)} ${f(y0)}L${f(o.x + lean * 0.4)} ${f(ym)}`,
+      flower: `M${f(o.x + lean * 0.4)} ${f(ym)}L${f(o.x + lean)} ${f(y1)}`,
+    };
+  }
   const spike = o.spike === false ? '' : `M${f(o.x)} ${f(top - o.h * 0.1)}L${f(o.x + o.h * 0.03)} ${f(top - o.h * 0.95)}`;
-  return { trunk, leaves: leaves.join(''), spike };
+  return { trunk, leaves: leaves.join(''), spike, flower: '' };
 }
