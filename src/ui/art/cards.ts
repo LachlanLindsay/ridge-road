@@ -731,7 +731,7 @@ function frost(seed = 271): Scene {
   return { w: W, h: H, marks: m };
 }
 
-/** Salt meat: the cask open by the dying fire, a man laid up beside it. */
+/** Salt meat: the casks by the fire, one of them open, a man laid up beside it. */
 function saltMeat(seed = 281): Scene {
   const m: Mark[] = [];
   sky(m, { seed, w: W, horizon: 80, clouds: [cloudBank(seed + 1, 240, 26, 200, 20, 8)], reach: 0.78 });
@@ -1051,10 +1051,10 @@ export const CARD_PLATE_LABEL: Record<string, string> = {
   gullyWater: 'An engraving: the camp on a narrow ridge, the gully far below, two men climbing the face with kettles.',
   kangarooDogs: 'An engraving: three kangaroo dogs running down a kangaroo through open forest.',
   frost: 'An engraving: dawn under the western cliffs, the sun just clearing the cliff top; the camp below in white frost, hoar on the grass and on the blankets of the sleeping men, the fire out, a kangaroo leg hanging frozen from a meat pole.',
-  saltMeat: 'An engraving: an open cask of salt meat by a dying fire, a man laid up under his blanket.',
-  after1813: 'An engraving: a road cut slantwise across a ridge and over its crest, stumps and felled trunks along it, nobody on it.',
+  saltMeat: 'An engraving: casks of salt meat by the fire, a man laid up under his blanket.',
+  after1813: 'An engraving: a road cut up the ridge and over its crest, stumps and felled trunks along it, nobody on it.',
   'signs-huts': 'An engraving: open forest on the foothills, a line of old blazes cut in the gums running on through the trees, the party halted at the first of them, a leader pointing on along the line.',
-  'signs-woodcutter': 'An engraving: evening at a swamp camp, the dogs racing off into the dark scrub, two of the party on their feet looking after them.',
+  'signs-woodcutter': 'An engraving: a swamp camp, the dogs racing off into the dark scrub, two of the party on their feet looking after them.',
   'signs-camps': 'An engraving: open grass country west of the range, the ashes of old fires in the grass, a leader standing over them, the dogs nosing round.',
 };
 

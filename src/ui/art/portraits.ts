@@ -208,9 +208,17 @@ function campMinder(seed = 451): Scene {
   ground(m, g, seed + 40, { every: 10, h: 6 });
   gum(m, { seed: seed + 50, x: 364, y: yAt(g, 364) + 1, h: 118, lean: -0.06, spread: 0.9, density: 0.45, depth: 3 });
   const back = emptyFigure();
-  horse(back, 70, yAt(g, 70) - 6, 1.2, 0.6, null, null, { droopDeg: 34 });
-  horse(back, 116, yAt(g, 116) - 7, 1.15, -0.4, null, null, { droopDeg: 30 });
+  // Grazing: heads down in the grass.
+  horse(back, 70, yAt(g, 70) - 6, 1.2, 0.6, null, null, { droopDeg: 62 });
+  horse(back, 116, yAt(g, 116) - 7, 1.15, -0.4, null, null, { droopDeg: 58 });
   m.push(...figureMarks(back, 'f3'));
+  // The long grass they are cropping, up round their muzzles.
+  for (const [i, [x, y]] of ([
+    [99, yAt(g, 70) - 6],
+    [142, yAt(g, 116) - 7],
+  ] as const).entries()) {
+    m.push({ d: tufts(curve(x - 6, x + 6, () => y + 0.4), { seed: seed + 70 + i, from: x - 6, to: x + 6, every: 3, h: 13, blades: 5 }), c: 'l3', w: 0.45 });
+  }
   campfire(m, { seed: seed + 60, x: 232, y: yAt(g, 232), s: 1.7, smoke: 46, drift: 0.25 });
   cask(m, 290, yAt(g, 290), 2);
   sack(m, 316, yAt(g, 316), 2.2, true);
