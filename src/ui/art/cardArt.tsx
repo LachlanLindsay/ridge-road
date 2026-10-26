@@ -19,9 +19,13 @@ const THUMB_H = 54;
 
 const LEADERS: MemberId[] = ['blaxland', 'lawson', 'wentworth'];
 
-/** The Country landscape, shared by Whose Country and the Signs of Country (see cards.ts). */
-const COUNTRY_LABEL = 'An engraving: across a deep valley to a wall of sandstone cliffs, smoke rising from fires on the valley floor.';
+/** The Country landscape, for Whose Country and, with two of the party watching, the fires of 26 May (see cards.ts). */
+const COUNTRY_LABEL: Record<string, string> = {
+  whoseCountry: 'An engraving: across a deep, forested valley to a wall of sandstone cliffs, smoke rising out of the trees from fires far below.',
+  'signs-smoke': 'An engraving: two of the party on a rock ledge, looking down into a deep forested valley where smoke rises from the fires of people below.',
+};
 const COUNTRY_FOCUS = [96, 56, 250, 104] as const;
+const countryScene = (id: string) => (id === 'signs-smoke' ? country(21, { watchers: true }) : country());
 
 /** A milestone plate at the head of its card, cropped to the scene so the party shows larger. */
 const MILESTONE_HEAD: Record<string, readonly [number, number, number, number]> = {
@@ -40,10 +44,10 @@ const MILESTONE_FOCUS: Record<string, readonly [number, number, number, number]>
 
 const fixedCache = new Map<string, Scene>();
 function fixedScene(id: string): Scene | null {
-  const key = isCountryCard(id) ? 'country' : id;
+  const key = id;
   const hit = fixedCache.get(key);
   if (hit) return hit;
-  const make = key === 'country' ? () => country() : CARD_PLATES[key];
+  const make = isCountryCard(id) ? () => countryScene(id) : CARD_PLATES[key];
   if (!make) return null;
   const scene = make();
   fixedCache.set(key, scene);
@@ -80,7 +84,7 @@ function useCardScene(id: string, state: GameState | null): { scene: Scene | nul
   const party = isMilestone(id) ? partyNow(state) : null;
   const key = party ? partyKey(party) : '';
   const scene = useMemo(() => (party ? milestone(id, party.counts, party.loads) : fixedScene(id)), [id, key]);
-  const label = isMilestone(id) ? MILESTONE_LABEL[id]! : isCountryCard(id) ? COUNTRY_LABEL : (CARD_PLATE_LABEL[id] ?? '');
+  const label = isMilestone(id) ? MILESTONE_LABEL[id]! : isCountryCard(id) ? COUNTRY_LABEL[id]! : (CARD_PLATE_LABEL[id] ?? '');
   return { scene, label };
 }
 
@@ -121,7 +125,7 @@ export function CardThumb({ id, state }: { id: string; state: GameState | null }
 function ThumbPlate({ id, state }: { id: string; state: GameState | null }) {
   const party = isMilestone(id) ? partyNow(state) : null;
   const theme = themeKey();
-  const key = `${isCountryCard(id) ? 'country' : id}|${party ? partyKey(party) : ''}|${theme}`;
+  const key = `${id}|${party ? partyKey(party) : ''}|${theme}`;
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     let live = true;

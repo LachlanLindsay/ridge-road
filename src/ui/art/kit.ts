@@ -604,6 +604,55 @@ export function smoke(o: { seed: number; x: number; y: number; h: number; drift?
   return bands.map((b) => b.join(''));
 }
 
+/**
+ * A plume of smoke as an engraver leaves it: a column of bare paper rising from a fire, widening and
+ * billowing as it climbs and leans with the wind, rounded off at the top, with broken strokes along
+ * its shaded (right) side and a curl or two inside. Laid over hatched ground or sky, the paper is the
+ * smoke; drawn in ink lines alone, smoke at this size reads as hooks.
+ */
+export function plume(o: { seed: number; x: number; y: number; h: number; w0?: number; w1?: number; drift?: number }): { body: string; edge: string; curls: string } {
+  const r = rng(o.seed);
+  const n = 30;
+  const w0 = o.w0 ?? o.h * 0.04;
+  const w1 = o.w1 ?? o.h * 0.17;
+  const drift = (o.drift ?? 0.15) * o.h;
+  const ph = r() * 6;
+  const cx = (t: number) => o.x + drift * t ** 1.5 + Math.sin(t * 4.5 + ph) * o.h * 0.03 * t;
+  const cy = (t: number) => o.y - o.h * t;
+  // Wide billows on each side, out of step, so the column swells and pinches as it climbs; at the
+  // top it thins raggedly away rather than ending in a cap.
+  const lw = (t: number) => (w0 + (w1 - w0) * t ** 0.8) * (1 + 0.17 * Math.sin(t * 14 + ph * 2) + 0.08 * Math.sin(t * 29 + ph)) * fade(t);
+  const rw = (t: number) => (w0 + (w1 - w0) * t ** 0.8) * (1 + 0.17 * Math.sin(t * 14 + ph * 2 + 1.7) + 0.08 * Math.sin(t * 27 + ph * 3)) * fade(t);
+  const fade = (t: number) => (t > 0.72 ? Math.max(0, 1 - ((t - 0.72) / 0.28) ** 1.4) ** 0.6 : 1);
+  const hw = (t: number) => (lw(t) + rw(t)) / 2;
+  const left: [number, number][] = [];
+  const right: [number, number][] = [];
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    left.push([cx(t) - lw(t), cy(t)]);
+    right.push([cx(t) + rw(t), cy(t)]);
+  }
+  const pt = ([x, y]: [number, number]) => `${f(x)} ${f(y)}`;
+  const body = `M${left.map(pt).join('L')}L${[...right].reverse().map(pt).join('L')}Z`;
+  // Broken strokes along the shaded side, thinning out toward the top; a few on the lit side low down.
+  const edge: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const t = i / n;
+    if (r() < 0.25 + t * 0.55) continue;
+    edge.push(`M${pt(right[i]!)}L${pt(right[i + 1]!)}`);
+    if (t < 0.35 && r() < 0.5) edge.push(`M${pt(left[i]!)}L${pt(left[i + 1]!)}`);
+  }
+  // Curls inside: short arcs set off from the middle, where the smoke turns over.
+  const curls: string[] = [];
+  for (const t of [0.42 + r() * 0.1, 0.66 + r() * 0.1]) {
+    const x = cx(t) + hw(t) * 0.15;
+    const y = cy(t);
+    const rr = hw(t) * 0.55;
+    curls.push(`M${f(x - rr)} ${f(y + rr * 0.2)}Q${f(x)} ${f(y - rr * 0.9)} ${f(x + rr)} ${f(y - rr * 0.1)}`);
+  }
+  return { body, edge: edge.join(''), curls: curls.join('') };
+}
+
 /** A grass tree: a short black trunk, a fountain of fine leaves, and a tall flower spike. */
 export function grassTree(o: { seed: number; x: number; y: number; h: number; spike?: boolean }): { trunk: string; leaves: string; spike: string } {
   const r = rng(o.seed);
