@@ -217,7 +217,7 @@ function dogsRaceOff(seed = 171): Scene {
   const m: Mark[] = [];
   const g = flat(GY, seed, 0.5);
   const fireX = 92;
-  nightSky(m, { seed, w: W, bottom: H, glows: [{ x: fireX, y: 86, rx: 78, ry: 56 }] });
+  nightSky(m, { seed, w: W, bottom: H, glows: [{ x: fireX, y: 86, rx: 78, ry: 26 }] });
   m.push({ d: areaPath(g, H + 4), c: 'pp' });
   m.push({ d: linePath(g), c: 'l4', w: 0.8 });
   // Scrub on the right, black against the night.
@@ -240,7 +240,7 @@ function brood(seed = 181): Scene {
   const m: Mark[] = [];
   const g = flat(GY, seed, 0.4);
   const fireX = 206;
-  nightSky(m, { seed, w: W, bottom: H, glows: [{ x: fireX, y: 86, rx: 104, ry: 58 }] });
+  nightSky(m, { seed, w: W, bottom: H, glows: [{ x: fireX, y: 86, rx: 104, ry: 30 }] });
   m.push({ d: areaPath(g, H + 4), c: 'pp' });
   m.push({ d: linePath(g), c: 'l4', w: 0.8 });
   gum(m, { seed: seed + 10, x: 40, y: yAt(g, 40) + 1, h: 84, lean: 0.05, spread: 0.9, density: 0.45, depth: 2 }, 4);

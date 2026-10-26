@@ -2820,6 +2820,20 @@ p {
 :root[data-theme='dark'] .art .ln {
   stroke: #333d47;
 }
+/* A fire's light on the night: nothing on light paper, where the bare paper inside the ruling is
+   the light; on dark paper, where bare paper is darker than the ruled sky, a soft warm light laid in
+   rings, brightest at the fire. */
+.art .gl {
+  fill: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .art .gl {
+    fill: rgba(236, 214, 170, 0.05);
+  }
+}
+:root[data-theme='dark'] .art .gl {
+  fill: rgba(236, 214, 170, 0.05);
+}
 
 /* A journal card's plate: across the head of the card, edge to edge. */
 .card-art {
