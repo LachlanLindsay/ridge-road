@@ -793,22 +793,68 @@ function after1813(seed = 291): Scene {
   m.push({ d: pts(L), c: 'l4', w: 0.9 }, { d: pts(R), c: 'l3', w: 0.7 });
   const rut = (k: number) => pts(L.map(([x, y], i) => [x + (R[i]![0] - x) * k, y] as [number, number]));
   m.push({ d: rut(0.32) + rut(0.68), c: 'l2', w: 0.45 });
-  // Stumps along both sides where the line was cleared, smaller as they go.
+  // Stumps along both sides where the line was cleared, smaller as they go: each its own height and
+  // girth, leaning a little, the top cut in a V by the axe, set back from the road at no fixed
+  // distance; and trunks felled and left lying along the verges.
+  const rs = rng(seed + 31);
   const stumps: string[] = [];
-  const tops: string[] = [];
+  const cuts: string[] = [];
   const stump = (x: number, y: number, s: number) => {
-    stumps.push(`M${f(x - 2.2 * s)} ${f(y)}L${f(x - 1.7 * s)} ${f(y - 4 * s)}L${f(x + 1.9 * s)} ${f(y - 4.6 * s)}L${f(x + 2.4 * s)} ${f(y)}Z`);
-    tops.push(`M${f(x - 1.8 * s)} ${f(y - 4 * s)}Q${f(x)} ${f(y - 5.8 * s)} ${f(x + 1.9 * s)} ${f(y - 4.6 * s)}Q${f(x)} ${f(y - 3.4 * s)} ${f(x - 1.8 * s)} ${f(y - 4 * s)}Z`);
+    const hf = 0.6 + rs() * 0.8;
+    const wf = 0.7 + rs() * 0.6;
+    const lean = ((rs() - 0.5) * 24 * Math.PI) / 180;
+    const tw = 1.7 * wf;
+    const bw = tw + 0.45;
+    const ht = 4.6 * hf;
+    const P = (u: number, v: number) => `${f(x + (u * Math.cos(lean) - v * Math.sin(lean)) * s)} ${f(y + (u * Math.sin(lean) + v * Math.cos(lean)) * s)}`;
+    // The axe cut: a V across the top, one lip left higher than the other where the trunk broke,
+    // the fresh wood pale in it.
+    const side = rs() < 0.5 ? 1 : -1;
+    const nx = side * tw * (0.05 + rs() * 0.25);
+    const deep = Math.min(1.2, ht * 0.25);
+    const lipL = -ht - (side < 0 ? 0.7 : 0);
+    const lipR = -ht - (side > 0 ? 0.7 : 0);
+    stumps.push(`M${P(-bw, 0)}Q${P(-tw, -0.3)} ${P(-tw, -1.2)}L${P(-tw, lipL)}L${P(nx, -ht + deep)}L${P(tw, lipR)}L${P(tw, -1.2)}Q${P(tw, -0.3)} ${P(bw, 0)}Z`);
+    cuts.push(`M${P(-tw, lipL)}L${P(nx, -ht + deep)}L${P(tw, lipR)}L${P(tw, lipR + 0.8)}L${P(nx, -ht + deep + 0.8)}L${P(-tw, lipL + 0.8)}Z`);
   };
-  for (let i = 4; i < N - 6; i += 6 + Math.floor(r() * 5)) {
+  // A felled trunk lying in the grass beside the road, its cut end toward the road.
+  const log = (x: number, y: number, s: number, dir: 1 | -1) => {
+    const half = 8 * s;
+    const R = 0.95 * s;
+    const tilt = (rs() - 0.5) * 0.12;
+    const cutX = x - dir * half;
+    const farX = x + dir * half;
+    const yc = (xx: number) => y - R + (xx - x) * tilt;
+    stumps.push(`M${f(cutX)} ${f(yc(cutX) - R)}L${f(farX)} ${f(yc(farX) - R * 0.8)}Q${f(farX + dir * R)} ${f(yc(farX))} ${f(farX)} ${f(yc(farX) + R * 0.8)}L${f(cutX)} ${f(yc(cutX) + R)}Z`);
+    // A broken-off limb standing up from it.
+    stumps.push(`M${f(x + dir * half * 0.2)} ${f(yc(x) - R * 0.8)}L${f(x + dir * (half * 0.2 + 2.2 * s))} ${f(yc(x) - R - 2 * s)}L${f(x + dir * (half * 0.2 + 2.6 * s))} ${f(yc(x) - R - 1.7 * s)}L${f(x + dir * (half * 0.2 + 0.8 * s))} ${f(yc(x) - R * 0.8)}Z`);
+    cuts.push(`M${f(cutX - R * 0.45)} ${f(yc(cutX))}a${f(R * 0.45)} ${f(R)} 0 1 0 ${f(R * 0.9)} 0a${f(R * 0.45)} ${f(R)} 0 1 0 ${f(-R * 0.9)} 0Z`);
+  };
+  for (const [edge, dir, from] of [
+    [L, -1, 5],
+    [R, 1, 4],
+  ] as const) {
+    for (let i = from + Math.floor(rs() * 3); i < N - 6; i += 4 + Math.floor(rs() * 6)) {
+      const t = i / N;
+      const s = (2.2 * (1 - t) ** 1.5 + 0.35) * (dir < 0 ? 1 : 0.92);
+      const [ex, ey] = edge[i]!;
+      if (ey > H - 14) continue;
+      const back = (11 * (1 - t) + 3) * (1 + (rs() - 0.5) * 0.8);
+      stump(ex + dir * back, ey + 1, s);
+    }
+  }
+  // Felled trunks lying along the verges.
+  for (const [edge, dir, i] of [
+    [L, -1, 22],
+    [R, 1, 30],
+    [L, -1, 41],
+  ] as const) {
     const t = i / N;
     const s = 2.2 * (1 - t) ** 1.5 + 0.35;
-    const [lx, ly] = L[i]!;
-    const [rx, ry] = R[i]!;
-    stump(lx - 12 * (1 - t) - 3, ly + 1, s);
-    stump(rx + 10 * (1 - t) + 3, ry + 1, s * 0.9);
+    const [ex, ey] = edge[i]!;
+    log(ex + dir * (10 * s + 3), ey + 1.5, s, dir);
   }
-  m.push({ d: stumps.join(''), c: 'f4' }, { d: tops.join(''), c: 'pk', w: 0.45 });
+  m.push({ d: stumps.join(''), c: 'f4' }, { d: cuts.join(''), c: 'pk', w: 0.3 });
   return { w: W, h: H, marks: m };
 }
 
@@ -1006,7 +1052,7 @@ export const CARD_PLATE_LABEL: Record<string, string> = {
   kangarooDogs: 'An engraving: three kangaroo dogs running down a kangaroo through open forest.',
   frost: 'An engraving: dawn under the western cliffs, the sun just clearing the cliff top; the camp below in white frost, hoar on the grass and on the blankets of the sleeping men, the fire out, a kangaroo leg hanging frozen from a meat pole.',
   saltMeat: 'An engraving: an open cask of salt meat by a dying fire, a man laid up under his blanket.',
-  after1813: 'An engraving: a road cut slantwise across a ridge and over its crest, stumps along it, nobody on it.',
+  after1813: 'An engraving: a road cut slantwise across a ridge and over its crest, stumps and felled trunks along it, nobody on it.',
   'signs-huts': 'An engraving: open forest on the foothills, a line of old blazes cut in the gums running on through the trees, the party halted at the first of them, a leader pointing on along the line.',
   'signs-woodcutter': 'An engraving: evening at a swamp camp, the dogs racing off into the dark scrub, two of the party on their feet looking after them.',
   'signs-camps': 'An engraving: open grass country west of the range, the ashes of old fires in the grass, a leader standing over them, the dogs nosing round.',
