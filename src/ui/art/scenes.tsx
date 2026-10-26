@@ -21,7 +21,7 @@ export function loads1813(): Pack[] {
 
 // ---------------------------------------------------------------- the plates
 
-/** Title: from a lookout, the ridges going back in haze, a gum leaning out over the drop. */
+/** Title: from a lookout, the ridges going back in haze, a gum on the ledge above the drop. */
 export function vista(seed = 3): Scene {
   const W = 400;
   const H = 220;
@@ -691,7 +691,7 @@ export function SetOutArt({ counts, loads }: { counts: PartyCounts; loads: Pack[
 
 export function TitleArt() {
   const scene = useMemo(() => vista(), []);
-  return <Plate scene={scene} label="An engraving: from a lookout, ridge after ridge of the Blue Mountains fading into haze, a gum tree leaning out over the drop." class="plate plate-title" />;
+  return <Plate scene={scene} label="An engraving: from a lookout, ridge after ridge of the Blue Mountains fading into haze, a gum tree on the ledge above the drop." class="plate plate-title" />;
 }
 
 /** The party on the march, each horse carrying its share; point at anyone for their card. */

@@ -298,7 +298,7 @@ export const EVENT_ART: Record<EventId, () => Scene> = {
 
 /** What each strip shows, for the picture's label. */
 export const EVENT_ART_LABEL: Record<EventId, string> = {
-  dew: 'An engraving: men waiting by a fire beside scrub beaded with dew, mist in the valley.',
+  dew: 'An engraving: men waiting by a fire beside scrub beaded with dew.',
   horseFall: 'An engraving: a pack horse down on the track, its load spilled, a man hauling at its halter.',
   horseExhausted: 'An engraving: a pack horse that can barely stand under its load, legs braced out and head hanging to its knees, a man looking it over.',
   dryCamp: 'An engraving: two men carrying the kettles over the edge of the ridge, down toward the gully.',
