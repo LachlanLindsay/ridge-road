@@ -51,7 +51,13 @@ Each day the player plans two half-days, the game resolves them, and the night i
 - At the goal: **Return leg** — retrace your trail.
 - Forced home at any camp if morale hits 0, food runs out, three men are too ill or every horse is down.
 
-The 1813 rhythm is the strong line: move camp to the end of the cleared path in the morning, then send five men to mark and cut ahead in the afternoon while two mind the horses. Leaving camp behind saves the morning but makes every later half pay a longer walk; moving it too often spends hours the cutters needed. Rest days restore stamina but give a low-morale party time to brood, as the 1813 men did on their first Sunday.
+The 1813 rhythm is the strong line: move camp to the end of the cleared path in the morning, then send five men to mark and cut ahead in the afternoon while two mind the horses. Leaving camp behind saves the morning but makes every later half pay a longer walk; moving it too often spends hours the cutters needed. Rest days cost a day, but mend clothes and boots and let the horses graze, and give a low-morale party time to brood, as the 1813 men did on their first Sunday.
+
+Three decisions are always the player's, never the plan sheet's:
+
+- **The fork.** When the work toward the flag runs into a fork (the scouts stop there, or the flag is spent and the next lead starts at one), the target is left empty and a card asks which ridge to follow: each branch with Lawson's reading, and "Let Lawson choose" last. The sheet never fills the branch in.
+- **Sunday.** On Saturday night the camp sheet asks whether to rest tomorrow, and says the 1813 party rested on Sunday 16 and Sunday 30 May and worked the Sunday between. The rest is ticked for the player on Easy at a camp with water for the horses, and left unticked otherwise.
+- **The dew.** Waiting costs the morning's first hour; pushing through costs chill odds and wear, and the card states both with the numbers. After two answers the same way the card ticks "every misty morning" for the player and says so.
 
 ## World model
 
@@ -86,7 +92,7 @@ Node features:
 
 Each segment moves through four states: unknown, revealed, marked (blazed trees) and cleared (horses can pass). Clearing is tracked in miles, so a segment can be part-cleared, and it always extends outward from the cleared end. Cutting is only possible on marked ground.
 
-Fog of war hides everything not yet scouted. A branch shows as a dead end only when scouts reach its precipice, or from a lookout in clear weather. With Lawson on a scouting team, each new node carries a hint, right 75% of the time, about whether the ridge falls away ahead.
+Fog of war hides everything not yet scouted. A branch shows as a dead end only when scouts reach its precipice, or from a lookout in clear weather. With Lawson on a scouting team, each new node carries a hint, right 75% of the time, about whether the ridge falls away ahead. Scouts with Lawson carry on down the one branch he reads as running on; when his readings agree, or he was not there, they stop at the fork and the player chooses.
 
 ## The 1813 map
 
@@ -189,7 +195,7 @@ The outfitting screen also sets the party. The three leaders always go; the play
 
 ## Tuning table
 
-Every number the engine uses lives in one file, `tuning.json`, mirrored here. With these defaults the 1813 method reaches the goal in about 21 days, the same as the real party (calibration at the end).
+Every number the engine uses lives in one file, `tuning.json`, mirrored here. With these defaults the 1813 method reaches the goal in about 22 days, and a player who trusts the plan sheet on Easy in about 21, the same as the real party. The sim calibration behind the numbers is in `CALIBRATION.md`; the hand check at the end of this section is where they started.
 
 **Time.** Work runs 09:00–17:00 in two 4-hour halves; heavy dew starts the morning at 10:00. A camp move comes first and costs everyone miles ÷ horse speed. Workers walk to the work front and back at 2.5 mph, and the walk back covers whatever they cleared.
 
@@ -199,10 +205,10 @@ Every number the engine uses lives in one file, `tuning.json`, mirrored here. Wi
 | Heath | 2.0 | — | 2.0 | 0.2 |
 | Meadow | 2.0 | — | 2.0 | 0.2 |
 | Swamp head | 1.0 | — | 1.5 | 0.2 |
-| Scrub | 1.25 | 0.30 | 2.0 | 0.5 |
-| Thick brush | 0.75 | 0.10 | 2.0 | 0.5 |
-| Thorny scrub | 0.75 | 0.15 | 2.0 | 1.0 |
-| Narrow rocky ridge | 0.75 | 0.12 | 1.5 | 0.5 |
+| Scrub | 1.45 | 0.39 | 2.0 | 0.5 |
+| Thick brush | 0.82 | 0.13 | 2.0 | 0.5 |
+| Thorny scrub | 0.82 | 0.20 | 2.0 | 1.0 |
+| Narrow rocky ridge | 0.82 | 0.16 | 1.5 | 0.5 |
 
 Miles cleared in a half-day:
 
@@ -210,7 +216,7 @@ Miles cleared in a half-day:
 p = \frac{k\,(4 - h_{move} - h_{dew} - 2m/2.5)}{1 + k/2.5}, \qquad k = \sum_{cutters} r \cdot e \cdot t
 ```
 
-Here m is miles from camp to the work front at the start of the half, r the clearing rate, e = 0.5 + stamina ÷ 200, and t the tool factor (axe 1.0, hatchet 0.75, none 0.3; Wentworth ×1.15). Scouting covers speed × mean e × (1 + 0.1 per extra member, up to 3), ×0.6 in cloud and ×0.8 in rain, after the same walk out. A party may advance into scouted passable ground at scouting speed.
+Here m is miles from camp to the work front at the start of the half, r the clearing rate, e = (0.5 + stamina ÷ 200) × the wear factor (1 − 1% for each point of wear over 50), and t the tool factor (axe 1.0, hatchet 0.75, none 0.3; Wentworth ×1.15). Scouting covers speed × mean e × (1 + 0.1 per extra member, up to 3), ×0.6 in cloud and ×0.8 in rain, after the same walk out. A party may advance into scouted passable ground at scouting speed.
 
 | Activity | Stamina per hour |
 | --- | --- |
@@ -233,6 +239,7 @@ Overnight recovery is +40 on full rations, +30 reduced, +20 short and +5 with no
 | No water | −6 more |
 | Overloaded (over 160 lb) | −3 |
 | Moved more than 6 miles today | −3 |
+| A rest day, with water | +4 more |
 
 A loaded move risks a fall: 2%, plus 1% per 10 lb over 160, plus (50 − condition) ÷ 2 % when condition is under 50. A fall costs an hour, and 1 in 10 also costs 20 condition. These horse numbers reproduce the journal: horses weak but upright by the descent.
 
@@ -251,14 +258,18 @@ A loaded move risks a fall: 2%, plus 1% per 10 lb over 160, plus (50 − conditi
 | Rest day | +4 if morale is 45 or more, else −4 |
 | Night alarm | −2 |
 
+A rest day is any day the camp stays and nobody scouts or cuts. Its night mends clothes and boots (wear −8) and, where there is water for the horses, adds +4 to each horse's night.
+
+**Wear** (0–100) is the party's clothes and boots. Each working party adds the terrain's wear per hour in the field (the Terrain table), and pushing through dew adds 3. Past 50 each point slows scouting and cutting by 1% (wear 70: 20% slower); past 60 chills come more often; past 70 men who work rough ground go footsore. A day of rest takes 8 off, and each pair of spare shoes 10.
+
 Below 40 the servants work at 90%. Below 25 the Refusal event fires, and at 0 the party turns home.
 
 | Condition | Nightly chance | Effect | Recovery |
 | --- | --- | --- | --- |
-| Chill | 2%, +3% if wear over 60, +4% if stamina under 30, +3% if he worked in cloud or rain, +5% in frost without a blanket | Efficiency ×0.7, recovery halved; 15% a night to become too ill if he works | 30% a night if rested |
+| Chill | 2%, +3% if wear over 60, +4% if stamina under 30, +3% if he worked in cloud or rain, +5% in frost without a blanket, +7% if he worked on a morning the party pushed through dew | Efficiency ×0.7, recovery halved; 15% a night to become too ill if he works | 30% a night if rested |
 | Bowel complaint | From day 14: 3%, +4% if no fresh meat in 4 days, +4% if camp water is a rock hole or swamp | Efficiency ×0.8 | 20% a night |
 | Footsore | 5% when party wear is over 70 and he worked in thorny or rocky ground | Walking and scouting ×0.85 | Spare shoes |
-| Too ill | Comes only from a chill | Can't work; stays at camp | 25% a night back to a chill |
+| Too ill | Comes only from a chill | Can't work; stays at camp | 50% a night back to a chill if he lay up all day (Rest, no camp move); 25% if he minded camp or was carried along |
 
 | Weather | Fair | Heavy dew | Cloud | Rain | Frost at night |
 | --- | --- | --- | --- | --- | --- |
@@ -297,13 +308,23 @@ Calibration, five men cutting at mean efficiency 0.85, camp moved to the end of 
 
 This is a hand check; the sim harness in milestone M1 replaces it.
 
+| Difficulty | Easy | Historical | Hard |
+| --- | --- | --- | --- |
+| False ridges per region | as Historical | as the map | one more |
+| Lawson's readings right | 85% | 75% | 65% |
+| Clearing | ×1.0 | ×1.0 | ×0.9 |
+| Morale at the start | 75 | 70 | 65 |
+| Event odds | ×0.75 | ×1 | ×1.25 |
+| Sunday rest ticked on the camp sheet | yes, at a camp with water for the horses | no | no |
+
 ## Events
 
 Events are short cards with two or three choices, effects shown before the player picks. All text is written fresh; the 1813 journals supply situations, not wording.
 
 | Event | Trigger | Choices and effects |
 | --- | --- | --- |
-| Heavy dew | 30% of mountain mornings | Wait: start at 10:00 · Push through: start at 09:00, wear +3, chill odds +3% tonight |
+| Heavy dew | 30% of mountain mornings | Wait: start at 10:00 · Push through: start at 09:00, wear +3, chill odds +7% tonight for each man who works. The card gives the night's odds both ways. After two answers the same way it ticks "every misty morning" for the player |
+| A fork | The work toward the flag runs into two or more unexplored ridges | One button per ridge, lettered as on the card's sketch, with Lawson's reading · Let Lawson choose: the one he reads as running on, otherwise his guess. The flag moves to the chosen ridge |
 | Cloud lifts | Cloudy morning, 40% by noon | At a lookout: full reveal; elsewhere morale +2 |
 | Horse falls under its load | Fall roll on a loaded move | Reload: −1 hour · Lighten: cache 20 lb here, −1 hour, no second fall today |
 | Horse exhausted | Condition below 25 | Spread its load, which may overload others · Cache goods at camp · Rest a day here |
@@ -360,7 +381,7 @@ Everything is a tap or a click: no keyboard, no real-time action. The layout is 
 | Party cards | A card for each man, each horse and the dogs: his trait in play with the numbers for the mode, how he is now, and what the record says of 1813, with sources. Hover with a mouse or press and hold a roster chip; tap anyone in Party and stores or in the party's plate |
 | Expedition | The main screen, below |
 | Event card | Short text, two or three choices with their effects shown |
-| Camp | Evening summary: food eaten, water, horse condition, who is ill; set tomorrow's rations, issue tea, call a rest day, cache items |
+| Camp | Evening summary: food eaten, water, horse condition, who is ill; set tomorrow's rations, issue tea, call a rest day, cache items. On Saturday night the rest is the Sunday question, with the 1813 Sundays |
 | Lookout | A layered 2D panorama; newly revealed terrain lights up on the map |
 | Journal | One auto-written line per day plus the player's notes, with the 1813 entry for the same date beside it |
 | End | Outcome, score breakdown, ghost-line chart, history panel |

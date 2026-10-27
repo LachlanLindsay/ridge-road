@@ -21,6 +21,10 @@ Played on a laptop as a primary-school class would (see the project doc `primary
 
 The map shows feed in each camp's point (full, half, none), the key docks on the map and lists only what is in view, unexplored ridges end in an arrow, and "A fine stream" has the coarse grass Blaxland describes. The plan and camp sheets give the runway: food in days against the days home, and the weakest horse against tonight's camp. The plan offers grass cutting before bare ground and a hunt when food runs short, instead of setting them silently; the camp move comes with the target. Nothing is left "for the way home" once on it. `CALIBRATION.md` has the numbers.
 
+## The three decisions
+
+After the second school playtest found that nobody could lose, the three real decisions are the player's: at a fork the plan sheet leaves the ridge empty and a card asks which way (with Lawson's reading, and "Let Lawson choose"); on Saturday night the camp sheet asks about Sunday (ticked on Easy at a camp with water for the horses); and the dew card states the chill odds both ways, with wear that now slows the work, and ticks "every misty morning" after two answers the same way. Rest days mend clothes and boots and let the horses graze, and a man too ill to work mends faster lying up. The brush is slower, so a player who trusts the sheet reaches the sugarloaf hill on day 21 on Easy, beside 1813. `CALIBRATION.md` has the numbers.
+
 ## Play on your iPhone over Tailscale
 
 On your Mac, with Node 20 or later and Tailscale running:
@@ -45,7 +49,7 @@ For development, `npm run dev` serves on port 5173 with hot reload, also reachab
 ```sh
 npm test                                      # Vitest suite
 npm run typecheck
-npm run sim -- --bot historical --runs 1000   # or naive, cautious, all
+npm run sim -- --bot historical --runs 1000   # or naive, cautious, defaults, all
 npm run sim -- --bot historical --runs 1 --seed 3 --trace   # one run, half by half
 npm run build:artifact                        # one self-contained page: dist/ridge-road.html
 npm run replay -- report.txt --trace          # replay a tester's expedition from their feedback report
@@ -55,7 +59,7 @@ npm run replay -- report.txt --trace          # replay a tester's expedition fro
 
 Menu → Send feedback (also on the title and end screens) builds a report: the tester's note, the build, the expedition's seed, mode and day, the device, and a replay code of about 1 KB holding the new-game options and every order given. Testers share or copy it into a message. `npm run replay -- <report or code>` rebuilds the exact game in Node (`--trace` prints each order and what it led to, `--until N` stops early, `--save out.json` writes a save to load into the browser). Saves are stamped with the build, and a save from an older build is rebuilt by replaying its orders, so fixes can ship mid-beta. A crash shows a screen with the same report instead of a blank page. In development, `?crash` shows that screen.
 
-`npm run sim -- --bot all` ends with the M1 acceptance checks. `--mode easy|hard` and `--json` are also available.
+`npm run sim -- --bot all` ends with the M1 acceptance checks; `--bot defaults --mode easy` checks the plan-sheet player lands beside 1813. `--mode easy|hard` and `--json` are also available.
 
 ## Layout
 
