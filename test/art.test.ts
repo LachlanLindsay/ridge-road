@@ -68,6 +68,15 @@ describe('event art', () => {
   it('keeps each strip small', () => {
     for (const [id, make] of Object.entries(EVENT_ART)) expect(kb(make().marks), id).toBeLessThan(80);
   });
+
+  it('starts every path with a move, so the browser draws it without an error', () => {
+    // The dry camp strip once drew a tuft past its right edge as a bare "Z", which the browser
+    // reported every time the card came up. An empty path is fine; a path must not start mid-shape.
+    const plates = [...Object.entries(EVENT_ART), ...Object.entries(CARD_PLATES)];
+    for (const [id, make] of plates) {
+      for (const m of make().marks) if (m.d) expect(m.d, id).toMatch(/^\s*[Mm]/);
+    }
+  });
 });
 
 describe('the procession', () => {
