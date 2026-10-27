@@ -5,6 +5,8 @@
 // Each save is stamped with the build that wrote it. A save from another build is rebuilt by
 // replaying its orders with this build's engine, so a fix shipped mid-expedition never meets a game
 // state shaped by older code; if the orders no longer replay, the player is told and starts afresh.
+// A finished expedition is the exception: nothing more is played in it, so when its orders no longer
+// replay it is kept as it was, for its end screen and journal.
 import { fromSave, replay, toSave, type GameState } from '../engine';
 import { BUILD } from './build';
 import type { Draft } from './draft';
@@ -41,6 +43,7 @@ export function restore(raw: string | null, savedBuild: string | null): Restored
   try {
     return { game: replay(s.opts, s.actions), notice: null };
   } catch {
+    if (s.phase === 'over' && s.outcome) return { game: s, notice: null };
     return { game: null, notice: CARRY_OVER_FAILED };
   }
 }

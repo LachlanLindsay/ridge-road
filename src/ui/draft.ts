@@ -6,6 +6,7 @@ import {
   capacity,
   chooseTarget,
   feedOf,
+  forkAhead,
   huntHabitat,
   huntOdds,
   runway,
@@ -38,6 +39,11 @@ export interface Draft {
   /** This half's tasks: the standing orders adjusted for illness and rest days, plus any taps. */
   tasks: Partial<Record<MemberId, Task>>;
   target: string | null;
+  /**
+   * A fork the work has run into, waiting for the player to choose a branch (the fork card). The
+   * target stays empty until then, so the sheet never picks the ridge for them.
+   */
+  fork?: string | null;
   moveTo: string | null;
   advance: boolean;
   blaze: boolean;
@@ -54,7 +60,8 @@ export function overload(s: GameState): number {
 
 /**
  * What to leave behind so the horses can move: the least needed things first, food last. Null when
- * nothing is over, or when no horse can carry anything at all.
+ * nothing is over, when no horse can carry anything at all, or when leaving every spare thing would
+ * still not lighten the loads enough (the tools and camp kit stay with the party).
  */
 export function excessCache(s: GameState): Cache | null {
   const over = overload(s);
@@ -68,6 +75,7 @@ export function excessCache(s: GameState): Cache | null {
     ['shoes', T.weights.shoes],
     ['flour', 1],
     ['saltMeat', 1],
+    ['shots', T.weights.shot],
   ];
   for (const [item, per] of order) {
     if (left <= 0) break;
@@ -77,7 +85,7 @@ export function excessCache(s: GameState): Cache | null {
     cache[item] = qty;
     left -= qty * per;
   }
-  return cache;
+  return left > 1e-6 ? null : cache;
 }
 
 /** The tap order on a roster chip, from the spec. */
@@ -161,13 +169,20 @@ export function normalizeDraft(s: GameState, prev: Draft | null): Draft {
   if (fresh && !resting && s.leg === 'out') noGrassToCut(s, tasks);
   let target = prev?.target ?? null;
   if (target && !validTarget(s, target)) target = null;
-  if (fresh && targetSpent(s, target)) target = chooseTarget(s);
-  if (!target) target = chooseTarget(s);
+  // A fork ahead is the player's to settle: the target waits empty for the fork card. Within a half
+  // the question stands until it is answered (or a ridge is tapped on the map).
+  let fork = !fresh && !target ? (prev?.fork ?? null) : null;
+  if (fresh && s.leg === 'out') fork = forkAhead(s, target);
+  if (fork) target = null;
+  else {
+    if (fresh && targetSpent(s, target)) target = chooseTarget(s);
+    if (!target) target = chooseTarget(s);
+  }
   // A new half moves the camp forward with the work, as the suggestion has it; "Stay instead" undoes it.
   let moveTo = resting ? null : fresh ? campFor(s, target) : (prev?.moveTo ?? null);
   if (moveTo === s.camp) moveTo = null;
   const advance = resting ? false : fresh ? !!target && canAdvance(s, moveTo ?? s.camp, target) : (prev?.advance ?? false);
-  const out: Draft = { key, roster, tasks, target, moveTo, advance, blaze: prev?.blaze ?? true, halt: fresh ? false : (prev?.halt ?? false) };
+  const out: Draft = { key, roster, tasks, target, fork, moveTo, advance, blaze: prev?.blaze ?? true, halt: fresh ? false : (prev?.halt ?? false) };
   if (!fresh && prev?.cache) out.cache = prev.cache;
   // Horses that cannot carry the load cannot push on, unless the plan leaves the excess here.
   if (out.advance && overload(s) > 1e-6 && !out.cache) out.advance = false;
@@ -201,6 +216,11 @@ function noGrassToCut(s: GameState, tasks: Partial<Record<MemberId, Task>>) {
  * The camp move that goes with a target: the suggestion for it, when the horses can carry the
  * load and get there this half. Null keeps the camp where it is.
  */
+/** The fork card is up: a fork waits for the player's choice on a working half outbound. */
+export function forkPending(s: GameState, d: Draft): boolean {
+  return !!d.fork && !d.target && s.leg === 'out' && !restDay(s) && (s.phase === 'morning' || s.phase === 'afternoon');
+}
+
 export function campFor(s: GameState, target: string | null, cache?: Cache): string | null {
   if (!target || s.leg !== 'out' || restDay(s)) return null;
   if (overload(s) > 1e-6 && !cache) return null;
@@ -214,7 +234,7 @@ export function campFor(s: GameState, target: string | null, cache?: Cache): str
 /** A new target, with the camp move that goes with it and whether the party can push on. */
 export function withTarget(s: GameState, d: Draft, target: string): Draft {
   const moveTo = campFor(s, target, d.cache);
-  return { ...d, target, moveTo, advance: canAdvance(s, moveTo ?? s.camp, target) && !(overload(s) > 1e-6 && !d.cache) };
+  return { ...d, target, fork: null, moveTo, advance: canAdvance(s, moveTo ?? s.camp, target) && !(overload(s) > 1e-6 && !d.cache) };
 }
 
 export function toPlan(s: GameState, d: Draft): HalfDayPlan {

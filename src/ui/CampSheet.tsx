@@ -16,6 +16,7 @@ import {
 import { GRASS_LABEL, horseWaterAt, itemText, lb, num, plural, waterLabel } from './format';
 import { Horses, ManRow, Report, Stepper, Toggle, foodRunwayText, horseNightPlace, horseRunwayText } from './parts';
 import { PlaceInfo } from './PlaceInfo';
+import { sundayDefault, sundayQuestion } from './camp';
 
 interface Props {
   state: GameState;
@@ -41,7 +42,7 @@ const CACHE_ITEMS: { item: Item; step: number; label: string }[] = [
 ];
 
 /** Wear below this does nothing yet, so the shoes row stays out of the way unless a man is footsore. */
-const SHOES_SHOWN_OVER = 55;
+const SHOES_SHOWN_OVER = T.wear.slowOver;
 
 export function CampSheet({ state, onMakeCamp, selected, setSelected }: Props) {
   const node = state.map.nodes[state.camp]!;
@@ -50,7 +51,8 @@ export function CampSheet({ state, onMakeCamp, selected, setSelected }: Props) {
   const footsore = state.men.filter((m) => m.condition === 'footsore').length;
   const [rations, setRations] = useState<Rations>(state.rations);
   const [tea, setTea] = useState(false);
-  const [rest, setRest] = useState(false);
+  const sunday = sundayQuestion(state);
+  const [rest, setRest] = useState(() => sundayDefault(state));
   const [shoes, setShoes] = useState(Math.min(footsore, st.shoes));
   const [feed, setFeed] = useState(true);
   const [cache, setCache] = useState<Cache>({});
@@ -70,6 +72,17 @@ export function CampSheet({ state, onMakeCamp, selected, setSelected }: Props) {
   const men = state.men.filter((m) => !isAway(state, m));
   const horsesWithUs = state.horses.filter((h) => h.leftAt === null).length;
   const grassNights = Math.floor(st.grass / T.horses.night.grassLbPerHorse);
+
+  // What a day of rest gives and costs, as the night after it will settle it.
+  const restNote = [
+    `A day lost, but clothes and boots are mended (wear −${T.wear.restMend}${state.wear > 0 ? `, now ${Math.round(state.wear)}` : ''})`,
+    horsesWithUs > 0
+      ? horseWater
+        ? ` and the horses graze all day (+${T.horses.night.restDay} each)`
+        : `; no water for the horses here, so they lose condition while the party waits`
+      : '',
+    state.morale >= T.morale.restDay.threshold ? `. Morale +${T.morale.restDay.good}.` : '. Spirits are low: a day idle may sour into brooding.',
+  ].join('');
 
   const orders = (): EveningOrders => {
     const o: EveningOrders = { rations, feedGrass: feed };
@@ -151,13 +164,14 @@ export function CampSheet({ state, onMakeCamp, selected, setSelected }: Props) {
         </fieldset>
 
         {st.tea >= 1 && <Toggle id="tea" checked={tea} onChange={setTea} label="Issue tea and sugar" note={`Morale +${T.morale.tea}. ${lb(st.tea)} left.`} />}
-        <Toggle
-          id="rest"
-          checked={rest}
-          onChange={setRest}
-          label="Rest tomorrow"
-          note={state.morale >= T.morale.restDay.threshold ? `Stamina recovers and morale +${T.morale.restDay.good}.` : 'Stamina recovers, but low spirits may sour into brooding.'}
-        />
+        {sunday ? (
+          <div class="offer sunday">
+            <p>Tomorrow is Sunday. The 1813 party rested on Sunday 16 May and Sunday 30 May, and worked the Sunday between.</p>
+            <Toggle id="rest" checked={rest} onChange={setRest} label="Rest on Sunday" note={restNote} />
+          </div>
+        ) : (
+          <Toggle id="rest" checked={rest} onChange={setRest} label="Rest tomorrow" note={restNote} />
+        )}
         {st.grass >= T.horses.night.grassLbPerHorse && !goodGrass && (
           <Toggle id="feed" checked={feed} onChange={setFeed} label="Feed the cut grass" note="Each horse eats 15 lb and counts as well fed. Untick to save it for a camp with no grass." />
         )}
@@ -168,7 +182,7 @@ export function CampSheet({ state, onMakeCamp, selected, setSelected }: Props) {
             max={st.shoes}
             onChange={setShoes}
             label={`Spare shoes to issue (${plural(st.shoes, 'pair')} left${footsore ? `, ${footsore} footsore` : ''})`}
-            note={`Boots and clothes are ${state.wear > T.illness.footsore.wearOver ? 'worn through' : state.wear > T.illness.chill.wearOver ? 'badly worn' : 'wearing'} (wear ${Math.round(state.wear)} of 100). Each pair takes ${T.wear.shoesRelief} off and puts a footsore man back on his feet; past ${T.illness.chill.wearOver} chills come more often, past ${T.illness.footsore.wearOver} men go footsore.`}
+            note={`Boots and clothes are ${state.wear > T.illness.footsore.wearOver ? 'worn through' : state.wear > T.illness.chill.wearOver ? 'badly worn' : 'wearing'} (wear ${Math.round(state.wear)} of 100). Each pair takes ${T.wear.shoesRelief} off and puts a footsore man back on his feet. Past ${T.wear.slowOver} every point slows scouting and cutting by ${Math.round(T.wear.slowPerPoint * 100)}%; past ${T.illness.chill.wearOver} chills come more often, past ${T.illness.footsore.wearOver} men go footsore.`}
           />
         )}
         {hasCache && (

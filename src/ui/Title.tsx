@@ -11,7 +11,7 @@ import { decodeReplay } from './replaycode';
 import { ThemeChoice } from './theme';
 
 const MODES: { id: Mode; label: string; note: string }[] = [
-  { id: 'easy', label: 'Easy', note: 'Fewer false ridges, faster cutting, steadier men' },
+  { id: 'easy', label: 'Easy', note: 'Lawson more often right, steadier men, Sundays rested' },
   { id: 'historical', label: 'Historical', note: 'The 1813 numbers' },
   { id: 'hard', label: 'Hard', note: 'More dead ends, slower cutting, a warier party' },
 ];

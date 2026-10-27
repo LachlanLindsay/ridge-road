@@ -11,12 +11,28 @@ const DEW_AGAIN = [
   'Heavy dew again. Boots and coats will be wet by the first hundred yards.',
 ];
 
-/** An event card: what happened, and two or three choices with their effects shown before picking. */
-export function EventModal({ state, onChoose, onRemember }: { state: GameState; onChoose: (c: ChoiceId) => void; onRemember?: (c: ChoiceId) => void }) {
+/**
+ * An event card: what happened, and two or three choices with their effects shown before picking.
+ * `remembered` is the choice the player made the last two times this card came up: the card ticks
+ * "every misty morning" for them and says so.
+ */
+export function EventModal({
+  state,
+  onChoose,
+  onRemember,
+  remembered = null,
+}: {
+  state: GameState;
+  onChoose: (c: ChoiceId) => void;
+  onRemember?: (c: ChoiceId) => void;
+  remembered?: ChoiceId | null;
+}) {
   const card = eventCard(state);
   const first = useRef<HTMLButtonElement>(null);
-  const [remember, setRemember] = useState(false);
+  const [remember, setRemember] = useState(!!remembered);
   useEffect(() => first.current?.focus(), [card?.id, state.pending.length]);
+  useEffect(() => setRemember(!!remembered && !!onRemember), [card?.id, state.day, remembered]);
+  const sameLabel = remembered ? card?.choices.find((c) => c.id === remembered)?.label : undefined;
   if (!card) return null;
   const firstEnabled = card.choices.findIndex((c) => !c.disabled);
   return (
@@ -53,7 +69,10 @@ export function EventModal({ state, onChoose, onRemember }: { state: GameState; 
             <span class="toggle-box" aria-hidden="true" />
             <span class="toggle-text">
               <span class="toggle-label">Do the same every misty morning</span>
-              <span class="toggle-note">Stops this card for the rest of the expedition.</span>
+              <span class="toggle-note">
+                {sameLabel ? `Ticked for you: you chose “${sameLabel}” the last two misty mornings. Untick it to be asked each time. ` : ''}
+                Stops this card for the rest of the expedition.
+              </span>
             </span>
           </label>
         )}
