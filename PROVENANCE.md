@@ -39,11 +39,14 @@ Until an organisation has answered, the game stays with its testers and goes to 
 | Nation | Organisation | Pack | Lines | Sent | Build | Fee agreed | Answered |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Darug | Deerubbin Local Aboriginal Land Council | [Darug pack](https://claude.ai/artifact/WT2Wj6XkaHwc16o67jk6H9) | D1–D12 | Not yet | | | |
-| Darug | A Darug corporation, as Deerubbin advises | Darug pack | D1–D12 | Not yet | | | |
+| Darug | Darug Custodian Aboriginal Corporation | Darug pack | D1–D12 | Not yet | | | |
 | Gundungurra | Gundungurra Aboriginal Heritage Association | [Gundungurra pack](https://claude.ai/artifact/HZomJRofHLVZqX7FYJcppB) | G1–G15 | Not yet | | | |
 | Gundungurra | Blue Mountains Aboriginal Culture and Resource Centre | Gundungurra pack | G1–G15 | Not yet | | | |
 | Wiradjuri | Bathurst Local Aboriginal Land Council | [Wiradjuri pack](https://claude.ai/artifact/Rq3vKPRkP7ev6K68fVeCJX) | W1–W8 | Not yet | | | |
+| Wiradjuri | Wiradyuri Traditional Owners Central West Aboriginal Corporation | Wiradjuri pack | W1–W8 | Not yet | | | |
 | All three (classroom edition) | NSW Aboriginal Education Consultative Group | All three packs and the teacher guide's content note | | Not yet | | | |
+
+Each organisation answers separately. Where two organisations for the same nation answer a line differently, the line stays as a draft, and goes to no school, until they agree or both approve a change.
 
 ### Decisions
 
