@@ -1,5 +1,5 @@
 // endDay: evening orders, then the night in camp settles the costs, then dawn.
-import { CARDS, T, modeTuning } from './data';
+import { CARDS, T, isSignOfCountry, modeTuning } from './data';
 import { dateOf, startDay, turnHome, weatherWord } from './day';
 import { EPS, huntHabitat, zoneOf } from './map';
 import {
@@ -84,24 +84,57 @@ function pickNotable(lines: string[]): string[] {
   return lines.filter((l) => keys.some((k) => l.includes(k))).slice(0, 3);
 }
 
+/** At most this many of the day's report lines go into its journal entry. */
+const DAY_LINES = 4;
+/** The moments the crossing is about: the hill, the river home, the pass, the views and the dead ends. */
+const FIRST_KEYS = ['sugarloaf hill', 'across the Nepean', 'find a way down', 'trench is dug', 'Down the pass', 'Up the pass', 'show plainly', 'A view at last', 'Dead end'];
+/** The rest of the day's story, kept while there is room. */
+const MORE_KEYS = ['Camp moved', 'pushed on', 'search the cliff line', 'rock step', 'cairn', 'reached a fork', 'Collected from the cache', 'Cached at camp', 'nothing to mark'];
+
 /**
  * The day's story for the journal: where the camp went, what was found, the dead ends, the views,
  * the pass and the hill. Cards found read as "Found: The rock wall."; the Signs of Country read as
  * the card's own line ("Signs of people: huts near the ridge."), never as something found.
+ *
+ * The moments in FIRST_KEYS and the signs of people go in first; camp moves, cards found and the
+ * rest fill the room left. What is kept reads in the order it happened.
  */
-function pickDayNotable(lines: string[]): string[] {
-  const keys = ['Camp moved', 'pushed on', 'Dead end', 'show plainly', 'A view at last', 'way down', 'trench is dug', 'Down the pass', 'Up the pass', 'sugarloaf hill', 'rock step', 'cairn', 'reached a fork', 'Collected from the cache', 'Cached at camp', 'nothing to mark'];
-  const out: string[] = [];
-  for (const l of lines) {
+export function pickDayNotable(lines: string[]): string[] {
+  const goal = lines.some((l) => l.startsWith('The whole party stands on the sugarloaf hill'));
+  const picked: { at: number; text: string; first: boolean }[] = [];
+  lines.forEach((l, at) => {
     if (l.startsWith('Journal card: ')) {
       const title = l.slice('Journal card: '.length, -1);
-      const card = Object.values(CARDS).find((c) => c.title === title);
-      out.push(card?.found ?? `Found: ${title}.`);
-      continue;
+      const id = Object.keys(CARDS).find((k) => CARDS[k]!.title === title);
+      // The hill's card comes with the hill's own line, which says it better.
+      if (id === 'sugarloaf') return;
+      picked.push({ at, text: (id && CARDS[id]!.found) || `Found: ${title}.`, first: !!id && isSignOfCountry(id) });
+      return;
     }
-    if (keys.some((k) => l.includes(k))) out.push(l.replace(/\. Tap one on the map\.$/, '.'));
-  }
-  return out.slice(0, 4);
+    // Said twice over: the scouts' first sight of the hill on the day the whole party stands on it,
+    // and the lookout's view on the day it is the first view of the grass country.
+    if (goal && l.startsWith('The sugarloaf hill:')) return;
+    if (l.includes('show plainly') && lines[at + 1]?.startsWith('A view at last')) return;
+    // A line the morning and the afternoon both reported, such as the scouts finding nothing to mark.
+    // Two camp moves or two dead ends in a day are two things that happened, and both count.
+    const happensTwice = l.startsWith('Camp moved') || l.includes('pushed on') || l.startsWith('Dead end');
+    if (!happensTwice && lines.indexOf(l) < at) return;
+    const first = FIRST_KEYS.some((k) => l.includes(k));
+    if (first || MORE_KEYS.some((k) => l.includes(k))) picked.push({ at, text: l.replace(/\. Tap one on the map\.$/, '.'), first });
+  });
+  const kept = [...picked.filter((p) => p.first), ...picked.filter((p) => !p.first)].slice(0, DAY_LINES);
+  return kept.sort((a, b) => a.at - b.at).map((p) => p.text);
+}
+
+/**
+ * The last entry, for the day the party comes back across the Nepean: the game ends in that half,
+ * so no evening is ever made and endDay never writes it.
+ */
+export function homeEntry(s: GameState) {
+  if (s.phase !== 'over' || s.journal.some((j) => j.day === s.day)) return;
+  const dayNotes = pickDayNotable(s.today.log);
+  const summary = summarise(s, dayNotes.some((l) => l.startsWith('Camp moved') || l.includes('pushed on')));
+  s.journal.push({ day: s.day, date: dateOf(s.day), text: [summary, ...dayNotes].join(' ') });
 }
 
 function blanketed(s: GameState, men: Member[]): Set<string> {

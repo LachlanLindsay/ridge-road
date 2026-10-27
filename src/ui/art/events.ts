@@ -211,8 +211,12 @@ function dryCamp(seed = 131): Scene {
       if (r() < 0.45) {
         const a = x + r() * len * 0.5;
         const b = Math.min(W + 4, a + 4 + r() * 8);
-        const g = curve(a, b, (xx) => ly(xx) - 0.1, 0.4);
-        m.push({ d: bandPath(taperEnds(canopy(g, { seed: seed + 40 + Math.round(a), size: 1.1, tall: 0.2 }), g, a, b, 1.5), g), c: 'f1' });
+        // A tuft that would start past the right edge draws nothing: its path would be a bare "Z",
+        // which the browser reports as an error.
+        if (b > a) {
+          const g = curve(a, b, (xx) => ly(xx) - 0.1, 0.4);
+          m.push({ d: bandPath(taperEnds(canopy(g, { seed: seed + 40 + Math.round(a), size: 1.1, tall: 0.2 }), g, a, b, 1.5), g), c: 'f1' });
+        }
       }
       x += len + 6 + r() * 20;
     }

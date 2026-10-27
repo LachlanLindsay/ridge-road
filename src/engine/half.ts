@@ -21,6 +21,7 @@ import {
   walkedMiles,
   type Step,
 } from './map';
+import { homeEntry } from './night';
 import { finishGame } from './score';
 import { assignments, hoursAvailable, planErrors, type Assignment } from './plan';
 import {
@@ -36,6 +37,7 @@ import {
   MEMBER_ORDER,
   round1,
   walkFactor,
+  withParty,
   workFactor,
 } from './party';
 import { chance } from './rng';
@@ -88,6 +90,7 @@ export function resolveHalfDay(state: GameState, plan: HalfDayPlan): HalfResult 
   applyAccounts(ctx);
   const event = finishHalf(ctx);
   s.today.log.push(...ctx.lines);
+  homeEntry(s);
   return { state: s, log: ctx.lines.map((text) => ({ day, half, text })), ...(event ? { event } : {}) };
 }
 
@@ -169,7 +172,8 @@ function moveCamp(ctx: HalfCtx, steps: Step[], party: Member[]): number {
 /** The pass is the one place the horses go unloaded: the men carry every pack down, and up again on the way home. */
 function sayPass(ctx: HalfCtx, dir: Step['dir'], hours: number) {
   if (dir === 'out') say(ctx, `Down the pass: the horses are unloaded and led down the trench, and every man carries a pack. ${round1(hours)} h of climbing.`);
-  else say(ctx, `Up the pass: the packs go up on the men's backs and the horses climb the trench behind them. ${round1(hours)} h of climbing.`);
+  else if (ctx.s.horses.some(withParty)) say(ctx, `Up the pass: the packs go up on the men's backs and the horses climb the trench behind them. ${round1(hours)} h of climbing.`);
+  else say(ctx, `Up the pass: no horses are left, so the men carry every pack up themselves. ${round1(hours)} h of climbing.`);
 }
 
 function campArrived(ctx: HalfCtx, miles: number) {
@@ -719,6 +723,7 @@ function travelHome(ctx: HalfCtx, party: Member[], H: number) {
     miles += seg.miles;
     if (!carry) loaded = true;
     for (const m of party) log(ctx, m, carry ? 'carry' : 'walk', h);
+    if (seg.pass) sayPass(ctx, 'in', h);
     s.camp = seg.a;
     passHomeNode(ctx, seg.a);
     if (seg.a === map.start) break;

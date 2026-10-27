@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { CARDS, JOURNAL_1813 } from '../src/engine/index';
 import { BRIEFING, CARD_SOURCES, CARD_TEXT, COUNTRY_CARD, PARTY_CARD } from '../src/ui/copy';
+import { MILESTONE_CARDS } from '../src/ui/Info';
+import { fleschKincaid, ownWords } from './helpers';
 
 const cardIds = Object.keys(CARDS).filter((k) => !k.startsWith('_'));
 
@@ -23,6 +25,24 @@ describe('journal content for a complete game', () => {
       const text = CARD_TEXT[id]!.join(' ');
       expect((text.match(/“/g) ?? []).length, id).toBe((text.match(/”/g) ?? []).length);
     }
+  });
+
+  it('opens each milestone card with a plain line placing the player there, then Blaxland’s words', () => {
+    for (const id of MILESTONE_CARDS) {
+      const [first, ...rest] = CARD_TEXT[id]!;
+      expect(first, id).toMatch(/^You have /);
+      expect(first, id).not.toMatch(/[“”]/);
+      expect(rest.join(' '), id).toMatch(/“[^”]+”/);
+      // The game's own words, with Blaxland's quotations taken out, read at US grade 6 or under.
+      expect(fleschKincaid(ownWords(CARD_TEXT[id]!.join(' '))), id).toBeLessThanOrEqual(6);
+    }
+    // The measure is not soft: the After 1813 card, written for older readers, reads well above it.
+    expect(fleschKincaid(ownWords(CARD_TEXT.after1813!.join(' ')))).toBeGreaterThan(8);
+  });
+
+  it('gives the reason for crossing in the briefing: the droughts of 1812 and 1813', () => {
+    const may = BRIEFING.find((c) => c.title === 'May 1813')!.paragraphs.join(' ');
+    expect(may).toMatch(/Drought in 1812 and 1813/);
   });
 
   it('has the 1813 party’s day for every date out and home', () => {
