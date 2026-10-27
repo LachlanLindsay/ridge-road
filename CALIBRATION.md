@@ -4,24 +4,26 @@ What the sim harness found when it played the spec's rules, what changed, and ho
 
 ## Result
 
-1,000 seeds per bot, `npm run sim -- --bot all --runs 1000`, mode historical:
+1,000 seeds per bot, `npm run sim -- --bot all --runs 1000`, mode historical, on the 27 October 2026 rules (the three decisions, below). Defaults is a player who trusts the plan sheet (`sim/defaults.ts`).
 
-| | Historical | Naive | Cautious |
-| --- | --- | --- | --- |
-| Reached the goal | 86.3% | 0% | 44.0% |
-| Median day at the goal (p10–p90) | 22 (21–24) | — | 31 (28–32) |
-| Days home after the goal (median) | 5 | — | 5 |
-| Repulsed | 13.7%, all by spent horses | 100%: horses 84%, food 9%, illness 6%, morale 1% | 56%: horses 54%, food 2% |
-| Food left at the ford (median) | 25 lb | 0 | 0 |
-| Horses home (mean of 4) | 2.9 | 4.0 | 1.8 |
-| Mean horse condition at the descent | 49 | — | 41 |
-| Refusals per run | 0.00 | 1.03 | 0.02 |
-| Dead ends found per run | 3.5 | 1.3 | 3.3 |
-| Median score | 1,480 (Explorer 81%, Trailblazer 4%) | — | 1,310 |
+| | Historical | Naive | Cautious | Defaults |
+| --- | --- | --- | --- | --- |
+| Reached the goal | 86.7% | 0% | 71.6% | 92.2% |
+| Median day at the goal (p10–p90) | 22 (21–24) | — | 29 (28–32) | 21 (19–23) |
+| Days home after the goal (median) | 5 | — | 5 | 5 |
+| Repulsed | 13.3%, all by spent horses | 100%: horses 88.6%, food 10.8%, morale 0.6% | 28.4%: horses 27.3%, food 1.1% | 7.8%: horses 7.7%, food 0.1% |
+| Food left at the ford (median) | 50 lb | — | 28 lb | 61 lb |
+| Horses home (mean of 4) | 2.9 | 4.0 | 2.6 | 3.3 |
+| Mean horse condition at the descent | 44 | — | 43 | 52 |
+| Refusals per run | 0.00 | 0.87 | 0.01 | 0.00 |
+| Dead ends found per run | 3.6 | 1.2 | 3.4 | 3.6 |
+| Median score | 1,480 (Explorer 81%, Trailblazer 5%) | — | 1,320 | 1,530 (Explorer 80%, Trailblazer 12%) |
 
 The 1813 party reached the goal on day 21 and took six days home; the spec asks for horses "weak but upright by the descent" (condition under 50) and a well-run party "home with almost nothing left".
 
-M1 acceptance: historical median 22 days (target 20–23) **pass**; naive repulsed in 100% of runs (target at least 60%) **pass**; the same seed and actions give the same end state, checked by replaying three full runs from their action logs and by the Vitest suite **pass**.
+M1 acceptance: historical median 22 days (target 20–23) **pass**; naive repulsed in 100% of runs (target at least 60%) **pass**; the same seed and actions give the same end state, checked by replaying three full runs from their action logs and by the Vitest suite **pass**. The plan-sheet defaults on Easy reach the goal in a median of 21 days (target 20–23) **pass**.
+
+The sections below are in the order the work happened: the first M1 calibration, then the changes after each round of play.
 
 ## What the sim found
 
@@ -39,12 +41,14 @@ Slow runs then fail for a second reason: more nights in the mountains wear the h
 
 **Tuning (data/tuning.json).** The smallest change that brings the historical bot inside 20–23 days with most runs succeeding:
 
-| Terrain | Clearing, spec → now (mi per worker-hour) | Scouting, spec → now (mph) |
+| Terrain | Clearing, spec → M1 → 27 Oct (mi per worker-hour) | Scouting, spec → M1 → 27 Oct (mph) |
 | --- | --- | --- |
-| Scrub | 0.30 → 0.48 | 1.25 → 1.75 |
-| Thick brush | 0.10 → 0.16 | 0.75 → 1.0 |
-| Thorny scrub | 0.15 → 0.24 | 0.75 → 1.0 |
-| Narrow rocky ridge | 0.12 → 0.19 | 0.75 → 1.0 |
+| Scrub | 0.30 → 0.48 → 0.39 | 1.25 → 1.75 → 1.45 |
+| Thick brush | 0.10 → 0.16 → 0.13 | 0.75 → 1.0 → 0.82 |
+| Thorny scrub | 0.15 → 0.24 → 0.20 | 0.75 → 1.0 → 0.82 |
+| Narrow rocky ridge | 0.12 → 0.19 → 0.16 | 0.75 → 1.0 → 0.82 |
+
+(The 27 October column is explained under "The three decisions" below.)
 
 Clearing is up by 60%, which restores the cutting labour the hand check assumed. Scouting in brush is up by a third because scouts also pay the walk out and back every half. Scouting on open ground is unchanged; raising it would let scouts outpace a walking man.
 
@@ -66,7 +70,7 @@ How the engine settles each one. All are easy to change.
 | Rule | Engine behaviour |
 | --- | --- |
 | "A party may advance into scouted passable ground at scouting speed" | A plan can set `advance`: after any camp move, the whole party pushes on with the horses into open ground (forest, heath, meadow, swamp) toward the target at the slower of scouting and horse speed, blazing as it goes. It stops at brush, a fork, a cliff, the pass, the goal, or the end of the half, and the camp ends at the last node reached. `blaze: false` moves at horse speed without marking: faster out, but 1 mph with lost hours on the way home and no route-score credit |
-| Scouts reaching the end of their target | They carry on along a single unexplored branch. At a fork they follow Lawson's "runs on" hint if he is with them and exactly one branch has it; otherwise they stop and report |
+| Scouts reaching the end of their target | They carry on along a single unexplored branch. At a fork they follow Lawson's "runs on" hint if he is with them and exactly one branch has it; otherwise they stop and report, and the fork card puts the choice to the player |
 | Cutters reaching the end of their target | They follow the scouts' blazes onward if the blazes lead one way |
 | Lawson's hints | Given for each new branch when a party including Lawson first reaches a node. A branch "falls away" if it leads only to cliffs; the hint is right 75% of the time (85% easy, 65% hard) |
 | Lookouts | Reveal every node within 2 miles in a straight line and the segments joining them; with Lawson, one segment more. Cloud blanks them. +5 morale the first time. The cliff above open forest counts as the first view of grassland (+15, once) |
@@ -77,12 +81,13 @@ How the engine settles each one. All are easy to change.
 | Cut grass | 15 lb per man-hour (scaled by efficiency), at good or tall grass only, up to the horses' unpenalised capacity. Fed automatically where the camp's own grass is poor or missing, unless the evening order says not to |
 | Hunting ground | A camp counts as forest, grass or meadow if its grass is good or tall or an adjoining segment is open forest or meadow |
 | New westward ground | +1 morale per mile the camp moves beyond its previous furthest point along the trail, up to +4 a day |
-| Rest day | Any outbound day with no camp move, no scouting and no cutting |
+| Rest day | Any outbound day with no camp move, no scouting and no cutting. Its night takes 8 off wear and, with water for the horses, adds 4 to each horse |
+| Wear | Past 50 each point slows scouting and cutting by 1%, in `workFactor` |
 | A missing hunter | Away for a number of time slots (three a day). Waiting brings him back next morning 70% of the time, otherwise the morning after. Searching costs two men the next half and brings him back with them |
 | The way home | Each half travels along the trail automatically unless the plan halts. Horses left at a camp rejoin half the time when the party passes; caches are collected on the way |
 | Starting values | Stamina 100, horse condition 100 |
 | Gaps filled with a number | Grass cutting rate, grass stamina cost (−4/h), advance stamina (leaders −5/h, others −3/h), horse rejoin condition (30), the stray delay cap. Listed under `_specGaps` in tuning.json |
-| Difficulty | Proposed, not in the spec: easy has one fewer decoy per region, hints right 85%, clearing ×1.1, morale 75, event odds ×0.75; hard is the mirror (one more decoy, 65%, ×0.9, morale 65, ×1.25) |
+| Difficulty | Proposed, not in the spec, now in its tuning table: easy has the historical decoys, hints right 85%, clearing ×1.0, morale 75, event odds ×0.75 and the Sunday rest ticked; hard has one more decoy per region, 65%, ×0.9, morale 65, ×1.25 |
 
 ## Changes after the school playtest (22 October 2026)
 
@@ -129,9 +134,78 @@ A player who trusts the plan sheet (its draft each half, Go, the first live choi
 
 Grass is now a decision with a cost the sheet states. The pace is unchanged: the fork, Sunday and the dew are still made for the player, which is the open "nobody can lose" item.
 
+## The three decisions (27 October 2026)
+
+The second school playtest found that nobody could lose: a player who trusted the plan sheet crossed on every difficulty, one to six days ahead of 1813, because the sheet made the three real decisions for them. It picked the ridge at every fork (`chooseTarget`), the camp sheet never asked about Sunday, and pushing through the dew cost nothing that landed. The fix puts each decision to the player and retunes the pace so the defaults land beside 1813.
+
+### The decisions
+
+| Decision | Was | Now |
+| --- | --- | --- |
+| The fork | The sheet filled in the branch, depth first with Lawson's hint as a tie-break | When the work toward the flag runs into a fork (the scouts stop there, or the flag is spent and the next lead starts at one), the target stays empty and Go stays shut until the fork card is answered: a sketch of the fork with each ridge lettered and Lawson's pencil, one button per ridge with his reading and his accuracy, "Let Lawson choose" last, and "Look at the map first". The card can be put aside; the plan sheet keeps a "Which way?" prompt and a tapped ridge on the map answers it too. Scouts with Lawson still follow his one "runs on" ridge, so the card comes when his readings agree or he was not there: about 11 times a run |
+| Sunday | Never asked; the Rest toggle was off | On Saturday night the camp sheet asks: "Tomorrow is Sunday. The 1813 party rested on Sunday 16 May and Sunday 30 May, and worked the Sunday between." Ticked on Easy at a camp with water for the horses; unticked otherwise, with the reason (a rest at a dry camp costs the horses). About 3 times a run |
+| The dew | Push: wear +3, chill odds +3% for those who worked. Strictly better than waiting | Push: wear +3, chill odds +7%, and wear now slows the work past 50. The card gives the night's odds both ways ("a 9% chance of a chill tonight, not 2%"). After two answers the same way it ticks "Do the same every misty morning" for the player and says so. The report says what the men did, and a remembered answer can be undone from the plan sheet ("Ask me each time"). About 7 dew cards a run |
+
+### Rules that changed
+
+| Rule | Was | Now |
+| --- | --- | --- |
+| Rest day | Stamina and morale only, both of which reset or rarely bind | Also mends clothes and boots (wear −8) and, where there is water for the horses, +4 to each horse that night. The camp sheet's rest toggle says what a rest gives and costs |
+| Wear | Past 60 chills, past 70 footsore | Also past 50: each point slows scouting and cutting by 1%. The plan sheet says so when it applies |
+| Too ill | 25% a night back to a chill, whatever he did | 50% a night if he lay up all day (Rest, no camp move); 25% if he minded camp or was carried along |
+| Brush rates | M1 values | About 18% slower (table above), because the bot now moves camp as the plan sheet does |
+| Easy | One fewer false ridge per region, clearing ×1.1 | Historical false ridges and clearing; Lawson's 85%, morale 75, softer events and the Sunday rest are what make it easier. The title note says so |
+| The advance | Offered with every leader ill or kept at camp, so Go stayed shut (the historical bot crashed on Easy seed 703) | Not offered without a leader fit to blaze |
+| Leaving the excess | Could offer an empty cache when only tools were left, then refuse the move | Offered only when it lightens the loads enough; otherwise the sheet says the horses can't carry what is left |
+| Dry camp plate | One brush tuft past the plate's edge drew an empty path, a console error on every Dry camp card | Skipped; a test checks every plate |
+
+### The bots
+
+- **historical** now moves camp up with the work every half, as the plan sheet does, instead of only in the morning. That afternoon move was the main reason the sheet beat the calibrated bot by two to three days; the brush rates came down to bring the bot back to 22.
+- **historical** loads grass before the brush, the 1813 way: at a full-feed camp with no feed on the ground walked ahead (the forest tract), it holds the camp for a half and puts the minders and a spare servant on Grass until the horses carry what they can. In 1813 the party camped at the forest tract from 13 to 16 May and loaded the horses with grass on 17 May; the engine charges the walk to the work front every half, so holding the camp four days would stall the cutters, and the bot holds it for one half. With the afternoon moves at M1 rates, this alone took the bot from 91.5% to 97.5% reaching the goal (200 seeds).
+- **defaults** (new) plays through the plan sheet's own draft: every suggestion taken (the camp move, the advance, grass and hunt offers, leaving the excess), "Let Lawson choose" at every fork, the camp sheet's own ticks (so the Sunday rest on Easy at water), and the top choice on every other card. Played by touch in the browser on Easy seed 7 it reaches the same end as the bot: goal day 24, home day 29, 22.5 lb of food at the ford.
+
+### The defaults, before and after
+
+1,000 seeds each; "before" is the same player on `main` (`ffc4203`).
+
+| Plan-sheet defaults | Easy, before | Easy, now | Historical, before | Historical, now | Hard, before | Hard, now |
+| --- | --- | --- | --- | --- | --- | --- |
+| Reached the goal | 95.5% | 96.0% | 89.6% | 92.2% | 88.3% | 84.3% |
+| Median day at the goal (p10–p90) | 17 (16–19) | 21 (19–23) | 19 (18–21) | 21 (19–23) | 22 (20–25) | 24 (21–26) |
+| Horses home (mean of 4) | 3.4 | 3.6 | 3.2 | 3.3 | 3.1 | 3.0 |
+| Rest days | 0 | 1.3 | 0 | 0 | 0 | 0 |
+| Dead ends | 1.6 | 2.2 | 3.6 | 3.6 | 6.5 | 6.4 |
+| Median score | 1,615 | 1,535 | 1,570 | 1,530 | 1,495 | 1,450 |
+
+On Historical the defaults leave Sundays unticked, so they work through and arrive with the 1813 party on day 21, failing about one run in thirteen.
+
+### Each decision played the other way
+
+The defaults, with one decision always made the other way, 1,000 seeds:
+
+| | Reached | Median day | Horses home | Illnesses | Median score |
+| --- | --- | --- | --- | --- | --- |
+| Easy, defaults | 96.0% | 21 | 3.56 | 7.5 | 1,535 |
+| Easy, push through every dew | 95.3% | 21 | 3.84 | 9.8 | 1,540 |
+| Easy, work every Sunday | 95.5% | 19 | 3.38 | 6.9 | 1,560 |
+| Easy, against Lawson at every fork | 91.1% | 24 | 3.28 | 9.5 | 1,460 |
+| Historical, defaults | 92.2% | 21 | 3.3 | 7.7 | 1,530 |
+| Historical, push through every dew | 88.3% | 21 | 3.58 | 10.4 | 1,540 |
+| Historical, rest every Sunday at water | 92.6% | 22 | 3.46 | 8.4 | 1,515 |
+| Historical, against Lawson at every fork | 88.0% | 23 | 3.14 | 9.4 | 1,480 |
+
+No answer is right every time any more. Pushing through gains the hour and keeps the camp moves longer (more horses home), and pays in chills and in wear that slows the late cutting; on Historical it fails more often. Resting on Sunday costs a day and buys a little safety in horses and wear; it is the weakest of the three, a choice about following 1813 more than an edge. Going against Lawson costs two or three days and three or four more dead ends a run.
+
+### Saves
+
+Saves from `main` are rebuilt by replaying their orders, and the new pace and Easy's map change most of them: of 240 saves made on `main` by the defaults player at days 1 to 30, 17 carried over, all from the first six days, and none of the 55 finished ones. The player is told and starts a new expedition, as before. A finished expedition whose orders no longer replay is now kept as it was, for its end screen and printable journal, since nothing more is played in it.
+
 ## Re-running
 
 ```sh
-npm run sim -- --bot all --runs 1000          # about ten minutes
-npm run sim -- --bot historical --runs 200    # a quick check while tuning
+npm run sim -- --bot all --runs 1000                  # about five minutes
+npm run sim -- --bot defaults --runs 1000 --mode easy # the plan-sheet target: median 20–23
+npm run sim -- --bot historical --runs 200            # a quick check while tuning
+RR_DEW=push npm run sim -- --bot defaults --runs 1000 # a decision the other way (RR_SUNDAY=rest|work, RR_FORK=against)
 ```

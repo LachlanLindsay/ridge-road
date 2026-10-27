@@ -21,10 +21,10 @@
     "heath":      { "passable": true,  "scoutMph": 2.0,  "clearMiPerWorkerHour": 0,    "horseMph": 2.0, "wearPerHour": 0.2, "hunt": "poor" },
     "meadow":     { "passable": true,  "scoutMph": 2.0,  "clearMiPerWorkerHour": 0,    "horseMph": 2.0, "wearPerHour": 0.2, "hunt": "good" },
     "swamp":      { "passable": true,  "scoutMph": 1.0,  "clearMiPerWorkerHour": 0,    "horseMph": 1.5, "wearPerHour": 0.2, "hunt": "poor" },
-    "scrub":      { "passable": false, "scoutMph": 1.75, "clearMiPerWorkerHour": 0.48, "horseMph": 2.0, "wearPerHour": 0.5, "hunt": "poor" },
-    "thick":      { "passable": false, "scoutMph": 1.0,  "clearMiPerWorkerHour": 0.16, "horseMph": 2.0, "wearPerHour": 0.5, "hunt": "poor" },
-    "thorny":     { "passable": false, "scoutMph": 1.0,  "clearMiPerWorkerHour": 0.24, "horseMph": 2.0, "wearPerHour": 1.0, "hunt": "poor" },
-    "rocky":      { "passable": false, "scoutMph": 1.0,  "clearMiPerWorkerHour": 0.19, "horseMph": 1.5, "wearPerHour": 0.5, "hunt": "poor" }
+    "scrub":      { "passable": false, "scoutMph": 1.45, "clearMiPerWorkerHour": 0.39, "horseMph": 2.0, "wearPerHour": 0.5, "hunt": "poor" },
+    "thick":      { "passable": false, "scoutMph": 0.82, "clearMiPerWorkerHour": 0.13, "horseMph": 2.0, "wearPerHour": 0.5, "hunt": "poor" },
+    "thorny":     { "passable": false, "scoutMph": 0.82, "clearMiPerWorkerHour": 0.2,  "horseMph": 2.0, "wearPerHour": 1.0, "hunt": "poor" },
+    "rocky":      { "passable": false, "scoutMph": 0.82, "clearMiPerWorkerHour": 0.16, "horseMph": 1.5, "wearPerHour": 0.5, "hunt": "poor" }
   },
   "efficiency": {
     "base": 0.5,
@@ -65,7 +65,7 @@
     "exhaustedBelow": 25,
     "rejoinCondition": 30,
     "rejoinChance": 0.5,
-    "night": { "goodFeed": 8, "rushy": -2, "noFeed": -10, "noWater": -6, "overloaded": -3, "longMove": -3, "longMoveMiles": 6, "grassLbPerHorse": 15, "blaxlandLossFactor": 0.75 },
+    "night": { "goodFeed": 8, "rushy": -2, "noFeed": -10, "noWater": -6, "overloaded": -3, "longMove": -3, "longMoveMiles": 6, "grassLbPerHorse": 15, "blaxlandLossFactor": 0.75, "restDay": 4 },
     "fall": { "base": 0.02, "per10LbOver": 0.01, "weakPerPoint": 0.005, "hours": 1, "injuryChance": 0.1, "injuryCondition": 20, "lightenLb": 20 },
     "strayChance": 0.15,
     "strayHours": 2,
@@ -73,7 +73,7 @@
   },
   "dogs": { "count": 5 },
   "party": { "servants": 4, "servantsMax": 6, "horsesMin": 2, "horsesMax": 6, "dogsMax": 8 },
-  "wear": { "dewPush": 3, "shoesRelief": 10 },
+  "wear": { "dewPush": 3, "shoesRelief": 10, "slowOver": 50, "slowPerPoint": 0.01, "restMend": 8 },
   "morale": {
     "start": 70,
     "max": 100,
@@ -95,10 +95,10 @@
     "refusalBelow": 25
   },
   "illness": {
-    "chill": { "base": 0.02, "wearOver": 60, "wear": 0.03, "staminaUnder": 30, "lowStamina": 0.04, "wetWork": 0.03, "frostNoBlanket": 0.05, "dewPush": 0.03, "efficiency": 0.7, "tooIllIfWorks": 0.15, "recoverIfRested": 0.3 },
+    "chill": { "base": 0.02, "wearOver": 60, "wear": 0.03, "staminaUnder": 30, "lowStamina": 0.04, "wetWork": 0.03, "frostNoBlanket": 0.05, "dewPush": 0.07, "efficiency": 0.7, "tooIllIfWorks": 0.15, "recoverIfRested": 0.3 },
     "bowel": { "fromDay": 14, "base": 0.03, "noFreshMeatDays": 4, "noFreshMeat": 0.04, "poorWater": 0.04, "efficiency": 0.8, "recover": 0.2 },
     "footsore": { "wearOver": 70, "chance": 0.05, "walkFactor": 0.85 },
-    "tooIll": { "toChill": 0.25 }
+    "tooIll": { "toChill": 0.25, "toChillRested": 0.5 }
   },
   "weather": {
     "zones": {
@@ -145,8 +145,8 @@
     "titles": { "trailblazer": 1600, "explorer": 1250 }
   },
   "modes": {
-    "easy": { "moraleStart": 75, "decoyDelta": -1, "hintAccuracy": 0.85, "clearRateFactor": 1.1, "eventChanceFactor": 0.75 },
-    "historical": { "moraleStart": 70, "decoyDelta": 0, "hintAccuracy": 0.75, "clearRateFactor": 1, "eventChanceFactor": 1 },
-    "hard": { "moraleStart": 65, "decoyDelta": 1, "hintAccuracy": 0.65, "clearRateFactor": 0.9, "eventChanceFactor": 1.25 }
+    "easy": { "moraleStart": 75, "decoyDelta": 0, "hintAccuracy": 0.85, "clearRateFactor": 1.0, "eventChanceFactor": 0.75, "sundayRest": true },
+    "historical": { "moraleStart": 70, "decoyDelta": 0, "hintAccuracy": 0.75, "clearRateFactor": 1, "eventChanceFactor": 1, "sundayRest": false },
+    "hard": { "moraleStart": 65, "decoyDelta": 1, "hintAccuracy": 0.65, "clearRateFactor": 0.9, "eventChanceFactor": 1.25, "sundayRest": false }
   }
 }

@@ -59,13 +59,14 @@ export const HELP: Card[] = [
   {
     title: 'Dead ends',
     paragraphs: [
-      'Most ridges end at cliffs. Lawson pencils his guess beside each ridge nobody has walked yet: runs on, or falls away. A lookout shows the ridges around it in clear weather. A cliff line drawn across a ridge’s end marks a branch that leads nowhere, and country the party hasn’t seen lies under haze.',
+      'Most ridges end at cliffs. Lawson pencils his guess beside each ridge nobody has walked yet: runs on, or falls away. When the scouts reach a fork, you choose which ridge they follow, with his reading on the card. A lookout shows the ridges around it in clear weather. A cliff line drawn across a ridge’s end marks a branch that leads nowhere, and country the party hasn’t seen lies under haze.',
     ],
   },
   {
     title: 'Keeping the party going',
     paragraphs: [
       'Leave at least one man minding camp, or horses stray. Horses need water and grass every night. Each camp’s point on the map shows its feed: solid green is full feed, half green half feed (the horses still weaken), empty none. Grass cut at a full-feed camp can be carried for the bare ones, and the plan offers it before bare ground. Men need food, water, rest and, when spirits sag, tea.',
+      'Brush and wet mornings wear out clothes and boots; once wear passes 50 the scouting and cutting slow down. A day of rest mends them and lets the horses graze. The 1813 party rested on Sundays: the camp sheet asks each Saturday.',
       'Reach the sugarloaf hill beyond the range, then turn for home and bring everyone back across the Nepean.',
     ],
   },

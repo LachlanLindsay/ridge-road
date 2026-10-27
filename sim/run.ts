@@ -52,6 +52,7 @@ export function playRun(seed: number, bot: Bot, opts: RunOptions = {}): { state:
 
 function play(seed: number, bot: Bot, opts: RunOptions): { state: GameState; result: RunResult } {
   const maxDays = opts.maxDays ?? 90;
+  bot.reset?.();
   let s = newGame({ seed, mode: opts.mode ?? 'historical' });
   let minMorale = s.morale;
   let minHorse = 100;

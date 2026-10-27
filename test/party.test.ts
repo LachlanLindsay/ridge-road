@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { T, chooseEvent, dailyFood, dogOdds, endDay, newGame, partyOf, resolveHalfDay, validatePlan, type ChoiceId, type EventId, type GameState } from '../src/engine/index';
-import { normalizeDraft, toPlan } from '../src/ui/draft';
+import { lawsonsPick } from '../src/engine/index';
+import { forkPending, normalizeDraft, toPlan, withTarget } from '../src/ui/draft';
 
 /** A safe answer to every event card. */
 const ANSWER: Record<EventId, ChoiceId> = {
@@ -24,6 +25,8 @@ function playDays(s: GameState, days: number): GameState {
     else if (s.phase === 'evening') s = endDay(s, { rations: 'full' }).state;
     else {
       draft = normalizeDraft(s, draft);
+      // The fork card: let Lawson choose.
+      if (forkPending(s, draft)) draft = withTarget(s, draft, lawsonsPick(s, draft.fork!)!);
       const plan = toPlan(s, draft);
       expect(validatePlan(s, plan).filter((w) => w.level === 'error')).toEqual([]);
       s = resolveHalfDay(s, plan).state;

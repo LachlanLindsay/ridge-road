@@ -383,7 +383,7 @@ function scoutHalf(ctx: HalfCtx, team: Member[], target: string, H: number) {
         const open = openBranches(map, pos).filter((b) => !map.nodes[b.b]!.reached).length;
         if (open >= 2 && H - committed > EPS) {
           const where = node.label ? `at ${node.label}` : `${round1(dist)} mi out`;
-          say(ctx, `The scouts reached a fork ${where} and came back to ask which branch to take. Tap one on the map.`);
+          say(ctx, `The scouts reached a fork ${where} and came back to ask which branch to take.`);
         }
         break;
       }
@@ -775,6 +775,7 @@ function applyAccounts(ctx: HalfCtx) {
       a.rest * rate.rest +
       a.grass * rate.grass;
     m.stamina = clamp(m.stamina + d, 0, T.stamina.max);
+    if (a.walk + a.scout + a.cut + a.water + a.carry + a.hunt + a.camp + a.idle + a.grass > 0) m.exerted = true;
   }
   s.wear = clamp(s.wear + ctx.wear);
 }

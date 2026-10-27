@@ -22,6 +22,8 @@ interface Props {
   campKey: string;
   selected: string | null;
   target: string | null;
+  /** A point to keep in view after each half when there is no target, such as a fork waiting on the player. */
+  focus?: string | null;
   moveTo: string | null;
   onTap: (id: string | null) => void;
   onKey: () => void;
@@ -125,7 +127,7 @@ function coverBox(box: Bounds, kCover: number): Bounds {
   };
 }
 
-export function MapView({ draw, campKey, selected, target, moveTo, onTap, onKey, size: mapSize, onSize }: Props) {
+export function MapView({ draw, campKey, selected, target, focus = null, moveTo, onTap, onKey, size: mapSize, onSize }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const svg = useRef<SVGSVGElement>(null);
   // Where each label and pencilled reading sat last frame, so they keep their side while panning.
@@ -170,8 +172,11 @@ export function MapView({ draw, campKey, selected, target, moveTo, onTap, onKey,
     const { w, h } = sizeRef.current;
     if (!v || !w) return;
     const pts = [draw.camp];
-    const t = targetPoint(draw, target);
+    const t = targetPoint(draw, target) ?? targetPoint(draw, focus);
     if (t) pts.push(t);
+    // A fork waiting on the player: keep the ends of its ridges in view too.
+    const f = !targetPoint(draw, target) ? targetPoint(draw, focus) : null;
+    if (f) for (const g of draw.segs) if (Math.abs(g.a.x - f.x) < 1e-6 && Math.abs(g.a.y - f.y) < 1e-6) pts.push(g.b);
     const inner = (p: P) => {
       const sx = (p.x - v.cx) * v.k + w / 2;
       const sy = (p.y - v.cy) * v.k + h / 2;

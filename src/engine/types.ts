@@ -109,6 +109,8 @@ export interface Member {
   workedWet: boolean;
   workedRough: boolean;
   nightPenalty: number;
+  /** Walked, carried, worked or minded camp today: anything but lying up. */
+  exerted?: boolean;
 }
 
 export interface Horse {

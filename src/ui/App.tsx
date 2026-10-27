@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { chooseEvent, endDay, newGame, resolveHalfDay, type ChoiceId, type EveningOrders, type GameState, type Mode } from '../engine';
 import { CampSheet } from './CampSheet';
-import { normalizeDraft, toPlan, type Draft } from './draft';
+import { forkPending, normalizeDraft, toPlan, withTarget, type Draft } from './draft';
+import { ForkCard } from './ForkCard';
 import { EndScreen } from './EndScreen';
 import { EventModal } from './EventModal';
 import { Feedback } from './Feedback';
@@ -26,6 +27,27 @@ type Screen = 'title' | 'briefing' | 'outfit' | 'play';
 
 const coachKey = (seed: number) => `ridge-road.coach.v2.${seed}`;
 const dewKey = (seed: number) => `ridge-road.dew.v1.${seed}`;
+const dewAnswersKey = (seed: number) => `ridge-road.dew-answers.v1.${seed}`;
+
+/** The player's answers to the dew card so far this expedition, oldest first. */
+function dewAnswers(seed: number): string[] {
+  try {
+    const raw = localStorage.getItem(dewAnswersKey(seed));
+    const list = raw ? (JSON.parse(raw) as unknown) : [];
+    return Array.isArray(list) ? list.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function readDewRule(seed: number): ChoiceId | null {
+  try {
+    const v = localStorage.getItem(dewKey(seed));
+    return v === 'wait' || v === 'push' ? v : null;
+  } catch {
+    return null;
+  }
+}
 
 /** For a first expedition: what the screen is for, shown before anything else on the first morning. */
 function Coach({ state, onDone }: { state: GameState; onDone: () => void }) {
@@ -97,6 +119,8 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
   const [setup, setSetup] = useState<{ mode: Mode; seed: number } | null>(null);
   const [units, setUnitsState] = useState<Units>(getUnits());
   const [tick, setTick] = useState(0);
+  // The fork card can be put aside to look at the map; it stays aside for that half and fork.
+  const [forkAside, setForkAside] = useState<string | null>(null);
   const sheet = useRef<HTMLDivElement>(null);
   const changeUnits = (u: Units) => {
     setUnits(u);
@@ -150,13 +174,8 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
   // A remembered answer to the dew card: the same choice every misty morning of this expedition.
   useEffect(() => {
     if (!game || game.pending[0]?.id !== 'dew') return;
-    let remembered: string | null = null;
-    try {
-      remembered = localStorage.getItem(dewKey(game.seed));
-    } catch {
-      // Nothing remembered.
-    }
-    if (remembered === 'wait' || remembered === 'push') act(() => chooseEvent(game, remembered as ChoiceId));
+    const remembered = readDewRule(game.seed);
+    if (remembered) act(() => chooseEvent(game, remembered));
   }, [game?.pending.length, game?.day]);
 
   const start = (mode: Mode) => {
@@ -218,6 +237,21 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
       // A convenience only.
     }
   };
+  const forgetDew = () => {
+    try {
+      localStorage.removeItem(dewKey(game.seed));
+      localStorage.removeItem(dewAnswersKey(game.seed));
+    } catch {
+      // A convenience only.
+    }
+    setTick(tick + 1);
+  };
+  // Two misty mornings answered the same way: the card ticks "every misty morning" for the player.
+  const dewHistory = dewAnswers(game.seed);
+  const dewSame = dewHistory.length >= 2 && dewHistory[dewHistory.length - 1] === dewHistory[dewHistory.length - 2] ? (dewHistory[dewHistory.length - 1] as ChoiceId) : null;
+  const dewRule = readDewRule(game.seed);
+  const forkKey = current?.fork ? `${current.key}:${current.fork}` : null;
+  const showFork = !!current && forkPending(game, current) && !game.pending.length && forkAside !== forkKey;
   const live = marks && marks.seed === game.seed ? marks : null;
   const fresh = live ? newCards(game, live) : [];
   const unread = live ? unreadCards(game, live) : [];
@@ -234,7 +268,16 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
     setSelected(null);
     act(() => resolveHalfDay(game, toPlan(game, current)).state);
   };
-  const choose = (c: ChoiceId) => act(() => chooseEvent(game, c));
+  const choose = (c: ChoiceId) => {
+    if (game.pending[0]?.id === 'dew') {
+      try {
+        localStorage.setItem(dewAnswersKey(game.seed), JSON.stringify([...dewHistory, c].slice(-4)));
+      } catch {
+        // A convenience only.
+      }
+    }
+    act(() => chooseEvent(game, c));
+  };
   const makeCamp = (orders: EveningOrders) => {
     fileSlip();
     setSelected(null);
@@ -253,6 +296,7 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
         campKey={`${game.camp}:${game.day}:${game.phase}`}
         selected={selected}
         target={current && game.leg === 'out' ? current.target : null}
+        focus={current && game.leg === 'out' ? (current.fork ?? null) : null}
         moveTo={current && game.leg === 'out' ? current.moveTo : null}
         onTap={setSelected}
         onKey={() => setOverlay('key')}
@@ -264,7 +308,19 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
         {game.phase === 'evening' ? (
           <CampSheet key={`${game.seed}:${game.day}`} state={game} onMakeCamp={makeCamp} selected={selected} setSelected={setSelected} />
         ) : (
-          current && <PlanSheet state={game} draft={current} setDraft={setDraft} selected={selected} setSelected={setSelected} onGo={go} />
+          current && (
+            <PlanSheet
+              state={game}
+              draft={current}
+              setDraft={setDraft}
+              selected={selected}
+              setSelected={setSelected}
+              onGo={go}
+              onFork={() => setForkAside(null)}
+              dewRule={dewRule}
+              onForgetDew={forgetDew}
+            />
+          )
         )}
       </div>
       {error && (
@@ -284,7 +340,27 @@ export function App({ resume, resumeBuild = null }: { resume: string | null; res
           }}
         />
       ) : (
-        game.pending.length > 0 && <EventModal state={game} onChoose={choose} onRemember={game.pending[0]?.id === 'dew' ? rememberDew : undefined} />
+        <>
+          {game.pending.length > 0 && (
+            <EventModal
+              state={game}
+              onChoose={choose}
+              onRemember={game.pending[0]?.id === 'dew' ? rememberDew : undefined}
+              remembered={game.pending[0]?.id === 'dew' ? dewSame : null}
+            />
+          )}
+          {showFork && current?.fork && (
+            <ForkCard
+              state={game}
+              at={current.fork}
+              onChoose={(seg) => {
+                setDraft(withTarget(game, current, seg));
+                setSelected(null);
+              }}
+              onMap={() => setForkAside(forkKey)}
+            />
+          )}
+        </>
       )}
       {overlay === 'menu' && (
         <Menu

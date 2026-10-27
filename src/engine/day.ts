@@ -47,6 +47,11 @@ export function weatherWord(w: Weather): string {
   return WEATHER_WORDS[w];
 }
 
+/** Tomorrow is a Sunday (the 1813 party rested on two of its three Sundays out). */
+export function sundayTomorrow(s: GameState): boolean {
+  return weekday(s.day + 1) === 0;
+}
+
 /** Start a new day: flags reset, the weather rolled, heavy dew asks its question. */
 export function startDay(s: GameState, lines: string[]) {
   s.today = blankToday();
@@ -55,6 +60,7 @@ export function startDay(s: GameState, lines: string[]) {
     m.workedWet = false;
     m.workedRough = false;
     m.nightPenalty = 0;
+    m.exerted = false;
     // A man kept at camp with a chill stays there until it passes; the flag outlives the day.
     if (m.condition !== 'chill') m.keepAtCamp = false;
   }

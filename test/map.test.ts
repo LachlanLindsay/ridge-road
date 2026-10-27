@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildMap, horseReach, straightMiles } from '../src/engine/map';
-import { MAP_DATA, T } from '../src/engine/data';
+import { MAP_DATA, T, modeTuning } from '../src/engine/data';
 import { seedRng } from '../src/engine/rng';
 import { storesFrom } from '../src/engine/stores';
 import type { GameMap, Mode, Terrain } from '../src/engine/types';
@@ -82,9 +82,10 @@ describe('the 1813 map', () => {
 
   it('scales decoys by difficulty', () => {
     const count = (mode: Mode) => Object.values(build(3, mode).nodes).filter((n) => n.feature === 'precipice').length;
+    // Five regions carry decoys; each mode adds or takes away one per region.
     expect(count('historical')).toBe(16);
-    expect(count('easy')).toBe(16 - 5);
-    expect(count('hard')).toBe(16 + 5);
+    expect(count('easy')).toBe(16 + 5 * modeTuning('easy').decoyDelta);
+    expect(count('hard')).toBe(16 + 5 * modeTuning('hard').decoyDelta);
   });
 
   it('is passable with the hoe once the route is cleared, the step shifted and the trench dug', () => {

@@ -305,7 +305,10 @@ export function Party({ state, onClose }: { state: GameState; onClose: () => voi
         <div>
           <dt>Wear</dt>
           <dd>
-            {Math.round(state.wear)} of 100{state.wear > T.illness.chill.wearOver ? ': clothes and boots are failing, chills come easier' : ''}
+            {Math.round(state.wear)} of 100
+            {state.wear > T.wear.slowOver
+              ? `: worn clothes and boots slow scouting and cutting by ${Math.round(T.wear.slowPerPoint * (state.wear - T.wear.slowOver) * 100)}%${state.wear > T.illness.chill.wearOver ? ', and chills come easier' : ''}. A day of rest mends ${T.wear.restMend}`
+              : ''}
           </dd>
         </div>
         <div>

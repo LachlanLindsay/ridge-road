@@ -13,6 +13,8 @@ import {
   stepsToTarget,
   suggestCampMove,
   validatePlan,
+  wearFactor,
+  type ChoiceId,
   type GameState,
   type Member,
   type Task,
@@ -29,6 +31,11 @@ interface Props {
   selected: string | null;
   setSelected: (id: string | null) => void;
   onGo: () => void;
+  /** Bring back the fork card, when it was put aside to look at the map. */
+  onFork?: () => void;
+  /** The answer given for every misty morning, if the player chose one. */
+  dewRule?: ChoiceId | null;
+  onForgetDew?: () => void;
 }
 
 export function describeTarget(state: GameState, id: string | null): string {
@@ -56,7 +63,7 @@ function campNote(n: GameState['map']['nodes'][string]): string {
   return `${n.label ?? 'an unnamed camp'} · ${water} · ${grass}`;
 }
 
-export function PlanSheet({ state, draft, setDraft, selected, setSelected, onGo }: Props) {
+export function PlanSheet({ state, draft, setDraft, selected, setSelected, onGo, onFork, dewRule = null, onForgetDew }: Props) {
   const home = state.leg === 'home';
   const plan = toPlan(state, draft);
   const warnings = validatePlan(state, plan);
@@ -109,8 +116,19 @@ export function PlanSheet({ state, draft, setDraft, selected, setSelected, onGo 
     .map(([t, n]) => `${n} ${t === 'scout' ? 'scouting' : t === 'cut' ? 'cutting' : t === 'camp' ? 'minding camp' : t === 'water' ? 'fetching water' : t === 'hunt' ? 'hunting' : t === 'grass' ? 'cutting grass' : 'resting'}`)
     .join(', ');
 
+  const forkName = draft.fork ? (state.map.nodes[draft.fork]!.label ? `A fork at ${state.map.nodes[draft.fork]!.label}` : 'A fork in the ridge') : '';
   return (
     <div class="sheet-inner">
+      {draft.fork && !draft.target && !home && !resting && (
+        <div class="notice fork-notice">
+          {forkName}: the scouts need to know which ridge to follow. Tap one on the map, or{' '}
+          {onFork && (
+            <button type="button" class="btn btn-small" onClick={onFork}>
+              Which way?
+            </button>
+          )}
+        </div>
+      )}
       <Report lines={state.today.log} />
       {selected && (
         <PlaceInfo
@@ -150,12 +168,24 @@ export function PlanSheet({ state, draft, setDraft, selected, setSelected, onGo 
           <>
             <div class="plan-row">
               <span class="plan-key">Work toward</span>
-              <span class="plan-val">{describeTarget(state, draft.target)}</span>
+              <span class="plan-val">
+                {draft.fork && !draft.target ? `${forkName}: not chosen yet.` : describeTarget(state, draft.target)}
+              </span>
             </div>
+            {state.phase === 'morning' && dewRule && (dew > 0 || state.today.pushedDew) && (
+              <p class="plan-line">
+                Heavy dew: {dewRule === 'wait' ? 'the men waited an hour for it to dry' : 'the men pushed into the wet brush'}, as you chose for every misty morning.{' '}
+                {onForgetDew && (
+                  <button type="button" class="link-btn" onClick={onForgetDew}>
+                    Ask me each time
+                  </button>
+                )}
+              </p>
+            )}
             {over > 0 && (
               <div class="notice">
                 {!leave ? (
-                  'The horses are too weak to carry anything. Rest them at a camp with grass and water, or turn back.'
+                  'The horses are too weak to carry what the party has left. Rest them at a camp with grass and water, or turn back.'
                 ) : draft.cache ? (
                   <>
                     Leaving{' '}
@@ -223,6 +253,11 @@ export function PlanSheet({ state, draft, setDraft, selected, setSelected, onGo 
               <Toggle id="blaze" checked={draft.blaze} onChange={(v) => set({ blaze: v })} label="Blaze the trail as you go" note="Unblazed ground is quicker now and slow on the way home." />
             )}
             <RunwayLines state={state} night={draft.moveTo ?? state.camp} />
+            {wearFactor(state) < 1 && (
+              <p class="plan-line is-warn">
+                Clothes and boots are worn ({Math.round(state.wear)} of 100): scouting and cutting go {Math.round((1 - wearFactor(state)) * 100)}% slower. A day of rest mends {T.wear.restMend}; a pair of spare shoes {T.wear.shoesRelief}.
+              </p>
+            )}
             {offerList}
             <Roster state={state} draft={draft} onSet={give} />
             {summary && <p class="plan-line">{summary}.</p>}

@@ -2975,3 +2975,45 @@ p {
 .event-art .art .pk {
   fill: var(--paper-3);
 }
+
+/* The fork card: a sketch of the fork in the map's own marks, the branches named, Lawson's pencil. */
+.fork-sketch {
+  display: block;
+  width: 100%;
+  max-width: 22rem;
+  height: auto;
+  margin: 0 auto -4px;
+}
+.fork-sketch .fork-name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  fill: var(--ink);
+}
+.fork-sketch .fork-hint {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 13px;
+  fill: var(--ink-3);
+}
+.fork-map {
+  justify-self: start;
+  padding-block: 4px;
+}
+
+/* Saturday night: the Sunday question sits in the camp sheet like an offer. */
+.offer.sunday {
+  border-left-color: var(--ink-2);
+}
+.offer.sunday .toggle {
+  margin-top: 2px;
+}
+.fork-sketch {
+  max-height: 168px;
+  margin-top: 18px;
+}
+.fork-sketch .fork-letter {
+  font-family: var(--font-ui);
+  font-weight: 650;
+  font-size: 12px;
+  fill: var(--ink);
+}
