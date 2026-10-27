@@ -45,6 +45,10 @@ interface Option {
   warn?: boolean;
 }
 
+function pct(p: number): string {
+  return `${Math.round(p * 100)}%`;
+}
+
 function mealCost(s: GameState, days: number): number {
   return Math.round(dailyFood(s, 'full', false) * days);
 }
@@ -64,11 +68,20 @@ function nameOf(s: GameState, ev: PendingEvent): string {
 function options(s: GameState, ev: PendingEvent): Option[] {
   const node = s.map.nodes[s.camp]!;
   switch (ev.id) {
-    case 'dew':
+    case 'dew': {
+      // The night's chill odds for a man who works today, as the night will roll them.
+      const I = T.illness.chill;
+      const dry = I.base + (s.wear > I.wearOver ? I.wear : 0);
+      const wet = I.base + (s.wear + T.wear.dewPush > I.wearOver ? I.wear : 0) + I.dewPush;
       return [
-        { id: 'wait', effect: 'Start work at 10:00, an hour late' },
-        { id: 'push', effect: 'Start at 09:00 in wet clothes: boots and coats wear faster, and the men who work are more likely to catch a chill tonight' },
+        { id: 'wait', effect: `Start at 10:00: an hour less work this morning. Each man's chance of a chill tonight stays ${pct(dry)}` },
+        {
+          id: 'push',
+          warn: true,
+          effect: `Start at 09:00 in wet clothes. Each man who works has a ${pct(wet)} chance of a chill tonight, not ${pct(dry)}; a chill keeps him in camp a few nights. Wet boots and coats wear out faster, which slows the work once wear passes ${T.wear.slowOver}`,
+        },
       ];
+    }
     case 'horseFall':
       return [
         { id: 'reload', effect: 'Carry on with the same loads; another horse may fall today' },
@@ -216,11 +229,14 @@ function apply(ctx: Ctx, ev: PendingEvent, choice: ChoiceId) {
   const { s } = ctx;
   switch (ev.id) {
     case 'dew':
-      if (choice === 'wait') s.today.dewStart = T.time.dewDelayHours;
-      else {
+      if (choice === 'wait') {
+        s.today.dewStart = T.time.dewDelayHours;
+        say(ctx, 'The men wait an hour by the fire for the dew to dry.');
+      } else {
         s.today.dewStart = 0;
         s.today.pushedDew = true;
         s.wear = clamp(s.wear + T.wear.dewPush);
+        say(ctx, 'The men push into the wet brush at nine.');
       }
       return;
     case 'horseFall':

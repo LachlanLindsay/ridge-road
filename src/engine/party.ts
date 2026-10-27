@@ -58,9 +58,14 @@ export function moraleFactor(s: GameState, m: Member): number {
   return !m.leader && s.morale < T.efficiency.servantMoraleBelow ? T.efficiency.servantMoraleFactor : 1;
 }
 
-/** Efficiency times illness and morale: how hard this man can work today. */
+/** Worn clothes and boots slow the work in the brush: past a threshold, a little for every point. */
+export function wearFactor(s: GameState): number {
+  return Math.max(0, 1 - T.wear.slowPerPoint * Math.max(0, s.wear - T.wear.slowOver));
+}
+
+/** Efficiency times illness, morale and the party's wear: how hard this man can work today. */
 export function workFactor(s: GameState, m: Member): number {
-  return efficiency(m) * illnessFactor(m) * moraleFactor(s, m);
+  return efficiency(m) * illnessFactor(m) * moraleFactor(s, m) * wearFactor(s);
 }
 
 export function walkFactor(m: Member): number {

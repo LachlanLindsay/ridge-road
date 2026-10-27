@@ -99,7 +99,7 @@ function pickDayNotable(lines: string[]): string[] {
       out.push(card?.found ?? `Found: ${title}.`);
       continue;
     }
-    if (keys.some((k) => l.includes(k))) out.push(l.replace(/\. Tap one on the map\.$/, '.'));
+    if (keys.some((k) => l.includes(k))) out.push(l);
   }
   return out.slice(0, 4);
 }
@@ -199,6 +199,12 @@ function night(ctx: Ctx, tea: boolean, feedGrass: boolean) {
 
   illness(ctx, men, frost, covered);
 
+  // A day in camp: the men dry and mend their clothes and boots.
+  if (!s.today.campMoved && !s.today.fieldWork && s.wear > EPS) {
+    s.wear = clamp(s.wear - T.wear.restMend);
+    say(ctx, 'A day in camp: the men dried and mended their clothes and boots.');
+  }
+
   // Morale.
   addMorale(s, T.morale.daily);
   addMorale(s, T.morale.rations[eaten]);
@@ -220,6 +226,9 @@ function horsesNight(ctx: Ctx, water: boolean, feedGrass: boolean) {
   const N = T.horses.night;
   const over = isOverloaded(s);
   const longMove = s.today.movedMiles > N.longMoveMiles;
+  // A day of rest: the camp stayed and nobody went out to scout or cut, so the men were free to
+  // lead the horses round the best grazing near camp and to water.
+  const rested = !s.today.campMoved && !s.today.fieldWork && water;
   let grass = s.stores.grass;
   for (const h of s.horses) {
     if (!withParty(h)) continue;
@@ -232,6 +241,7 @@ function horsesNight(ctx: Ctx, water: boolean, feedGrass: boolean) {
     if (!water) d += N.noWater;
     if (over) d += N.overloaded;
     if (longMove) d += N.longMove;
+    if (rested) d += N.restDay;
     if (d < 0 && s.today.blaxlandAtCamp) d *= N.blaxlandLossFactor;
     const before = h.condition;
     h.condition = clamp(h.condition + d);
@@ -306,7 +316,8 @@ function illness(ctx: Ctx, men: Member[], frost: boolean, covered: Set<string>) 
         say(ctx, `${m.name} is mending from his complaint.`);
       }
     } else if (m.condition === 'tooIll') {
-      if (chance(s, I.tooIll.toChill)) {
+      // Lying up all day helps; carried along on a move, or minding camp, he mends more slowly.
+      if (chance(s, m.exerted ? I.tooIll.toChill : I.tooIll.toChillRested)) {
         m.condition = 'chill';
         m.keepAtCamp = true; // he rests on until the chill has gone
         say(ctx, `${m.name} is mending, though still chilled.`);

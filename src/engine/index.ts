@@ -16,6 +16,9 @@ export { resolveHalfDay } from './half';
 export {
   leads,
   chooseTarget,
+  forkAhead,
+  forkBranches,
+  lawsonsPick,
   furthestReachable,
   horseWater,
   campChoice,
@@ -28,7 +31,7 @@ export { chooseEvent, eventCard } from './events';
 export { endDay, dogOdds } from './night';
 export { runway, horseNightRate, huntOdds, walkedAhead, feedOf, FOOD_MARGIN_DAYS, type Runway, type Feed } from './forecast';
 export { computeOutcome, routeShare } from './score';
-export { dateOf, weekday } from './day';
+export { dateOf, weekday, sundayTomorrow } from './day';
 export {
   horseReach,
   horsePassable,
@@ -48,6 +51,7 @@ export {
 export {
   efficiency,
   workFactor,
+  wearFactor,
   canWork,
   isAway,
   isBusy,

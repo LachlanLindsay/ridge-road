@@ -3,6 +3,7 @@
 import { EPS, horsePassable, horseReach, isPassable, openBranches, stepsToTarget, walkedMiles } from './map';
 import { T } from './data';
 import { hoursAvailable, moveHours, validTarget } from './plan';
+import { canWork } from './party';
 import type { GameState, Segment } from './types';
 
 /** Stable pseudo-random number in [0, 1) for tie-breaks, so a suggestion does not flip-flop between halves. */
@@ -48,6 +49,45 @@ export function chooseTarget(s: GameState): string | null {
   };
   options.sort((x, y) => score(y) - score(x));
   return options[0]!.id;
+}
+
+/** The unexplored branches running on from a reached point. */
+export function forkBranches(s: GameState, at: string): Segment[] {
+  return openBranches(s.map, at).filter((b) => !s.map.nodes[b.b]!.reached);
+}
+
+/** A reached point the work cannot go past without choosing a branch: two or more unexplored ones. */
+function isFork(s: GameState, id: string): boolean {
+  const n = s.map.nodes[id];
+  if (!n || !n.reached || n.feature === 'goal' || n.feature === 'precipice') return false;
+  // At the cliff line the scouts search for the way down before anything else.
+  if (n.feature === 'pass' && n.childSegs.some((c) => s.map.segments[c]!.pass && !s.map.segments[c]!.found)) return false;
+  return forkBranches(s, id).length >= 2;
+}
+
+/**
+ * The fork the work toward the flag has run into, which the player decides: the flag's far end is a
+ * fork the scouts or the party have reached, or the flag is spent and the next lead starts at a fork.
+ * Null when the way on is a single ridge, or the flag still has work to do short of a fork.
+ */
+export function forkAhead(s: GameState, target: string | null): string | null {
+  const map = s.map;
+  if (target && validTarget(s, target)) {
+    const seg = map.segments[target];
+    const end = seg ? (seg.deadEnd ? null : seg.b) : target;
+    if (end && isFork(s, end)) return end;
+    if (!targetSpent(s, target)) return null;
+  }
+  const next = chooseTarget(s);
+  const lead = next ? map.segments[next] : undefined;
+  return lead && isFork(s, lead.a) ? lead.a : null;
+}
+
+/** Lawson's pick at a fork: the branch he reads as running on; with equal readings, a guess. */
+export function lawsonsPick(s: GameState, at: string): string | null {
+  const score = (seg: Segment) => (seg.hint === 'runsOn' ? 0.5 : seg.hint === 'fallsAway' ? -0.5 : 0) + 0.1 * stableNoise(s.seed, seg.id);
+  const options = forkBranches(s, at).sort((x, y) => score(y) - score(x));
+  return options[0]?.id ?? null;
 }
 
 /** The furthest node the horses can reach on the way to the target within the hours this half allows. */
@@ -117,6 +157,8 @@ export function campChoice(s: GameState, target: string, maxHours = hoursAvailab
  * without gambling the camp on one side of an unread fork?
  */
 export function canAdvance(s: GameState, from: string, target: string): boolean {
+  // Only a leader blazes: with every leader ill, kept at camp or away, nobody can lead the advance.
+  if (!s.men.some((m) => m.leader && canWork(s, m))) return false;
   for (const st of stepsToTarget(s.map, from, target)) {
     const seg = s.map.segments[st.seg]!;
     if (horsePassable(s.map, seg, s.stores)) continue;
