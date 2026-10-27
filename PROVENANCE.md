@@ -28,11 +28,12 @@ The terms, as sent to every organisation in its review pack:
 2. **Line by line.** The organisation approves, changes or cuts each line by its number in the pack (Darug D1–D12, Gundungurra G1–G15, Wiradjuri W1–W8). A line nobody has approved is not described as reviewed.
 3. **Their words stay theirs.** Text an organisation writes, and anything it tells the project about Country, remains its ICIP. It is used only in Ridge Road and its teacher guide, only as approved, and nowhere else without asking again.
 4. **Credit in their words.** The game names an organisation, or says it reviewed the game, only in wording the organisation has agreed.
-5. **Withdrawal.** An organisation may withdraw approval of any line, or its credit, at any time. The next build removes it, and this record keeps the date.
+5. **Withdrawal.** An organisation may withdraw approval of any line, or its credit, at any time. The next build removes it, and this record keeps the date. Copies already printed, such as a class's printed journal, can't be recalled.
 6. **Nothing added on their behalf.** No Aboriginal language words, place names, stories, pictures of people or huts, or text for the reserved card go into the game unless an organisation writes or approves them.
 7. **Last look.** The final text goes back to each organisation before release.
+8. **Their timing.** The target is Term 2 2027 (answers by 26 February, wording by 26 March). It is the project's target, not the organisations' deadline: if they need longer, the school release waits.
 
-Until an organisation has answered, the game stays with its testers and goes to no school.
+No line goes to schools until it is approved; lines cut or left unanswered stay out.
 
 ### Packs sent
 
@@ -60,7 +61,7 @@ Decision is one of: approved; approved as changed; cut; written by the organisat
 
 ### The reserved card
 
-SPEC.md reserves a card for text the reviewing nations write, credited to them and shown first in the briefing. It is not built yet and holds no text. It is built only if an organisation wants it, with the words it writes.
+SPEC.md reserves a card for text the reviewing nations write, credited to them and shown first in the briefing. It is not built yet and holds no text. It is built only if an organisation wants it, written by that organisation or by whoever it names, and the writing is paid separately from the review.
 
 | Date | Organisation | Status | Text (commit) | Credit wording |
 | --- | --- | --- | --- | --- |
