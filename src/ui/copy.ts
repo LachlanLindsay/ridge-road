@@ -19,7 +19,11 @@ export const BRIEFING: Card[] = [
     title: 'May 1813',
     paragraphs: [
       'The settlements west of Sydney end at the Nepean River, a frontier where Darug people have fought the farms since the 1790s. Beyond it rise the Blue Mountains. Every European party that has tried to cross them has been turned back, and the ones that got furthest took Aboriginal guides. Blaxland’s party takes none.',
-      'Gregory Blaxland means to keep to the ridges: find the one that runs through, mark it, and cut a path wide enough for four pack horses.',
+      // The droughts: Wikipedia, “1813 crossing of the Blue Mountains” (the colony needed more
+      // farming land, “particularly after the droughts of 1812 and 1813”), which cites NSW National
+      // Parks and the State Library of NSW; C. Fenby, History of Meteorology 7 (2015), dates that
+      // drought in coastal NSW to 1809–1815.
+      'Drought in 1812 and 1813 has left the colony short of grass for its sheep and cattle, and it wants more land. Gregory Blaxland means to keep to the ridges: find the one that runs through, mark it, and cut a path wide enough for four pack horses.',
       'Lead the party across the range to open country, then bring everyone home before the food runs out.',
     ],
   },

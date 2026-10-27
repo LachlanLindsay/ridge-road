@@ -40,6 +40,11 @@ describe('journal content for a complete game', () => {
     expect(fleschKincaid(ownWords(CARD_TEXT.after1813!.join(' ')))).toBeGreaterThan(8);
   });
 
+  it('gives the reason for crossing in the briefing: the droughts of 1812 and 1813', () => {
+    const may = BRIEFING.find((c) => c.title === 'May 1813')!.paragraphs.join(' ');
+    expect(may).toMatch(/Drought in 1812 and 1813/);
+  });
+
   it('has the 1813 party’s day for every date out and home', () => {
     const dates = [...JOURNAL_1813.days, ...JOURNAL_1813.home].map((d) => d.date);
     const expected = Array.from({ length: 27 }, (_, i) => new Date(Date.UTC(1813, 4, 11 + i)).toISOString().slice(0, 10));
