@@ -116,8 +116,9 @@ export const CARD_TEXT: Record<string, string[]> = {
     'The journal notices animals mostly as food or as noise. There is a kangaroo an eagle had just killed, on the second day, and an emu calling all night across a gully. Dingoes, which the journal calls native dogs, howl round the camp. And there are the kangaroos the dogs ran down, welcome after nearly two weeks of salt meat.',
   ],
   viewBack: [
-    'On 19 May the party began to climb the second ridge of the mountains. From up there they could see back over the colony: Prospect Hill to the east, a little south; Windsor and Grose Head to the north-east; Mount Banks to the north-west.',
-    'Mount Banks was as far as the botanist George Caley had got, in 1804.',
+    'You have climbed the second ridge. Look back the way you came: the farms you left are far below.',
+    'Blaxland’s party climbed this ridge on 19 May 1813. From the top they had, for the first time, “an extensive view of the settlements below”.',
+    'They could see Prospect Hill to the east, Windsor and Grose Head to the north-east, and Mount Banks to the north-west. Mount Banks was as far as the botanist George Caley had got, in 1804.',
   ],
   rockWall: [
     'On 18 May the ridge was “not more than fifteen or twenty yards over, with deep precipices on each side”, and then it was blocked by a mass of rock “nearly thirty feet high, extending across the whole breadth”.',
@@ -128,8 +129,9 @@ export const CARD_TEXT: Record<string, string[]> = {
     'Water decided where they camped. On the second night there was “just enough for the night, contained in a hole in the rock”; further on they camped at the heads of swamps.',
   ],
   highHeath: [
-    'On 22 May they reached the summit of the third ridge: “about two thousand acres of land clear of trees”, which they computed to be eighteen miles from the Nepean in a straight line. They camped “by the side of a fine stream of water”.',
-    'They tried to get down the cliffs, following the streams or climbing down where the rock had fallen in, but “were baffled in every instance”. In places, the journal says, “the perpendicular height of the rocks above the earth below could not be less than four hundred feet.”',
+    'You have reached the high heath, the top of the range. The ground here is open, but past it the cliffs drop away.',
+    'Blaxland’s party got here on 22 May 1813. On top they found “about two thousand acres of land clear of trees”. They worked out that it was eighteen miles from the Nepean in a straight line. They camped “by the side of a fine stream of water”.',
+    'Then they tried to get down the cliffs. They followed the streams, and tried where the rock had fallen in, but they “were baffled in every instance”: every way down beat them. In places, the journal says, “the perpendicular height of the rocks above the earth below could not be less than four hundred feet.”',
   ],
   kangarooDogs: [
     'The kangaroo dog was bred in the colony in the early 1800s, mostly from greyhounds and Scottish deerhounds: a sighthound fast and strong enough to outrun a kangaroo and hold it, and tough enough to survive its claws. Kangaroo was a major food for the early settlers.',
@@ -145,11 +147,14 @@ export const CARD_TEXT: Record<string, string[]> = {
     '“Their provisions were nearly expended, their clothes and shoes were in very bad condition”, and they decided “to return home by the track they came”.',
   ],
   wayDown: [
-    'On 28 May they stopped at five o’clock on the edge of the precipice, above forest land. They got the horses down “by cutting a small trench with a hoe, which kept them from slipping”. At the bottom the horses “again tasted fresh grass for the first time since they left the forest land on the other side of the mountain”.',
-    'Next morning the party went down “through a pass in the rock, about thirty feet wide”, starting at seven o’clock and reaching the foot at nine. In places “the party were obliged to carry the packages themselves”. They had come down from what is now called Mount York.',
+    'You have found a way down the cliffs. At the bottom there is fresh grass for the horses.',
+    'Blaxland’s party came to the edge of the cliffs on 28 May 1813, above forest land. They got the horses down “by cutting a small trench with a hoe, which kept them from slipping”. At the bottom the horses “again tasted fresh grass for the first time since they left the forest land on the other side of the mountain”.',
+    'The next morning the party went down “through a pass in the rock, about thirty feet wide”. It took them from seven o’clock until nine. In places “the party were obliged to carry the packages themselves”. They had come down from what is now called Mount York.',
   ],
   sugarloaf: [
-    'On 31 May, eight miles into the forest land beyond the cliffs, they came to “a high hill, in the shape of a sugar-loaf”, and in the afternoon “ascended its summit”. Around it lay forest and grass land “sufficient in extent in their opinion, to support the stock of the colony for the next thirty years”.',
+    'You have reached the sugarloaf hill, the end of the way out. Now bring everyone home.',
+    'Blaxland’s party came here on 31 May 1813, eight miles past the cliffs. They saw “a high hill, in the shape of a sugar-loaf”, and that afternoon they “ascended its summit”.',
+    'All round lay forest and grass. They thought there was enough “to support the stock of the colony for the next thirty years”. Stock means farm animals: sheep and cattle.',
     '“This was the extreme point of their journey.” The next morning they turned for home.',
   ],
   after1813: [

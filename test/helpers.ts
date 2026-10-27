@@ -50,3 +50,31 @@ export function lineGame(terrain: Terrain, miles: number, opts: { marked?: numbe
 export function tasks(work: Record<string, 'scout' | 'cut' | 'camp' | 'rest' | 'hunt' | 'water' | 'grass'>) {
   return work as Partial<Record<'blaxland' | 'lawson' | 'wentworth' | 'burne' | 'fairs' | 'servant3' | 'servant4', 'scout' | 'cut' | 'camp' | 'rest' | 'hunt' | 'water' | 'grass'>>;
 }
+
+/** Syllables in a word by the usual vowel-group rule: rough, but within a few tenths of a grade of a dictionary count over a card. */
+export function syllables(word: string): number {
+  let w = word.toLowerCase().replace(/[^a-z]/g, '');
+  if (!w) return 0;
+  if (w.length <= 3) return 1;
+  // A silent final e or es, and an -ed that is not its own syllable (walked, but not waited).
+  w = w.replace(/(?:[^laeiouy]es|[^laeiouy]e)$/, '').replace(/([^td])ed$/, '$1').replace(/^y/, '');
+  return Math.max(1, (w.match(/[aeiouy]{1,2}/g) ?? []).length);
+}
+
+/** Flesch–Kincaid grade: the US school grade a text reads at. */
+export function fleschKincaid(text: string): number {
+  const sentences = text.split(/[.!?]+[”’]?(?=\s|$)/).filter((s) => /[A-Za-z0-9]/.test(s)).length;
+  const words = text.match(/[A-Za-z0-9’'-]+/g) ?? [];
+  const syl = words.reduce((n, w) => n + syllables(w), 0);
+  return 0.39 * (words.length / Math.max(1, sentences)) + 11.8 * (syl / Math.max(1, words.length)) - 15.59;
+}
+
+/** A card's own words: its text with every quotation taken out, leaving the rest of each sentence. */
+export function ownWords(text: string): string {
+  return text
+    .replace(/“[^”]*”/g, ' ')
+    .replace(/\s+([.,;:])/g, '$1')
+    .replace(/([.:;,])\s*[.:;,]/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
