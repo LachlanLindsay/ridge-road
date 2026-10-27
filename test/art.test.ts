@@ -41,6 +41,12 @@ describe('card art', () => {
     }
   });
 
+  it('never draws an empty path, which the browser reports as an error', () => {
+    for (const [id, make] of Object.entries({ ...CARD_PLATES, ...EVENT_ART })) {
+      for (const m of make().marks) if (m.d.trim()) expect(m.d.trim(), id).toMatch(/^[Mm]/);
+    }
+  });
+
   it('draws the same plate every time, and keeps it light enough for a phone', () => {
     for (const [id, make] of Object.entries(CARD_PLATES)) {
       const a = make();

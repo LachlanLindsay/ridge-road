@@ -5,6 +5,7 @@ import { decodeReplay, encodeReplay } from '../src/ui/replaycode';
 import { reportText } from '../src/ui/report';
 import { CARRY_OVER_FAILED, restore } from '../src/ui/save';
 import { BOTS } from '../sim/bots';
+import { playRun } from '../sim/run';
 
 /** A game some days in, played by the historical bot with a non-default party. */
 function played(days: number): GameState {
@@ -83,5 +84,12 @@ describe('saves across builds', () => {
     expect(restore(JSON.stringify(broken), 'an-older-build')).toEqual({ game: null, notice: CARRY_OVER_FAILED });
     expect(restore('{"not":"a save"}', null)).toEqual({ game: null, notice: CARRY_OVER_FAILED });
     expect(restore(null, null)).toEqual({ game: null, notice: null });
+  });
+
+  it('keep a finished expedition whose orders no longer replay, for its end screen and journal', () => {
+    const s = playRun(3, BOTS.historical!).state;
+    expect(s.phase).toBe('over');
+    const old = { ...s, actions: [{ t: 'end', orders: { rations: 'full' } }, ...s.actions] };
+    expect(restore(JSON.stringify(old), 'an-older-build').game?.outcome).toEqual(s.outcome);
   });
 });
