@@ -1,4 +1,5 @@
 // npm run sim -- --bot historical --runs 1000 [--seed 1] [--mode historical] [--json] [--trace]
+// --bot all runs the four bots; defaults is a player who trusts the plan sheet (sim/defaults.ts).
 import { replay, type Mode } from '../src/engine/index';
 import { BOTS } from './bots';
 import { playRun, summarise, type RunResult, type Summary } from './run';
@@ -24,7 +25,7 @@ function parse(argv: string[]): Args {
     else if (a === '--json') args.json = true;
     else if (a === '--trace') args.trace = true;
     else if (a === '--help' || a === '-h') {
-      console.log('npm run sim -- --bot historical|naive|cautious|all --runs N [--seed S] [--mode easy|historical|hard] [--json] [--trace]');
+      console.log('npm run sim -- --bot historical|naive|cautious|defaults|all --runs N [--seed S] [--mode easy|historical|hard] [--json] [--trace]');
       process.exit(0);
     }
   }
@@ -105,6 +106,11 @@ function main() {
     return;
   }
 
+  const defaults = summaries.find((x) => x.bot === 'defaults');
+  if (defaults && args.mode === 'easy') {
+    const ok = defaults.medianGoalDay >= 20 && defaults.medianGoalDay <= 23;
+    console.log(`\n  ${ok ? 'PASS' : 'FAIL'}  plan-sheet defaults on Easy: median day at the goal ${f1(defaults.medianGoalDay)} (target 20–23)`);
+  }
   const hist = summaries.find((x) => x.bot === 'historical');
   const naive = summaries.find((x) => x.bot === 'naive');
   if (hist || naive) {

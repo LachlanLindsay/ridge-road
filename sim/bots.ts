@@ -1,20 +1,26 @@
-// Three bots for the sim harness, playing through the same API as the UI.
-//   historical: the 1813 method. Five blaze, two mind camp, camp advances each morning, rest on Sundays.
+// Four bots for the sim harness, playing through the same API as the UI.
+//   historical: the 1813 method. Five blaze, two mind camp, camp moves up with the work, grass loaded
+//               before the brush, rest on Sundays.
 //   naive:      everyone scouts, cutting only now and then, nobody minds camp.
 //   cautious:   the historical method, resting every third day.
+//   defaults:   a player who trusts the plan sheet (sim/defaults.ts).
 import {
   T,
   canWork,
   capacity,
   dailyFood,
   eventCard,
+  feedOf,
   foodLb,
   isAway,
   isBusy,
   loadAfterCache,
   loadLb,
   markedAhead,
+  stepsToTarget,
+  walkedAhead,
   weekday,
+  withParty,
   type ChoiceId,
   type EveningOrders,
   type GameState,
@@ -25,9 +31,12 @@ import {
   type Task,
 } from '../src/engine/index';
 import { campChoice, canAdvance, chooseTarget, furthestReachable, stableNoise } from './view';
+import { defaultsBot } from './defaults';
 
 export interface Bot {
   name: string;
+  /** Called before each run, for bots that keep state between halves (the plan sheet's draft). */
+  reset?(): void;
   plan(s: GameState): HalfDayPlan;
   choose(s: GameState): ChoiceId;
   evening(s: GameState): EveningOrders;
@@ -54,6 +63,21 @@ function needsGrass(s: GameState): boolean {
   return capacity(s) - loadLb(s.stores) > 15;
 }
 
+/**
+ * The 1813 way at the forest tract: before leaving good grass for bare ground, hold the camp and load
+ * the horses with cut grass, "as much grass as could be put on them" (17 May). True while there is
+ * room for it, the camp has full feed, and the ground already walked toward the flag has a camp with
+ * no feed before the next good grass.
+ */
+function loadGrassHere(s: GameState, target: string): boolean {
+  if (!s.horses.some(withParty)) return false;
+  if (feedOf(s.map.nodes[s.camp]!.grass) !== 'full') return false;
+  if (capacity(s) - loadLb(s.stores) < T.horses.night.grassLbPerHorse) return false;
+  const ahead = walkedAhead(s, stepsToTarget(s.map, s.camp, target));
+  const firstGood = ahead.findIndex((n) => feedOf(n.grass) === 'full');
+  return (firstGood < 0 ? ahead : ahead.slice(0, firstGood)).some((n) => feedOf(n.grass) === 'none');
+}
+
 interface WorkStyle {
   minders: number;
   scoutsWhenShort: boolean;
@@ -67,15 +91,19 @@ function methodPlan(s: GameState, style: WorkStyle): HalfDayPlan {
 
   let moveTo: string | undefined;
   const campNode = s.map.nodes[s.camp]!;
+  const grassDay = loadGrassHere(s, target);
   const campInDeadEnd = !!campNode.parentSeg && !!s.map.segments[campNode.parentSeg]!.deadEnd;
-  const reach = s.phase === 'morning' ? campChoice(s, target) : furthestReachable(s, target);
+  // The camp moves up with the work every half, as the plan sheet moves it, never past water into a
+  // dry camp for the sake of a little distance.
+  const reach = campChoice(s, target);
   if (reach !== s.camp) {
     const gain = s.map.nodes[reach]!.routeMiles - campNode.routeMiles;
     // The camp only goes back when it is stranded on a dead branch.
-    if (campInDeadEnd || (gain > 0 && (s.phase === 'morning' || gain >= 3 || reach === s.map.goal))) moveTo = reach;
+    if (campInDeadEnd || gain > 0) moveTo = reach;
   }
+  if (grassDay && !campInDeadEnd) moveTo = undefined;
   const from = moveTo ?? s.camp;
-  const advance = canAdvance(s, from, target);
+  const advance = !grassDay && canAdvance(s, from, target);
 
   const tasks: Partial<Record<MemberId, Task>> = {};
   const here = s.men.filter((m) => !isAway(s, m) && !isBusy(s, m));
@@ -99,6 +127,11 @@ function methodPlan(s: GameState, style: WorkStyle): HalfDayPlan {
     if (minders >= style.minders) break;
     camp.push(m);
     minders += 1;
+  }
+  // Loading grass before the brush: one more servant joins the minders at the scythe.
+  if (grassDay) {
+    const extra = byTired.find((m) => !camp.includes(m) && !m.leader);
+    if (extra) camp.push(extra);
   }
   for (const m of camp) tasks[m.id] = needsGrass(s) ? 'grass' : 'camp';
 
@@ -272,4 +305,4 @@ export const naive: Bot = {
   },
 };
 
-export const BOTS: Record<string, Bot> = { historical, naive, cautious };
+export const BOTS: Record<string, Bot> = { historical, naive, cautious, defaults: defaultsBot() };
