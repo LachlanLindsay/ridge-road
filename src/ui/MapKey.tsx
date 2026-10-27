@@ -80,8 +80,8 @@ const ENTRIES: Entry[] = [
     id: 'unwalked',
     section: 'road',
     glyph: () => seen,
-    text: 'Dotted: a ridge nobody has walked yet',
-    short: 'Dotted: nobody has walked it',
+    text: 'Dotted: a ridge the party hasn’t walked yet',
+    short: 'Dotted: not walked yet',
     shown: (_, segs) => segs.some((s) => s.marked < 0.999 && s.open < 0.999 && !s.deadEnd),
   },
   {
@@ -297,7 +297,7 @@ const ENTRIES: Entry[] = [
     id: 'unseenPoint',
     section: 'places',
     glyph: () => dot(undefined, false),
-    text: 'A point seen from a lookout: nobody has been there, so its water and grass aren’t known',
+    text: 'A point seen from a lookout: the party hasn’t been there, so its water and grass aren’t known',
     short: 'Seen from afar: grass unknown',
     shown: (_, __, nodes) => nodes.some((n) => !n.reached),
   },
@@ -376,7 +376,7 @@ const ENTRIES: Entry[] = [
         </text>
       </g>
     ),
-    text: 'Pencilled beside a ridge nobody has walked: Lawson’s guess whether it runs on or falls away to cliffs. He is right about three times in four',
+    text: 'Pencilled beside a ridge the party hasn’t walked: Lawson’s guess whether it runs on or falls away to cliffs. He is right about three times in four',
     short: 'Lawson’s guess, in pencil',
     shown: (_, segs) => segs.some((s) => !!s.hint && s.lead && !s.hintMark),
   },
