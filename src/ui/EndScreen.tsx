@@ -4,6 +4,7 @@ import { EndArt } from './art/scenes';
 import { CARD_SOURCES, CARD_TEXT } from './copy';
 import { Feedback } from './Feedback';
 import { lb, localize, mi, plural } from './format';
+import { CHART, ghostLayout, LABEL_1813, LABEL_YOU, type Pt } from './ghostChart';
 import { packHorses } from './outfitting';
 import { Journal } from './Overlays';
 
@@ -36,17 +37,11 @@ function Ghost({ state }: { state: GameState }) {
   let cum = 0;
   const total = JOURNAL_1813.days.reduce((s, d) => s + d.move, 0);
   const ghost = JOURNAL_1813.days.map((d) => (cum += d.move) / total);
-  const days = Math.max(yours.length, ghost.length);
-  const W = 320;
-  const H = 168;
-  const L = 34;
-  const R = 22;
-  const Tp = 14;
-  const B = 26;
-  const x = (i: number) => L + ((W - L - R) * i) / Math.max(1, days);
+  const { W, H, L, R, Tp, B } = CHART;
+  const g = ghostLayout(yours, ghost);
+  const x = (d: number) => L + ((W - L - R) * d) / Math.max(1, g.days);
   const y = (v: number) => Tp + (H - Tp - B) * (1 - v);
-  const path = (vs: number[]) => vs.map((v, i) => `${i ? 'L' : 'M'}${x(i + 1).toFixed(1)} ${y(v).toFixed(1)}`).join('');
-  const ticks = [1, 7, 14, 21, 28, 35].filter((d) => d <= days);
+  const path = (pts: Pt[]) => pts.map(([px, py], i) => `${i ? 'L' : 'M'}${px.toFixed(1)} ${py.toFixed(1)}`).join('');
   return (
     <figure class="ghost">
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Share of the route covered each day: yours over ${yours.length} days against the 1813 party's 21`}>
@@ -58,46 +53,20 @@ function Ghost({ state }: { state: GameState }) {
             </text>
           </g>
         ))}
-        {ticks.map((d, i) => (
-          <text key={d} x={x(d)} y={H - 8} class="ghost-axis" text-anchor={i === ticks.length - 1 && x(d) > W - 40 ? 'end' : 'middle'}>
+        {g.ticks.map((d, i) => (
+          <text key={d} x={x(d)} y={H - 8} class="ghost-axis" text-anchor={i === g.ticks.length - 1 && x(d) > W - 40 ? 'end' : 'middle'}>
             Day {d}
           </text>
         ))}
-        <path d={path(ghost)} class="ghost-1813" />
-        <path d={path(yours)} class="ghost-you" />
-        {(() => {
-          // The two labels sit at the ends of their lines. When their words would touch, the lower
-          // line's label drops below it and the higher one's rises above, clear of each other.
-          const gx = x(ghost.length);
-          const gy = y(ghost[ghost.length - 1]!);
-          const yx = Math.min(x(yours.length) + 4, W - R);
-          const yy = y(yours[yours.length - 1] ?? 0);
-          const youEnd = x(yours.length) > W - 60;
-          const you: [number, number] = youEnd ? [yx - 24, yx] : [yx, yx + 24];
-          const then: [number, number] = [gx + 2 - 30, gx + 2];
-          const touchX = Math.min(you[1], then[1]) - Math.max(you[0], then[0]) > -6;
-          let gLabelY = gy + 12;
-          let yLabelY = yy - 6;
-          if (touchX && Math.abs(gLabelY - yLabelY) < 14) {
-            if (yy <= gy) {
-              yLabelY = yy - 6;
-              gLabelY = Math.max(gy + 14, yLabelY + 14);
-            } else {
-              gLabelY = Math.max(Tp - 4, gy - 6);
-              yLabelY = Math.max(yy + 14, gLabelY + 14);
-            }
-          }
-          return (
-            <>
-              <text x={gx + 2} y={gLabelY} class="ghost-label ghost-label-1813" text-anchor="end">
-                1813
-              </text>
-              <text x={yx} y={yLabelY} class="ghost-label" text-anchor={youEnd ? 'end' : 'start'}>
-                You
-              </text>
-            </>
-          );
-        })()}
+        <path d={path(g.ghost)} class="ghost-1813" />
+        <path d={path(g.you)} class="ghost-you" />
+        {/* Each label by the end of its line, clear of both lines and of the other label. */}
+        <text x={g.labels.ghost.x} y={g.labels.ghost.y} class="ghost-label ghost-label-1813" text-anchor={g.labels.ghost.anchor}>
+          {LABEL_1813}
+        </text>
+        <text x={g.labels.you.x} y={g.labels.you.y} class="ghost-label" text-anchor={g.labels.you.anchor}>
+          {LABEL_YOU}
+        </text>
       </svg>
       <figcaption>Share of the route covered by each evening. The 1813 line follows Blaxland's camp-to-camp miles; its flat days are cutting and rest.</figcaption>
     </figure>
