@@ -27,7 +27,7 @@ interface Props {
 const FEATURE_TEXT: Record<string, string> = {
   ford: 'The Nepean ford. Home is back across the river.',
   lookout: 'A lookout. In clear weather it shows the ridges within two miles.',
-  cairn: 'A cairn of stones left by an earlier party that turned back here.',
+  cairn: 'A pile of stones the 1813 party took to mark an earlier explorer’s farthest point. Who piled them is not known.',
   goal: 'The sugarloaf hill, beyond the range. Bring the whole party here, then turn for home.',
 };
 

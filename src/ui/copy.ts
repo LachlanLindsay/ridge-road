@@ -1,6 +1,6 @@
 // Words shown in the game. Facts come from SPEC.md, which cites its sources; everything here is
-// written fresh. The Country text is a draft for review by a Gundungurra or Darug organisation
-// before any public release (SPEC.md, "History and Country content").
+// written fresh. The Country text is a draft for review by Darug, Gundungurra and Wiradjuri
+// organisations before any public release (SPEC.md, "History and Country content"; PROVENANCE.md).
 
 export interface Card {
   title: string;
@@ -59,7 +59,7 @@ export const HELP: Card[] = [
   {
     title: 'Dead ends',
     paragraphs: [
-      'Most ridges end at cliffs. Lawson pencils his guess beside each ridge nobody has walked yet: runs on, or falls away. A lookout shows the ridges around it in clear weather. A cliff line drawn across a ridge’s end marks a branch that leads nowhere, and country the party hasn’t seen lies under haze.',
+      'Most ridges end at cliffs. Lawson pencils his guess beside each ridge the party hasn’t walked yet: runs on, or falls away. A lookout shows the ridges around it in clear weather. A cliff line drawn across a ridge’s end marks a branch that leads nowhere, and country the party hasn’t seen lies under haze.',
     ],
   },
   {
